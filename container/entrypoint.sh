@@ -24,11 +24,12 @@ if [ -n "${SKIP_MIGRATIONS:-}" ]; then
 	echo '[entrypoint] SKIP_MIGRATIONS is set, skipping database migrations'
 else
 	echo '[entrypoint] Applying database migrations...'
-	# The sqlite database path is relative to the Prisma schema
-	# (packages/backend/src/prisma/schema.prisma -> /app/database/database.sqlite).
+	# Prisma 7 reads the schema location *and* the database URL from
+	# packages/backend/prisma.config.ts, so the CLI is pointed at that file
+	# explicitly instead of relying on the current working directory.
 	# HOME is only needed so Prisma has a writable place for its cache.
 	HOME=/app node /app/node_modules/prisma/build/index.js migrate deploy \
-		--schema /app/packages/backend/src/prisma/schema.prisma
+		--config /app/packages/backend/prisma.config.ts
 fi
 
 echo "[entrypoint] Starting SafeStorage (nginx :80, frontend :8001, backend :8000)"

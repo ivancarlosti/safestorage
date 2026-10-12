@@ -4,6 +4,7 @@ import { fastifyCookie } from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import fstatic from '@fastify/static';
+import type { FastifyError } from 'fastify';
 import fastify from 'fastify';
 import { jsonSchemaTransform } from 'fastify-type-provider-zod';
 import jetpack from 'fs-jetpack';
@@ -22,8 +23,9 @@ import { fileWatcher, getFileWatcher } from './utils/Watcher.js';
 const server = fastify({
 	trustProxy: true,
 	connectionTimeout: 600000,
-	// @ts-ignore-error can't use process.env as its undefined
-	logger: log,
+	// Fastify 5 no longer accepts a pre-built logger through `logger` (it only
+	// takes a configuration object); a ready-made pino instance goes here.
+	loggerInstance: log,
 	disableRequestLogging: true
 });
 
@@ -87,9 +89,8 @@ const start = async () => {
 	});
 
 	// Route error handler
-	// @ts-ignore
 	// eslint-disable-next-line promise/prefer-await-to-callbacks
-	server.setErrorHandler((error, _, res) => {
+	server.setErrorHandler((error: FastifyError, _request, res) => {
 		if (error.statusCode) {
 			return res.send(error);
 		} else {

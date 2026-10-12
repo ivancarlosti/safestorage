@@ -1,0 +1,119 @@
+version: 2
+updates:
+  # ── Root workspace (yarn 4 / node-modules linker) ─────────────────────────
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    labels:
+      - dependencies
+    commit-message:
+      prefix: 'chore(deps)'
+      include: scope
+    # Keep the PR noise down: group routine bumps into a single PR per type.
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      production-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+    # Majors are migrated deliberately, one framework at a time, via tracked
+    # branches (see the phased upgrade plan). Dependabot must not race ahead.
+    ignore:
+      # ── Node runtime baseline (don't-merge without a coordinated bump) ────
+      - dependency-name: 'node'
+      - dependency-name: '@types/node'
+      # ── Frontend framework ────────────────────────────────────────────────
+      - dependency-name: 'next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@next/mdx'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint-config-next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@tremor/react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'sharp'
+        update-types: ['version-update:semver-major']
+      # ── Backend framework ─────────────────────────────────────────────────
+      - dependency-name: 'fastify'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@fastify/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'fastify-type-provider-zod'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@scalar/fastify-api-reference'
+        update-types: ['version-update:semver-major']
+      # ── Data layer ────────────────────────────────────────────────────────
+      - dependency-name: '@prisma/client'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'prisma'
+        update-types: ['version-update:semver-major']
+      # ── Validation ────────────────────────────────────────────────────────
+      - dependency-name: 'zod'
+        update-types: ['version-update:semver-major']
+      # ── Runtimes / toolchain ──────────────────────────────────────────────
+      - dependency-name: 'file-type'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'uuid'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'turbo'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
+
+  # ── GitHub Actions ────────────────────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: 'UTC'
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: 'chore(ci)'
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+
+  # ── Docker base images ────────────────────────────────────────────────────
+  - package-ecosystem: docker
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: 'UTC'
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: 'chore(docker)'
+    # The base image runtime is part of the Node baseline and is bumped in a
+    # coordinated way alongside `engines` / `.nvmrc`.
+    ignore:
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']

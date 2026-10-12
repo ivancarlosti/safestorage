@@ -2,7 +2,7 @@
 
 ## Requirements
 
--   **Node.js ≥ 18.9.0** (the Docker image uses Node 20).
+-   **Node.js ≥ 22.0.0** (the Docker image uses Node 22).
 -   **Yarn 4** — vendored in the repository (`.yarn/releases`) and pinned via `packageManager: yarn@4.1.1`, so just run `yarn` (Enable Corepack if your shell cannot find it: `corepack enable`).
 -   **ffmpeg** — optional; only needed for video thumbnail generation (`ffmpeg` is bundled in the Docker image).
 
@@ -34,7 +34,7 @@ Then create the SQLite database and generate the Prisma client:
 yarn migrate        # prisma migrate deploy && prisma generate
 ```
 
-The database file lands at `database/database.sqlite` (relative to the repo root, per the Prisma schema).
+The database file lands at `database/database.sqlite` (relative to the repo root). The connection URL and the schema location are declared in `packages/backend/prisma.config.ts`, and the generated Prisma client is written to `packages/backend/src/generated/prisma` (git-ignored).
 
 ## Running locally
 

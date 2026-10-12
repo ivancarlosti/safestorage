@@ -136,7 +136,6 @@ function SelectionWrapper({ selectAllFiles, type }: { selectAllFiles(): void; re
 
 export function FilesWrapper({
 	files,
-	total,
 	type,
 	albumUuid
 }: {

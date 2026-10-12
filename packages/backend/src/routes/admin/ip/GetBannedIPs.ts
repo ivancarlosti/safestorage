@@ -1,6 +1,6 @@
-import type { Prisma } from '@prisma/client';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import type { Prisma } from '@/generated/prisma/client.js';
 import prisma from '@/structures/database.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';

@@ -5,7 +5,6 @@ import type { DropItem, FileDropItem } from 'react-aria-components';
 import { isDirectoryDropItem, isFileDropItem } from 'react-aria-components';
 import type { MultipartUploadTarget } from './s3-multipart';
 import { getFileExtension } from './file';
-import { toast } from 'sonner';
 
 export const processDropItem = async (item: DropItem | File, settings: Settings | null) => {
 	if (item instanceof File) {

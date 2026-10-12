@@ -28,7 +28,7 @@ const logger = {
 
 const loggerDestination = pino.multistream([
 	{
-		stream: pretty.default({
+		stream: pretty({
 			hideObject: true,
 			messageFormat: (log, messageKey) => {
 				const message = log[messageKey] as string;

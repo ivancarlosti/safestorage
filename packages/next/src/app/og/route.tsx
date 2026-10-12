@@ -3,9 +3,9 @@ import { ImageResponse } from 'next/og';
 import fetchRequest from '@/lib/request';
 import { SafeStorageDefaultLogo } from '@/components/svg/SafeStorageLogo';
 
-export const contentType = 'image/jpeg';
 export const runtime = 'edge';
-export const size = {
+
+const size = {
 	width: 1200,
 	height: 630
 };
@@ -34,7 +34,9 @@ export async function GET(request: Request) {
 	});
 
 	if (error) {
-		return null;
+		// A route handler must return a Response, so an ImageResponse cannot be
+		// produced here: answer with a 500 instead.
+		return new Response('Failed to load settings', { status: 500 });
 	}
 
 	return new ImageResponse(

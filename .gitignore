@@ -6,6 +6,7 @@ packages/next/node_modules/
 # Build artifacts
 dist/
 packages/backend/dist/
+packages/backend/src/generated/
 packages/next/dist/
 packages/next/.next/
 *.tsbuildinfo

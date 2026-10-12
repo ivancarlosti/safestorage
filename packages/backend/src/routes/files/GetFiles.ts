@@ -1,6 +1,6 @@
-import type { Prisma } from '@prisma/client';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
+import type { Prisma } from '@/generated/prisma/client.js';
 import prisma from '@/structures/database.js';
 import type { RequestWithUser, ExtendedFile } from '@/structures/interfaces.js';
 import { fileAsUserSchema } from '@/structures/schemas/FileAsUser.js';

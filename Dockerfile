@@ -11,19 +11,21 @@
 # ---------------------------------------------------------------------------
 # Stage 1: build everything (backend dist, prisma client, Next.js standalone)
 # ---------------------------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 ARG VERSION=dev
 ARG COMMIT=unknown
 
 # `git` is used by some install scripts, `libc6-compat` is required by the
-# native tooling (sharp/swc), `openssl` by the Prisma engines.
+# native tooling (sharp/swc), `openssl` by the Prisma engines. `python3`/`make`/
+# `g++` are needed to build the better-sqlite3 addon (the Prisma 7 SQLite driver
+# adapter) when no prebuilt binary matches the musl target.
 # CI=true keeps `yarn install` fully non-interactive inside the build context
 # (which has no .git directory) and disables telemetry/prompt interruptions.
 ENV CI=true \
     NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache git libc6-compat openssl
+RUN apk add --no-cache git libc6-compat openssl python3 make g++
 
 WORKDIR /app
 
@@ -41,7 +43,7 @@ RUN node -e "const fs=require('fs');const p='package.json';const j=JSON.parse(fs
  && node -e "const fs=require('fs');fs.writeFileSync('/app/.commit',process.argv[1]+'\n');" "${COMMIT}"
 
 # The backend is a yarn workspace: the generated Prisma client must exist before
-# `tsc` runs because the source imports types from @prisma/client.
+# `tsc` runs because the source imports the client and its types.
 RUN yarn workspace @safestorage/backend generate \
  && yarn workspace @safestorage/backend build
 
@@ -58,7 +60,7 @@ RUN yarn workspaces focus @safestorage/backend \
 # ---------------------------------------------------------------------------
 # Stage 2: runtime
 # ---------------------------------------------------------------------------
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 ARG VERSION=dev
 ARG COMMIT=unknown
@@ -86,6 +88,9 @@ COPY --from=builder /app/packages/backend/package.json ./packages/backend/packag
 COPY --from=builder /app/packages/backend/node_modules ./packages/backend/node_modules
 COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
 COPY --from=builder /app/packages/backend/src/prisma ./packages/backend/src/prisma
+# Prisma 7 reads both the schema location and the migration connection URL from
+# the config file, so it has to ship with the runtime image.
+COPY --from=builder /app/packages/backend/prisma.config.ts ./packages/backend/prisma.config.ts
 
 # ---- frontend (Next.js standalone) ---------------------------------------
 # The standalone tree is self contained (server.js + node_modules + .next), so

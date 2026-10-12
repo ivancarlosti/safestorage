@@ -102,7 +102,7 @@ docker run -d \
   safestorage:local
 ```
 
-The [`Dockerfile`](../Dockerfile) is a two-stage build: a `node:20-alpine` **builder** installs the Yarn 4 workspaces, generates the Prisma client, compiles the backend (`tsc`) and the Next.js standalone output, then prunes the frontend dependencies. The **runner** stage adds nginx, supervisor, ffmpeg and OpenSSL, copies the build outputs and the files from [`container/`](../container), and exposes port 80.
+The [`Dockerfile`](../Dockerfile) is a two-stage build: a `node:22-alpine` **builder** installs the Yarn 4 workspaces, generates the Prisma client, compiles the backend (`tsc`) and the Next.js standalone output, then prunes the frontend dependencies. The **runner** stage adds nginx, supervisor, ffmpeg and OpenSSL, copies the build outputs and the files from [`container/`](../container), and exposes port 80.
 
 The release pipeline ([`.github/workflows/build.yml`](../.github/workflows/build.yml)) builds exactly this file for `linux/amd64` and `linux/arm64` on every published release, stamping `VERSION`/`COMMIT` into the image. The version is read at runtime from the root `package.json` (`/api/version`) and baked into the frontend as `NEXT_PUBLIC_VERSION` during `next build`.
 
