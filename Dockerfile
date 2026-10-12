@@ -18,8 +18,8 @@ ARG COMMIT=unknown
 
 # `git` is used by some install scripts, `libc6-compat` is required by the
 # native tooling (sharp/swc), `openssl` by the Prisma engines.
-# CI=true makes the root `postinstall` script (`is-ci || husky`) a no-op since
-# the build context does not contain a .git directory.
+# CI=true keeps `yarn install` fully non-interactive inside the build context
+# (which has no .git directory) and disables telemetry/prompt interruptions.
 ENV CI=true \
     NEXT_TELEMETRY_DISABLED=1
 

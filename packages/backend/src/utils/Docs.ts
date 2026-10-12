@@ -1,16 +1,16 @@
 import { getSafeStorageVersion } from './Util.js';
 
 const readme = `
-![](/meta.jpg)
-
 # Welcome to the API docs
 
 These are the official docs for the [SafeStorage](https://github.com/ivancarlosti/safestorage) project.
-On the sidebar you will find all available endpoints that the API has to offer.
-Keep in mind that some of those are accesible only to admins of the instance, for operations such as setting up the instance or managing users.
+On the sidebar you will find all available endpoints the API offers.
+Keep in mind that some of those are only accessible to administrators of the instance, for operations such as configuring the instance or managing users.
 
-If you want to test the API, we've included a Thunder Client collection that you can import into your IDE of choice if you clone the repo.
-If you are using VSCode, you can install the [Thunder Client extension](https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client) and the collection should already be imported automatically for you.
+A written overview — covering authentication, rate limiting and a table of every endpoint — lives in the repository at [\`docs/api.md\`](https://github.com/ivancarlosti/safestorage/blob/main/docs/api.md).
+
+If you want to try the API by hand, the repository ships an Insomnia collection at \`packages/backend/insomnia.json\`.
+It follows the Insomnia v4 export format, so it can also be imported into Thunder Client, Postman and any other client that reads that format.
 
 The default rate limit for the API is 100 requests per 1000ms.
 `;

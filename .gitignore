@@ -1,12 +1,13 @@
 # Packages
 node_modules/
 packages/backend/node_modules/
-packages/frontend/node_modules/
+packages/next/node_modules/
 
 # Build artifacts
 dist/
 packages/backend/dist/
-packages/frontend/dist/
+packages/next/dist/
+packages/next/.next/
 *.tsbuildinfo
 
 # Env files
