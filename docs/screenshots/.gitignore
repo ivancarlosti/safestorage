@@ -1,0 +1,7 @@
+# Script-local dependencies (installed on demand by generate.sh)
+node_modules/
+
+# Temporary demo uploads generated at capture time
+.assets/
+
+# Screenshot output is committed on purpose.

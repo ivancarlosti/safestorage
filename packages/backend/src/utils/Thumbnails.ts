@@ -31,7 +31,11 @@ const generateThumbnailForImage = async ({
 	await new Promise((resolve, reject) => {
 		ffmpeg(filePath)
 			.size('256x?')
-			.format('webp')
+			// The output is already named `.webp`, so ffmpeg picks the muxer from the
+			// extension. Setting `.format('webp')` explicitly makes fluent-ffmpeg run
+			// its `-f` capability check, which reads `ffmpeg -formats`: that output
+			// changed layout in ffmpeg 8 and no longer parses, making every thumbnail
+			// fail with "Output format webp is not available".
 			.output(path.join(thumbPath, output))
 			.on('error', error => {
 				log.error(error.message);
