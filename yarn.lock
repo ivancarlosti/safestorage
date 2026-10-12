@@ -4922,7 +4922,7 @@ __metadata:
     tsx: "npm:^4.23.15"
     typescript: "npm:^5.4.4"
     unzipit: "npm:^1.4.3"
-    uuid: "npm:^9.0.1"
+    uuid: "npm:^14.0.0"
     zod: "npm:^3.25.76"
   languageName: unknown
   linkType: soft
@@ -16412,6 +16412,15 @@ __metadata:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 10c0/41a5bdd214df2f6c3ecf8622745e4a366c4adced864bc3c833739791aeeeb1838119af7daed4ba36428114b5c67dcda034a79c882e97e43c03e66a4dd7389942
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "uuid@npm:14.0.0"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10c0/a57ae7794c45005c1a9208989196c5baf79a7679c30f43c1bee9033a2c4d113a2cea216fa6fcc9663b08b0d55635df1a7c6eb7e7f3d21c3e50688c698fa39a50
   languageName: node
   linkType: hard
 
