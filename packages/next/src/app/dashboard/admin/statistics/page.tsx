@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardAdminStatsPage() {
-	const cookiesStore = cookies();
+	const cookiesStore = await cookies();
 	const token = cookiesStore.get('token')?.value;
 
 	const {

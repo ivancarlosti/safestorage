@@ -5,20 +5,23 @@ import request from '@/lib/request';
 import { getToken } from './utils';
 import { revalidateTag } from 'next/cache';
 
-export const regenerateThumbnail = async (uuid: string) => {
+/*
+	Bound to a uuid and used directly as a `<form action>`, so — as required by
+	React 19's action typings — it must resolve to `void` rather than to a state
+	object. The regenerated thumbnail is surfaced through the `files` tag.
+*/
+export const regenerateThumbnail = async (uuid: string): Promise<void> => {
 	try {
 		await request.post({
 			url: `file/${uuid}/thumbnail/regenerate`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
 		revalidateTag('files');
-
-		return { message: 'Thumbnail queued for regeneration', type: MessageType.Success };
-	} catch (error: any) {
-		return { message: error, type: MessageType.Error };
+	} catch {
+		// The files list is revalidated on success; failures have no dedicated UI here.
 	}
 };
 
@@ -27,7 +30,7 @@ export const deleteFile = async (uuid: string) => {
 		const { error } = await request.delete({
 			url: `file/${uuid}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -46,7 +49,7 @@ export const deleteFileAsAdmin = async (uuid: string) => {
 		const { error } = await request.delete({
 			url: `admin/file/${uuid}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -65,7 +68,7 @@ export const quarantineFile = async (uuid: string) => {
 		const { error } = await request.post({
 			url: `admin/file/${uuid}/quarantine`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -84,7 +87,7 @@ export const allowFile = async (uuid: string) => {
 		const { error } = await request.post({
 			url: `admin/file/${uuid}/allow`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

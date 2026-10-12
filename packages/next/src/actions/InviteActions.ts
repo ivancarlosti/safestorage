@@ -5,21 +5,25 @@ import { MessageType } from '@/types';
 import request from '@/lib/request';
 import { getToken } from './utils';
 
-export const createInvite = async (_: FormData) => {
+/*
+	Used directly as a `<form action>` in a Server Component, so — as required by
+	React 19's action typings — it must resolve to `void` rather than to a state
+	object. The created invite is surfaced through the revalidated `invites` tag.
+*/
+export const createInvite = async (_: FormData): Promise<void> => {
 	try {
 		const { error } = await request.post({
 			url: 'admin/invite/create',
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
-		if (error) return { message: error, type: MessageType.Error };
+		if (error) return;
 
 		revalidateTag('invites');
-		return {};
 	} catch {
-		return {};
+		// The invites list is revalidated on success; failures have no dedicated UI here.
 	}
 };
 
@@ -31,7 +35,7 @@ export const revokeInvite = async (uuid: string) => {
 				code: uuid
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

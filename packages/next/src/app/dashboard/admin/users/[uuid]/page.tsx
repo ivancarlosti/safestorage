@@ -17,18 +17,19 @@ export default async function DashboardAdminUserPage({
 	params,
 	searchParams
 }: {
-	readonly params: { uuid: string };
-	readonly searchParams: PageQuery;
+	readonly params: Promise<{ uuid: string }>;
+	readonly searchParams: Promise<PageQuery>;
 }) {
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
-	const search = searchParams.search ?? '';
+	const { uuid } = await params;
+	const { page, limit, search = '' } = await searchParams;
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const {
 		data: response,
 		error,
 		status
-	} = await fetchEndpoint({ type: 'admin', userUuid: params.uuid }, currentPage, perPage, search);
+	} = await fetchEndpoint({ type: 'admin', userUuid: uuid }, currentPage, perPage, search);
 	if (error && status === 401) {
 		redirect('/login');
 	}
@@ -42,7 +43,7 @@ export default async function DashboardAdminUserPage({
 				breadcrumbs={[
 					{ name: 'Admin', url: '/dashboard/admin' },
 					{ name: 'Users', url: '/dashboard/admin/users' },
-					{ name: username, url: `/dashboard/admin/users/${params.uuid}` }
+					{ name: username, url: `/dashboard/admin/users/${uuid}` }
 				]}
 			/>
 			<div className="px-2 w-full">

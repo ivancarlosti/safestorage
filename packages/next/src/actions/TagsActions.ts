@@ -16,7 +16,7 @@ export const createTag = async (_: any, form: FormData) => {
 				name
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {
@@ -39,7 +39,7 @@ export const deleteTag = async (uuid: string) => {
 		const { error } = await request.delete({
 			url: `tag/${uuid}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {

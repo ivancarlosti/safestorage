@@ -11,7 +11,7 @@ export const regenerateThumbnails = async (uuids: string[]) => {
 			url: 'files/thumbnail/regenerate',
 			body: { files: uuids },
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -34,7 +34,7 @@ export const deleteFiles = async (uuids: string[], type: string) => {
 				type === 'admin' ? 'admin/files/delete' : type === 'quarantine' ? 'admin/files/delete' : 'files/delete',
 			body: { files: uuids },
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -53,7 +53,7 @@ export const quarantineFiles = async (uuids: string[]) => {
 			url: 'admin/files/quarantine',
 			body: { files: uuids },
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -75,7 +75,7 @@ export const unquarantineFiles = async (uuids: string[]) => {
 			url: 'admin/files/allow',
 			body: { files: uuids },
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

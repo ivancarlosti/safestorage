@@ -19,12 +19,14 @@ export default async function DashboardPage({
 	params,
 	searchParams
 }: {
-	readonly params: { ip: string };
-	readonly searchParams: PageQuery;
+	readonly params: Promise<{ ip: string }>;
+	readonly searchParams: Promise<PageQuery>;
 }) {
-	const ip = decodeURIComponent(params.ip);
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
+	const { ip: ipParam } = await params;
+	const { page, limit } = await searchParams;
+	const ip = decodeURIComponent(ipParam);
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const { data: response, error, status } = await fetchEndpoint({ type: 'admin', ip }, currentPage, perPage);
 	if (error && status === 401) {

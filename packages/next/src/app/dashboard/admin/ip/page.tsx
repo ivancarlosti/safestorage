@@ -15,8 +15,9 @@ export const metadata: Metadata = {
 	title: 'Dashboard - Admin - IPs'
 };
 
-export default async function DashboardAdminIPsPage({ searchParams }: { readonly searchParams: PageQuery }) {
-	const cookiesStore = cookies();
+export default async function DashboardAdminIPsPage({ searchParams }: { readonly searchParams: Promise<PageQuery> }) {
+	const { page, limit, search = '' } = await searchParams;
+	const cookiesStore = await cookies();
 	const token = cookiesStore.get('token')?.value;
 	if (!token) redirect('/');
 
@@ -24,9 +25,8 @@ export default async function DashboardAdminIPsPage({ searchParams }: { readonly
 		authorization: `Bearer ${token}`
 	};
 
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
-	const search = searchParams.search ?? '';
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const {
 		data: response,

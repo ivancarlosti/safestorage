@@ -13,7 +13,7 @@ export const unbanIp = async (ip: string) => {
 				ip
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -37,7 +37,7 @@ export const banIp = async (_: any, form: FormData) => {
 				reason
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -58,7 +58,7 @@ export const purgeIp = async (ip: string) => {
 				ip
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

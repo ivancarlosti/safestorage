@@ -13,11 +13,10 @@ export const metadata: Metadata = {
 	title: 'Dashboard - Admin - Files'
 };
 
-export default async function AdminFilesPage({ searchParams }: { readonly searchParams: PageQuery }) {
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
-	const search = searchParams.search ?? '';
-	const publicOnly = searchParams.publicOnly ?? false;
+export default async function AdminFilesPage({ searchParams }: { readonly searchParams: Promise<PageQuery> }) {
+	const { page, limit, search = '', publicOnly = false } = await searchParams;
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const {
 		data: response,

@@ -13,7 +13,7 @@ export const createShortURL = async (_: any, form: FormData) => {
 		const { error } = await request.post({
 			url: 'link/create',
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			body: {
 				url,
@@ -35,7 +35,7 @@ export const deleteLink = async (identifier: string) => {
 		const { error } = await request.delete({
 			url: `link/${identifier}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -53,7 +53,7 @@ export const deleteLinkAsAdmin = async (identifier: string) => {
 		const { error } = await request.delete({
 			url: `admin/link/${identifier}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

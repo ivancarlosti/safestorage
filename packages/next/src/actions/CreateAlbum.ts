@@ -16,7 +16,7 @@ export const createAlbum = async (_: any, form: FormData) => {
 				name
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

@@ -179,7 +179,7 @@ export const useUploadFile = ({ albumUuid }: { readonly albumUuid?: string | und
 				maxFileSize: settings?.maxSize ?? 0,
 				// If we're storing in s3, we don't want to chunk the file. Files that
 				// are too big for a single PUT request are uploaded in parts instead.
-				chunkSize: isNetworkStored ? settings?.maxSize ?? 0 : settings?.chunkSize ?? 0,
+				chunkSize: isNetworkStored ? (settings?.maxSize ?? 0) : (settings?.chunkSize ?? 0),
 				autoStart: true,
 				maxParallelUploads: 1
 			};
@@ -245,7 +245,7 @@ export const useUploadFile = ({ albumUuid }: { readonly albumUuid?: string | und
 					});
 				},
 				onRetry: (_, reason: any) => {
-					console.log('onRetry', reason);
+					debug('Retrying upload', reason);
 				},
 				onFinish: async (uuid: string, response: any) => {
 					if (isNetworkStored) {

@@ -14,8 +14,9 @@ export const metadata: Metadata = {
 	title: 'Dashboard - Snippets - Snippet'
 };
 
-export default async function PublicSnippetPage({ params }: { readonly params: { uuid: string } }) {
-	const cookiesStore = cookies();
+export default async function PublicSnippetPage({ params }: { readonly params: Promise<{ uuid: string }> }) {
+	const { uuid } = await params;
+	const cookiesStore = await cookies();
 	const token = cookiesStore.get('token')?.value;
 
 	const {
@@ -23,7 +24,7 @@ export default async function PublicSnippetPage({ params }: { readonly params: {
 		error,
 		status
 	} = await request.get({
-		url: `snippet/${encodeURIComponent(params.uuid)}`,
+		url: `snippet/${encodeURIComponent(uuid)}`,
 		headers: {
 			authorization: `Bearer ${token}`
 		},
@@ -47,7 +48,7 @@ export default async function PublicSnippetPage({ params }: { readonly params: {
 				subtitle={getDate(snippet.createdAt)}
 				breadcrumbs={[
 					{ name: 'Snippets', url: '/dashboard/snippets' },
-					{ name: snippet.name, url: `/dashboard/admin/ip/${params.uuid}` }
+					{ name: snippet.name, url: `/dashboard/admin/ip/${uuid}` }
 				]}
 			>
 				<DeleteSnippetDialog uuid={snippet.uuid} className="hidden md:inline-flex" />

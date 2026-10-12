@@ -15,15 +15,16 @@ export async function generateMetadata({
 	searchParams,
 	params
 }: {
-	readonly params: { identifier: string };
-	readonly searchParams: PageQuery;
+	readonly params: Promise<{ identifier: string }>;
+	readonly searchParams: Promise<PageQuery>;
 }): Promise<Metadata> {
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
-	const search = searchParams.search ?? '';
+	const { identifier } = await params;
+	const { page, limit, search = '' } = await searchParams;
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const { data: response, error } = await fetchEndpoint(
-		{ type: 'publicAlbum', identifier: params.identifier },
+		{ type: 'publicAlbum', identifier },
 		currentPage,
 		perPage,
 		search
@@ -63,18 +64,19 @@ export default async function PublicAlbumPage({
 	searchParams,
 	params
 }: {
-	readonly params: { identifier: string };
-	readonly searchParams: PageQuery;
+	readonly params: Promise<{ identifier: string }>;
+	readonly searchParams: Promise<PageQuery>;
 }) {
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
-	const search = searchParams.search ?? '';
+	const { identifier } = await params;
+	const { page, limit, search = '' } = await searchParams;
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const {
 		data: response,
 		error,
 		status
-	} = await fetchEndpoint({ type: 'publicAlbum', identifier: params.identifier }, currentPage, perPage, search);
+	} = await fetchEndpoint({ type: 'publicAlbum', identifier }, currentPage, perPage, search);
 
 	if (error) {
 		if (status === 401) return redirect('/login');
@@ -84,7 +86,7 @@ export default async function PublicAlbumPage({
 
 	try {
 		await request.get({
-			url: `album/${encodeURIComponent(params.identifier)}/view/count`,
+			url: `album/${encodeURIComponent(identifier)}/view/count`,
 			options: {
 				cache: 'no-cache'
 			}

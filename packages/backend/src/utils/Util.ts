@@ -70,6 +70,9 @@ export const createAdminUserIfNotExists = async () => {
 	});
 
 	if (!ownerUser) {
+		// Determine where the initial admin password comes from without ever
+		// passing the secret (or a secret-derived value) to the logger below.
+		const adminPasswordFromEnv = Boolean(process.env.ADMIN_PASSWORD);
 		const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin';
 		const hash = await bcrypt.hash(adminPassword, 10);
 		await prisma.users.create({
@@ -93,9 +96,9 @@ export const createAdminUserIfNotExists = async () => {
 		log.info('>>>');
 		log.info('');
 		log.info(
-			process.env.ADMIN_PASSWORD
-				? 'Created the admin user "admin" with the password from ADMIN_PASSWORD'
-				: 'Created the admin user "admin" with the default password: admin'
+			adminPasswordFromEnv
+				? 'Created the admin user "admin" with the password from the ADMIN_PASSWORD environment variable'
+				: 'Created the admin user "admin" with the default password. Change it after the first login.'
 		);
 		log.info('');
 		log.info('>>>');

@@ -13,10 +13,14 @@ export const metadata: Metadata = {
 	title: 'Dashboard - Admin - Quarantine'
 };
 
-export default async function DashboardAdminQuarantinePage({ searchParams }: { readonly searchParams: PageQuery }) {
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
-	const search = searchParams.search ?? '';
+export default async function DashboardAdminQuarantinePage({
+	searchParams
+}: {
+	readonly searchParams: Promise<PageQuery>;
+}) {
+	const { page, limit, search = '' } = await searchParams;
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const { data: response, error, status } = await fetchEndpoint({ type: 'quarantine' }, currentPage, perPage, search);
 	if (error && status === 401) {

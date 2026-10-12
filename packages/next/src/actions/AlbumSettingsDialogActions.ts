@@ -11,7 +11,7 @@ export const deleteAlbum = async (uuid: string) => {
 		const { error } = await request.delete({
 			url: `album/${uuid}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -30,7 +30,7 @@ export const deleteAlbumAndFiles = async (uuid: string) => {
 		const { error } = await request.delete({
 			url: `album/${uuid}/purge`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -49,7 +49,7 @@ export const deleteLink = async (uuid: string, albumUuid: string) => {
 		const { error } = await request.delete({
 			url: `album/${albumUuid}/link/${uuid}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
@@ -74,7 +74,7 @@ export const toggleEnabled = async (_: any, form: FormData) => {
 				enabled: !enabled
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

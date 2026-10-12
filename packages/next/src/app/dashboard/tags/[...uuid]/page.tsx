@@ -19,17 +19,15 @@ export default async function TagPage({
 	searchParams,
 	params
 }: {
-	readonly params: { uuid: string };
-	readonly searchParams: PageQuery;
+	readonly params: Promise<{ uuid: string }>;
+	readonly searchParams: Promise<PageQuery>;
 }) {
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
+	const { uuid } = await params;
+	const { page, limit } = await searchParams;
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
-	const {
-		data: response,
-		error,
-		status
-	} = await fetchEndpoint({ type: 'tag', tagUuid: params.uuid }, currentPage, perPage);
+	const { data: response, error, status } = await fetchEndpoint({ type: 'tag', tagUuid: uuid }, currentPage, perPage);
 	if (error && status === 401) {
 		redirect('/login');
 	}
@@ -41,7 +39,7 @@ export default async function TagPage({
 				subtitle={response.description}
 				breadcrumbs={[
 					{ name: 'Tags', url: '/dashboard/tags' },
-					{ name: response.name, url: `/dashboard/tags/${params.uuid}` }
+					{ name: response.name, url: `/dashboard/tags/${uuid}` }
 				]}
 			>
 				<Button>

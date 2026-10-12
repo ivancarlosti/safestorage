@@ -14,7 +14,7 @@ export const createAlbumAndReturn = async (name: string) => {
 				name
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 

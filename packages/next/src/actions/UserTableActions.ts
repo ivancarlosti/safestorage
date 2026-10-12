@@ -15,7 +15,7 @@ export const setQuota = async (_: any, form: FormData) => {
 				space: form.get('space')
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {
@@ -38,7 +38,7 @@ export const enableUser = async (uuid: string) => {
 		const { error } = await request.post({
 			url: `admin/user/${uuid}/enable`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {
@@ -61,7 +61,7 @@ export const disableUser = async (uuid: string) => {
 		const { error } = await request.post({
 			url: `admin/user/${uuid}/disable`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {
@@ -84,7 +84,7 @@ export const demoteUser = async (uuid: string) => {
 		const { error } = await request.post({
 			url: `admin/user/${uuid}/demote`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {
@@ -107,7 +107,7 @@ export const promoteUser = async (uuid: string) => {
 		const { error } = await request.post({
 			url: `admin/user/${uuid}/promote`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {
@@ -130,7 +130,7 @@ export const purgeUser = async (uuid: string) => {
 		const { error } = await request.post({
 			url: `admin/user/${uuid}/purge`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {

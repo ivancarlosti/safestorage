@@ -1,9 +1,8 @@
-import { createReadStream } from 'node:fs';
 import { basename, extname } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import type { FSWatcher } from 'chokidar';
 import { watch } from 'chokidar';
-import { fileTypeFromStream } from 'file-type';
+import { fileTypeFromFile } from 'file-type';
 import { checkFileNameOnDB, hashFile, storeFileToDb, updateFileOnDb } from './File.js';
 import { generateThumbnails } from './Thumbnails.js';
 
@@ -28,8 +27,7 @@ export const fileWatcher = () => {
 
 	watcher.on('add', async (path, stats) => {
 		const name = basename(path);
-		const fileStream = createReadStream(path);
-		const mimeType = await fileTypeFromStream(fileStream);
+		const mimeType = await fileTypeFromFile(path);
 		const hash = await hashFile(path);
 
 		const file = {

@@ -21,7 +21,7 @@ export const createSnippet = async (_: any, form: FormData) => {
 				language: language ?? 'auto-detect'
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {
@@ -46,7 +46,7 @@ export const deleteSnippet = async (_: any, form: FormData) => {
 		const { error } = await request.delete({
 			url: `snippet/${uuid}`,
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			},
 			options: {
 				next: {

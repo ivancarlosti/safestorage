@@ -4,9 +4,14 @@ import request from '@/lib/request';
 import type { MetadataBuilder, Snippet } from '@/types';
 import { SnippetViewer } from '@/components/SnippetViewer';
 
-export async function generateMetadata({ params }: { readonly params: { identifier: string } }): Promise<Metadata> {
+export async function generateMetadata({
+	params
+}: {
+	readonly params: Promise<{ identifier: string }>;
+}): Promise<Metadata> {
+	const { identifier } = await params;
 	const { data: response, error } = await request.get({
-		url: `snippet/public/${encodeURIComponent(params.identifier)}`,
+		url: `snippet/public/${encodeURIComponent(identifier)}`,
 		options: {
 			next: {
 				tags: ['snippets']
@@ -33,9 +38,10 @@ export async function generateMetadata({ params }: { readonly params: { identifi
 	} as MetadataBuilder;
 }
 
-export default async function PublicSnippetPage({ params }: { readonly params: { identifier: string } }) {
+export default async function PublicSnippetPage({ params }: { readonly params: Promise<{ identifier: string }> }) {
+	const { identifier } = await params;
 	const { data: response, error } = await request.get({
-		url: `snippet/public/${encodeURIComponent(params.identifier)}`,
+		url: `snippet/public/${encodeURIComponent(identifier)}`,
 		options: {
 			next: {
 				tags: ['snippets']

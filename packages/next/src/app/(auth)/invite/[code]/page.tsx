@@ -7,7 +7,9 @@ export const metadata: Metadata = {
 	description: 'Create an account to get started.'
 };
 
-export default function InvitePage({ params }: { readonly params: { code: string } }) {
+export default async function InvitePage({ params }: { readonly params: Promise<{ code: string }> }) {
+	const { code } = await params;
+
 	return (
 		<div className="container flex h-screen w-screen flex-col items-center justify-center">
 			<div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
@@ -20,7 +22,7 @@ export default function InvitePage({ params }: { readonly params: { code: string
 					</p>
 				</div>
 
-				<RegisterForm code={params.code} />
+				<RegisterForm code={code} />
 
 				{/* <p className="px-8 text-center text-sm text-muted-foreground">
 					By clicking continue, you agree to our{' '}

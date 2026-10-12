@@ -23,18 +23,19 @@ export default async function AlbumPage({
 	searchParams,
 	params
 }: {
-	readonly params: { uuid: string };
-	readonly searchParams: PageQuery;
+	readonly params: Promise<{ uuid: string }>;
+	readonly searchParams: Promise<PageQuery>;
 }) {
-	const currentPage = searchParams.page ?? 1;
-	const perPage = searchParams.limit ? (searchParams.limit > 50 ? 50 : searchParams.limit) : 50;
-	const search = searchParams.search ?? '';
+	const { uuid } = await params;
+	const { page, limit, search = '' } = await searchParams;
+	const currentPage = page ?? 1;
+	const perPage = limit ? (limit > 50 ? 50 : limit) : 50;
 
 	const {
 		data: response,
 		error,
 		status
-	} = await fetchEndpoint({ type: 'album', albumUuid: params.uuid }, currentPage, perPage);
+	} = await fetchEndpoint({ type: 'album', albumUuid: uuid }, currentPage, perPage);
 	if (error && status === 401) {
 		redirect('/login');
 	}
@@ -42,10 +43,10 @@ export default async function AlbumPage({
 	const queryClient = new QueryClient();
 
 	await queryClient.prefetchQuery({
-		queryKey: ['album', params.uuid, { currentPage, perPage, search }],
+		queryKey: ['album', uuid, { currentPage, perPage, search }],
 		queryFn: async () => {
 			const { data: response } = await fetchEndpoint(
-				{ type: 'album', albumUuid: params.uuid },
+				{ type: 'album', albumUuid: uuid },
 				currentPage,
 				perPage,
 				search
@@ -61,10 +62,10 @@ export default async function AlbumPage({
 				subtitle={response.description}
 				breadcrumbs={[
 					{ name: 'Albums', url: '/dashboard/albums' },
-					{ name: response.name, url: `/dashboard/albums/${params.uuid}` }
+					{ name: response.name, url: `/dashboard/albums/${uuid}` }
 				]}
 			>
-				<UploadTrigger allowsMultiple albumUuid={params.uuid}>
+				<UploadTrigger allowsMultiple albumUuid={uuid}>
 					<Button className={buttonVariants()}>
 						<Plus className="mr-2 h-4 w-4" />
 						Upload file to album
@@ -75,15 +76,15 @@ export default async function AlbumPage({
 				<HydrationBoundary state={dehydrate(queryClient)}>
 					<div className="grid gap-4">
 						<Suspense>
-							<Pagination type="album" albumUuid={params.uuid} />
-							<FilesWrapper type="album" albumUuid={params.uuid} />
-							<Pagination type="album" albumUuid={params.uuid} />
+							<Pagination type="album" albumUuid={uuid} />
+							<FilesWrapper type="album" albumUuid={uuid} />
+							<Pagination type="album" albumUuid={uuid} />
 						</Suspense>
 						<FileDialog />
 					</div>
 				</HydrationBoundary>
 			</div>
-			<GlobalDropZone albumUuid={params.uuid} />
+			<GlobalDropZone albumUuid={uuid} />
 		</>
 	);
 }

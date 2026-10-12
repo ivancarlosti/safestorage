@@ -25,7 +25,7 @@ export const updateAlbumSettings = async (_: any, form: FormData) => {
 				sortOrder
 			},
 			headers: {
-				authorization: `Bearer ${getToken()}`
+				authorization: `Bearer ${await getToken()}`
 			}
 		});
 
