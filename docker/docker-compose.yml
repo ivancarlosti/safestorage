@@ -1,0 +1,42 @@
+# SafeStorage - pull-only deployment
+#
+# This compose file never builds anything: it runs the single combined image
+# (nginx + backend + frontend) published to GitHub Container Registry.
+#
+#   cp .env.example .env   # then edit it
+#   docker compose pull
+#   docker compose up -d
+#
+# All data lives next to this file in ./uploads, ./database and ./logs.
+
+services:
+  safestorage:
+    image: ghcr.io/ivancarlosti/safestorage:${SAFESTORAGE_TAG:-latest}
+    container_name: safestorage
+    restart: unless-stopped
+    # Give running uploads time to finish writing before the container stops.
+    stop_grace_period: 2m
+    ports:
+      # Everything (frontend, /api, /docs, uploads) is served from port 80
+      # inside the container; only this single port is published.
+      - '${SAFESTORAGE_PORT:-24424}:80'
+    environment:
+      # Password of the automatically created admin user (first boot only).
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      # Used for the timestamps in the container logs.
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./database:/app/database
+      - ./logs:/app/logs
+    healthcheck:
+      # /api/health is the backend (through nginx), / is the Next.js frontend.
+      test:
+        [
+          'CMD-SHELL',
+          'wget -qO- http://127.0.0.1/api/health > /dev/null && wget -qO- http://127.0.0.1/ > /dev/null'
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

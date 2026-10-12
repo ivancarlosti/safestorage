@@ -1,0 +1,42 @@
+# Packages
+node_modules/
+packages/backend/node_modules/
+packages/frontend/node_modules/
+
+# Build artifacts
+dist/
+packages/backend/dist/
+packages/frontend/dist/
+*.tsbuildinfo
+
+# Env files
+packages/backend/.env
+
+# Database
+database.sqlite
+database.sqlite-journal
+
+# Log files
+npm-debug.log*
+
+# safestorage generated files
+uploads/
+database/
+logs/
+
+.env
+
+# yarn
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+.turbo
+
+/docker-compose.yml
+.idea/
+minio/
