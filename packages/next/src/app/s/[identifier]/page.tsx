@@ -6,7 +6,7 @@ import { SnippetViewer } from '@/components/SnippetViewer';
 
 export async function generateMetadata({ params }: { readonly params: { identifier: string } }): Promise<Metadata> {
 	const { data: response, error } = await request.get({
-		url: `snippet/public/${params.identifier}`,
+		url: `snippet/public/${encodeURIComponent(params.identifier)}`,
 		options: {
 			next: {
 				tags: ['snippets']
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { readonly params: { identifi
 
 export default async function PublicSnippetPage({ params }: { readonly params: { identifier: string } }) {
 	const { data: response, error } = await request.get({
-		url: `snippet/public/${params.identifier}`,
+		url: `snippet/public/${encodeURIComponent(params.identifier)}`,
 		options: {
 			next: {
 				tags: ['snippets']

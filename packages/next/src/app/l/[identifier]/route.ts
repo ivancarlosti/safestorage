@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: { params: { identifier: string
 	(async () => {
 		try {
 			await request.get({
-				url: `link/${identifier}/count`,
+				url: `link/${encodeURIComponent(identifier)}/count`,
 				options: {
 					cache: 'no-cache'
 				}
@@ -20,5 +20,5 @@ export async function GET(_: Request, { params }: { params: { identifier: string
 		}
 	})();
 
-	redirect(`/api/link/${identifier}`);
+	redirect(`/api/link/${encodeURIComponent(identifier)}`);
 }

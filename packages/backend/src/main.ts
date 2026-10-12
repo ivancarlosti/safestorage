@@ -156,13 +156,13 @@ const start = async () => {
 	// Chokidar implementation
 	fileWatcher();
 
-	server.log.debug('SafeStorage is starting with the following configuration:');
-	server.log.debug('');
-
-	const defaults = SETTINGS;
-	for (const [key, value] of Object.entries(defaults)) {
-		server.log.debug(`${key}: ${JSON.stringify(value)}`);
-	}
+	/*
+		The settings hold credentials (the JWT secret and the S3 access keys among
+		others) so their values are never printed in clear text. Only the names of
+		the settings that are currently in use are listed.
+	*/
+	const settingNames = Object.keys(SETTINGS).sort((keyA, keyB) => keyA.localeCompare(keyB));
+	server.log.debug(`SafeStorage is starting with the following configuration: ${settingNames.join(', ')}`);
 
 	server.log.debug('');
 	server.log.debug('Loading routes...');
@@ -177,7 +177,12 @@ const start = async () => {
 
 	if (process.env.NODE_ENV === 'production') {
 		server.addHook('onRequest', (req, _, next) => {
-			req.log.debug(req);
+			// Only the method and the url are logged: the request itself holds
+			// the cookies and the authorization headers.
+			req.log.debug({
+				method: req.method,
+				url: req.url
+			});
 			next();
 		});
 	}

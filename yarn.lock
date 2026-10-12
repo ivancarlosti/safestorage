@@ -4397,12 +4397,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-stately/flags@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "@react-stately/flags@npm:3.0.1"
+"@react-stately/flags@npm:3.0.5":
+  version: 3.0.5
+  resolution: "@react-stately/flags@npm:3.0.5"
   dependencies:
-    "@swc/helpers": "npm:^0.4.14"
-  checksum: 10c0/dccba779890d747ac229b1a0e59f6e20bdd1fb76b775f1d35ba64b0106b1c278868fb752f2688cc70e103aea67b416919bafe55f04d4956f69b540aa3c51a716
+    "@swc/helpers": "npm:^0.5.0"
+  checksum: 10c0/7cc8e1c1768f4c482cc0c402d42ff0c2f062bffc2197a2222c011db1851ad0becd8710c290ddf0b716cd4bed853885778a098d87a1021931d09e7cd1eec95401
   languageName: node
   linkType: hard
 
@@ -5762,16 +5762,6 @@ __metadata:
   dependencies:
     tslib: "npm:^2.4.0"
   checksum: 10c0/7d1987ee6b887277d373a9be8c445cd2259c3258c08b16908c06864121fd8eac8bb89b179c91b6c5395f38194a903b5772575947c7eb3ca23285152cb0f66caa
-  languageName: node
-  linkType: hard
-
-"@swc/helpers@npm:^0.4.14":
-  version: 0.4.36
-  resolution: "@swc/helpers@npm:0.4.36"
-  dependencies:
-    legacy-swc-helpers: "npm:@swc/helpers@=0.4.14"
-    tslib: "npm:^2.4.0"
-  checksum: 10c0/b3b12d0305d49474546952db398435d89ce305b8ffe9c73c90c18ba43ccb16cc90b043c199c813190826316835d590b87c2c3779aacc55382c6e959eca458d2d
   languageName: node
   linkType: hard
 
@@ -10873,15 +10863,6 @@ __metadata:
   dependencies:
     language-subtag-registry: "npm:^0.3.20"
   checksum: 10c0/9ab911213c4bd8bd583c850201c17794e52cb0660d1ab6e32558aadc8324abebf6844e46f92b80a5d600d0fbba7eface2c207bfaf270a1c7fd539e4c3a880bff
-  languageName: node
-  linkType: hard
-
-"legacy-swc-helpers@npm:@swc/helpers@=0.4.14":
-  version: 0.4.14
-  resolution: "@swc/helpers@npm:0.4.14"
-  dependencies:
-    tslib: "npm:^2.4.0"
-  checksum: 10c0/a8bd2e291fca73aa35ff316fb1aa9fb9554856518c8bf64ab5a355fb587d79d04d67f95033012fcdc94f507d22484871d95dc72efdd9ff13cc5d0ac68dfba999
   languageName: node
   linkType: hard
 

@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 import type { FastifyReply } from 'fastify';
 import prisma from '@/structures/database.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
@@ -42,9 +43,28 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
-	if (!link.destination.startsWith('http')) {
-		link.destination = `http://${link.destination}`;
+	let { destination } = link;
+	if (!/^https?:\/\//i.test(destination)) {
+		destination = `http://${destination}`;
 	}
 
-	return res.redirect(link.destination);
+	/*
+		Only http(s) destinations are redirected to. Parsing the URL and checking
+		its protocol keeps links such as `javascript:` from being sent to the
+		browser.
+	*/
+	let parsedDestination: URL;
+	try {
+		parsedDestination = new URL(destination);
+	} catch {
+		void res.badRequest('The link destination is not a valid URL');
+		return;
+	}
+
+	if (parsedDestination.protocol !== 'http:' && parsedDestination.protocol !== 'https:') {
+		void res.badRequest('The link destination is not a valid URL');
+		return;
+	}
+
+	return res.redirect(parsedDestination.toString());
 };

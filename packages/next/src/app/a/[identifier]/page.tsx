@@ -84,7 +84,7 @@ export default async function PublicAlbumPage({
 
 	try {
 		await request.get({
-			url: `album/${params.identifier}/view/count`,
+			url: `album/${encodeURIComponent(params.identifier)}/view/count`,
 			options: {
 				cache: 'no-cache'
 			}

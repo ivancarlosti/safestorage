@@ -27,6 +27,9 @@
 		"packages/backend",
 		"packages/next"
 	],
+	"resolutions": {
+		"@react-stately/flags": "3.0.5"
+	},
 	"devDependencies": {
 		"turbo": "1.10.13",
 		"typescript": "^5.4.4"

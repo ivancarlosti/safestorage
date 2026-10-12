@@ -23,7 +23,7 @@ export default async function PublicSnippetPage({ params }: { readonly params: {
 		error,
 		status
 	} = await request.get({
-		url: `snippet/${params.uuid}`,
+		url: `snippet/${encodeURIComponent(params.uuid)}`,
 		headers: {
 			authorization: `Bearer ${token}`
 		},

@@ -1,14 +1,25 @@
+/*
+	Every call is made against the API base URL picked by the configuration, and
+	callers only pass the path of the endpoint they want to reach. The path is
+	stripped of leading slashes so that it can not turn the request into a
+	protocol relative URL pointing at another host.
+*/
+const apiUrl = (path: string, query = {}) => {
+	const baseUrl = typeof window === 'undefined' ? `${process.env.BASE_API_URL ?? ''}/api/` : '/api/';
+	const queryUrl = `${baseUrl}${path.replace(/^[/\\]+/, '')}`;
+
+	// Check if we are passing any arguments and parse them if so
+	if (Object.keys(query).length) {
+		return `${queryUrl}?${new URLSearchParams(query)}`;
+	}
+
+	return queryUrl;
+};
+
 const request = {
 	raw: async ({ method = 'GET', url = '', query = {}, headers = {}, options = {} }) => {
 		try {
-			let queryUrl = `${process.env.BASE_API_URL ?? ''}/api/${url}`;
-
-			if (typeof window !== 'undefined') queryUrl = `/api/${url}`;
-
-			// Check if we are passing any arguments and parse them if so
-			if (Object.keys(query).length) {
-				queryUrl += `?${new URLSearchParams(query)}`;
-			}
+			const queryUrl = apiUrl(url, query);
 
 			const response = await fetch(queryUrl, {
 				method,
@@ -40,14 +51,7 @@ const request = {
 	},
 	get: async ({ url = '', query = {}, headers = {}, options = {} }) => {
 		try {
-			let queryUrl = `${process.env.BASE_API_URL ?? ''}/api/${url}`;
-
-			if (typeof window !== 'undefined') queryUrl = `/api/${url}`;
-
-			// Check if we are passing any arguments and parse them if so
-			if (Object.keys(query).length) {
-				queryUrl += `?${new URLSearchParams(query)}`;
-			}
+			const queryUrl = apiUrl(url, query);
 
 			const response = await fetch(queryUrl, {
 				method: 'GET',
@@ -79,9 +83,7 @@ const request = {
 	},
 	post: async ({ url = '', body = {}, headers = {}, options = {} }) => {
 		try {
-			let queryUrl = `${process.env.BASE_API_URL ?? ''}/api/${url}`;
-
-			if (typeof window !== 'undefined') queryUrl = `/api/${url}`;
+			const queryUrl = apiUrl(url);
 
 			const response = await fetch(queryUrl, {
 				method: 'POST',
@@ -114,9 +116,7 @@ const request = {
 	},
 	delete: async ({ url = '', headers = {}, options = {} }) => {
 		try {
-			let queryUrl = `${process.env.BASE_API_URL ?? ''}/api/${url}`;
-
-			if (typeof window !== 'undefined') queryUrl = `/api/${url}`;
+			const queryUrl = apiUrl(url);
 
 			const response = await fetch(queryUrl, {
 				method: 'DELETE',

@@ -9,6 +9,21 @@ import { toast } from 'sonner';
 import type { MultipartUploadTarget } from '@/lib/s3-multipart';
 import { uploadFileInParts } from '@/lib/s3-multipart';
 
+/*
+	DigitalOcean Spaces requires the uploaded objects to be marked as public.
+	The endpoint is parsed and its host compared to the Spaces domain instead of
+	looking for the domain anywhere in the URL, so that an endpoint such as
+	`digitaloceanspaces.com.example.com` is not mistaken for Spaces.
+*/
+const isDigitalOceanSpacesEndpoint = (endpoint: string) => {
+	try {
+		const labels = new URL(endpoint).hostname.split('.');
+		return labels.slice(-2).join('.') === 'digitaloceanspaces.com';
+	} catch {
+		return false;
+	}
+};
+
 export const useUploadFile = ({ albumUuid }: { readonly albumUuid?: string | undefined }) => {
 	const settings = useAtomValue(settingsAtom);
 	const setUploads = useSetAtom(uploadsAtom);
@@ -174,7 +189,7 @@ export const useUploadFile = ({ albumUuid }: { readonly albumUuid?: string | und
 					'Content-Type': file.type
 				};
 
-				if ((endpoint ?? '').includes('digitaloceanspaces.com')) {
+				if (isDigitalOceanSpacesEndpoint(endpoint ?? '')) {
 					options.headers['x-amz-acl'] = 'public-read';
 				}
 			} else {

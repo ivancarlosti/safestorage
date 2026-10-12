@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { finished } from 'node:stream/promises';
-import { URL, fileURLToPath } from 'node:url';
 import { DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
@@ -11,6 +10,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { storeFileToDb, constructFilePublicLink, checkFileHashOnDB, deleteTmpFile } from '@/utils/File.js';
+import { fetchNetworkStorageFile, getNetworkStorageTmpPath, isValidFileIdentifier } from '@/utils/NetworkStorage.js';
 import { generateThumbnails, imageExtensions, videoExtensions } from '@/utils/Thumbnails.js';
 import { validateAlbum } from '@/utils/UploadHelpers.js';
 
@@ -68,15 +68,14 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		type: string;
 	};
 	if (!identifier || !name || !type) return res.badRequest('Missing file identifier');
+	if (!isValidFileIdentifier(identifier)) return res.badRequest('Invalid file identifier');
 
 	const { createS3Client } = await import('@/structures/s3.js');
 	const S3Client = createS3Client();
 
 	const album = await validateAlbum(req.headers.albumuuid as string, req.user ? req.user : undefined);
-	const fileURL = `${SETTINGS.S3PublicUrl || SETTINGS.S3Endpoint}/${identifier}`;
 
-	const tmpDir = fileURLToPath(new URL('../../../../../uploads/tmp', import.meta.url));
-	const newPath = `${tmpDir}/${identifier}`;
+	const newPath = getNetworkStorageTmpPath(identifier);
 
 	let fileSize = 0;
 	let hash = '';
@@ -134,7 +133,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		const maxFileSizeForThumbnails = 100 * 1024 * 1024; // 100Mb
 
 		if (needsThumbnails && fileSize <= maxFileSizeForThumbnails) {
-			fetch(fileURL)
+			fetchNetworkStorageFile(identifier)
 				// eslint-disable-next-line promise/prefer-await-to-then
 				.then(async res => {
 					if (!res.body) throw new Error('Failed to fetch file');
