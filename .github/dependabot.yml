@@ -27,6 +27,12 @@ updates:
         update-types:
           - minor
           - patch
+      # Transitive / security bumps (lockfile-only) would otherwise land as one
+      # PR per package. Group them so we get a single PR to review + merge.
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - '*'
     # Majors are migrated deliberately, one framework at a time, via tracked
     # branches (see the phased upgrade plan). Dependabot must not race ahead.
     ignore:
@@ -35,8 +41,6 @@ updates:
       - dependency-name: '@types/node'
       # ── Frontend framework ────────────────────────────────────────────────
       - dependency-name: 'next'
-        update-types: ['version-update:semver-major']
-      - dependency-name: '@next/mdx'
         update-types: ['version-update:semver-major']
       - dependency-name: 'eslint-config-next'
         update-types: ['version-update:semver-major']

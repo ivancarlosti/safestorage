@@ -1,22 +1,10 @@
-import createMDX from '@next/mdx';
-import remarkGfm from 'remark-gfm';
-import remarkFrontmatter from 'remark-frontmatter';
-import remarkMdxFrontmatter from 'remark-mdx-frontmatter';
 import { readFileSync } from 'node:fs';
-
-const withMDX = createMDX({
-	// Add markdown plugins here, as desired
-	extension: /\.mdx?$/,
-	options: {
-		remarkPlugins: [remarkGfm, remarkFrontmatter, remarkMdxFrontmatter]
-	}
-});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	reactStrictMode: true,
 	output: 'standalone',
-	pageExtensions: ['mdx', 'ts', 'tsx'],
+	pageExtensions: ['ts', 'tsx'],
 	env: {
 		NEXT_PUBLIC_VERSION: JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version
 	},
@@ -53,4 +41,4 @@ const nextConfig = {
 	}
 };
 
-export default withMDX(nextConfig);
+export default nextConfig;
