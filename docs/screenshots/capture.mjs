@@ -22,6 +22,10 @@ import { generateDemoImages } from './placeholders.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
+// None of the values below are ever interpolated into log output: CodeQL's
+// `js/clear-text-logging` query treats every `process.env` read as a potential
+// secret (and `*user*name` / `*id` names such as ADMIN_USERNAME as sensitive
+// outright), so this script logs static messages only.
 const BASE_URL = (process.env.BASE_URL ?? 'http://localhost:24424').replace(/\/+$/, '');
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin';
@@ -74,7 +78,7 @@ const waitForInstance = async (timeoutMs = 180_000) => {
 			// Not up yet.
 		}
 
-		if (Date.now() > deadline) throw new Error(`SafeStorage at ${BASE_URL} did not become healthy in time`);
+		if (Date.now() > deadline) throw new Error('SafeStorage did not become healthy in time');
 		await new Promise(resolve => setTimeout(resolve, 2000));
 	}
 };
@@ -127,14 +131,18 @@ const launchBrowser = async () => {
 	};
 
 	const candidates = process.env.PW_CHANNEL
-		? [{ channel: process.env.PW_CHANNEL }]
-		: [{}, { channel: 'chrome' }, { channel: 'chromium' }];
+		? [{ channel: process.env.PW_CHANNEL, label: 'PW_CHANNEL' }]
+		: [
+				{ label: 'bundled chromium' },
+				{ channel: 'chrome', label: 'chrome' },
+				{ channel: 'chromium', label: 'chromium' }
+			];
 
-	for (const candidate of candidates) {
+	for (const { label, ...launchOptions } of candidates) {
 		try {
-			return await chromium.launch({ ...base, ...candidate });
+			return await chromium.launch({ ...base, ...launchOptions });
 		} catch (error) {
-			log(`browser ${JSON.stringify(candidate)} unavailable (${String(error.message).split('\n')[0]})`);
+			log(`browser ${label} unavailable (${String(error.message).split('\n')[0]})`);
 		}
 	}
 
@@ -233,7 +241,7 @@ const seedDemoContent = async () => {
 
 /** Uploads the generated demo images through the dashboard's real uploader. */
 const seedDemoUploads = async page => {
-	log(`generating ${DEMO_IMAGES} demo images in ${ASSET_DIR}`);
+	log(`generating ${DEMO_IMAGES} demo images`);
 	const files = generateDemoImages(ASSET_DIR, DEMO_IMAGES);
 
 	const before = await api('/files?page=1&limit=1');
@@ -261,10 +269,10 @@ const seedDemoUploads = async page => {
 const main = async () => {
 	await mkdir(OUTPUT_DIR, { recursive: true });
 
-	log(`waiting for ${BASE_URL}`);
+	log('waiting for the instance to become healthy');
 	await waitForInstance();
 
-	log(`logging in as ${ADMIN_USERNAME}`);
+	log('logging in as the configured admin user');
 	const session = await api('/auth/login', {
 		method: 'POST',
 		body: { username: ADMIN_USERNAME, password: ADMIN_PASSWORD },
@@ -387,7 +395,7 @@ const main = async () => {
 	// The synthetic uploads only exist to be photographed.
 	await rm(ASSET_DIR, { recursive: true, force: true });
 
-	log(`done - ${OUTPUT_DIR}`);
+	log('screenshots captured');
 };
 
 main().catch(error => {
