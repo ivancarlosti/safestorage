@@ -20,7 +20,6 @@
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1150.0",
 		"@aws-sdk/s3-request-presigner": "^3.1150.0",
-		"@chibisafe/uploader-module": "1.0.12",
 		"@fastify/cookie": "^11.1.3",
 		"@fastify/cors": "^11.3.1",
 		"@fastify/helmet": "^13.1.2",
@@ -31,6 +30,7 @@
 		"@napi-rs/blake-hash": "^1.4.0",
 		"@prisma/adapter-better-sqlite3": "7.10.0",
 		"@prisma/client": "7.10.0",
+		"@safestorage/uploader-module": "workspace:*",
 		"@scalar/fastify-api-reference": "^1.74.0",
 		"@sindresorhus/slugify": "^2.2.1",
 		"adm-zip": "^0.6.1",

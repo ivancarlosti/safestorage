@@ -25,7 +25,9 @@
 	"packageManager": "yarn@4.1.1",
 	"workspaces": [
 		"packages/backend",
-		"packages/next"
+		"packages/next",
+		"packages/uploader-client",
+		"packages/uploader-module"
 	],
 	"resolutions": {
 		"@react-stately/flags": "3.0.5"

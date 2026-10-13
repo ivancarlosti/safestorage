@@ -22,6 +22,8 @@ SafeStorage is a TypeScript monorepo that ships as a single container. This page
 | ------------------- | -------------------------------------------------------------------------------------------- |
 | `packages/backend`  | Fastify API, Prisma schema + migrations, middleware, route modules, cron jobs, upload utils. |
 | `packages/next`     | Next.js 14 (App Router) frontend: pages, components, Jotai stores, TanStack Query, Tailwind. |
+| `packages/uploader-module` | Server-side chunked/busboy upload handler (vendored, first-party).                    |
+| `packages/uploader-client` | Browser-side chunked upload client (vendored, first-party).                           |
 | `container`         | `nginx.conf`, `supervisord.conf` and `entrypoint.sh` baked into the image.                   |
 | `docker`            | Pull-only `docker-compose.yml` and `.env.example` for operators.                             |
 | `docs`              | This documentation.                                                                          |
@@ -76,7 +78,7 @@ A Next.js 14 **App Router** application (`output: 'standalone'`):
 -   **`src/middleware.ts`** — routing/guard middleware.
 -   Content pages (privacy policy, terms, rules) are MDX, enabled by `@next/mdx` in `next.config.mjs`.
 
-Data fetching uses **TanStack Query**; client state uses **Jotai** (with `jotai-immer`). Uploads are handled by `@chibisafe/uploader-client`, which performs the chunked / pre-signed / multipart upload flows against the backend.
+Data fetching uses **TanStack Query**; client state uses **Jotai** (with `jotai-immer`). Uploads are handled by `@safestorage/uploader-client` (vendored in `packages/uploader-client`), which performs the chunked / pre-signed / multipart upload flows against the backend.
 
 The frontend version is injected at build time (`NEXT_PUBLIC_VERSION`, read from the root `package.json`). In development only, `next.config.mjs` rewrites `/api/*` to `BASE_API_URL`; in production nginx routes `/api` directly, so the rewrite is disabled.
 

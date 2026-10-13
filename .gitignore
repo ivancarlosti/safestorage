@@ -9,6 +9,8 @@ packages/backend/dist/
 packages/backend/src/generated/
 packages/next/dist/
 packages/next/.next/
+packages/uploader-module/lib/
+packages/uploader-client/lib/
 *.tsbuildinfo
 
 # Env files

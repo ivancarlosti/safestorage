@@ -42,6 +42,11 @@ RUN node -e "const fs=require('fs');const p='package.json';const j=JSON.parse(fs
  && node -e "const fs=require('fs');fs.writeFileSync('/app/.version',process.argv[1]+'\n');" "${VERSION}" \
  && node -e "const fs=require('fs');fs.writeFileSync('/app/.commit',process.argv[1]+'\n');" "${COMMIT}"
 
+# The vendored uploader packages are yarn workspaces too, so their `lib/` output
+# has to exist before the backend `tsc` and the Next.js build consume them.
+RUN yarn workspace @safestorage/uploader-module build \
+ && yarn workspace @safestorage/uploader-client build
+
 # The backend is a yarn workspace: the generated Prisma client must exist before
 # `tsc` runs because the source imports the client and its types.
 RUN yarn workspace @safestorage/backend generate \
@@ -91,6 +96,11 @@ COPY --from=builder /app/packages/backend/src/prisma ./packages/backend/src/pris
 # Prisma 7 reads both the schema location and the migration connection URL from
 # the config file, so it has to ship with the runtime image.
 COPY --from=builder /app/packages/backend/prisma.config.ts ./packages/backend/prisma.config.ts
+
+# The vendored uploader module is a yarn workspace, so the backend resolves it
+# through a symlink from `node_modules`; the runtime image needs the real folder
+# (with its built `lib/`) or the import breaks when the backend boots.
+COPY --from=builder /app/packages/uploader-module ./packages/uploader-module
 
 # ---- frontend (Next.js standalone) ---------------------------------------
 # The standalone tree is self contained (server.js + node_modules + .next), so

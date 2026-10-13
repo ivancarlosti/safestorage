@@ -3,7 +3,7 @@ import process from 'node:process';
 import { URL, fileURLToPath } from 'node:url';
 import { CreateMultipartUploadCommand, PutObjectCommand, UploadPartCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { processFile } from '@chibisafe/uploader-module';
+import { processFile } from '@safestorage/uploader-module';
 import slugify from '@sindresorhus/slugify';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
@@ -32,9 +32,9 @@ export const schema = {
 	tags: ['Files'],
 	headers: z.object({
 		albumuuid: z.string().optional().describe('The uuid of the album.'),
-		'chibi-chunk-number': z.coerce.number().optional().describe('The chunk number.'),
-		'chibi-chunks-total': z.coerce.number().optional().describe('The total number of chunks.'),
-		'chibi-uuid': z.string().optional().describe('The uuid of the file.'),
+		'safestorage-chunk-number': z.coerce.number().optional().describe('The chunk number.'),
+		'safestorage-chunks-total': z.coerce.number().optional().describe('The total number of chunks.'),
+		'safestorage-uuid': z.string().optional().describe('The uuid of the file.'),
 		'x-source-url': z.string().optional().describe('The source URL of the file.')
 	}),
 	body: z
@@ -234,7 +234,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const tmpDir = fileURLToPath(new URL('../../../../../uploads/tmp', import.meta.url));
 	const maxChunkSize = SETTINGS.chunkSize;
 	/*
-		`@chibisafe/uploader-module` rejects a chunked upload when
+		`@safestorage/uploader-module` rejects a chunked upload when
 		`maxChunkSize * totalChunks` is bigger than the file size it is given, and
 		the browser rounds `totalChunks` up, so that product can overshoot the real
 		file size by up to one chunk. Allow for that rounding here (and enforce the
@@ -329,10 +329,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			case 'File is too big':
 				void res.payloadTooLarge(error.message);
 				break;
-			case 'Missing chibi-* headers':
-			case 'chibi-uuid is not a string':
-			case 'chibi-uuid does not meet the length criteria':
-			case 'chibi-uuid is not a valid uuid':
+			case 'safestorage-uuid is not a string':
+			case 'safestorage-uuid does not meet the length criteria':
+			case 'safestorage-uuid is not a valid uuid':
 			case 'Chunk is out of range':
 			case 'Invalid headers':
 				void res.badRequest(error.message);

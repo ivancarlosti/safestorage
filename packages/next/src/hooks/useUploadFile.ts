@@ -1,6 +1,6 @@
 import { settingsAtom } from '@/lib/atoms/settings';
-import type { UploaderOptions } from '@chibisafe/uploader-client';
-import { chibiUploader } from '@chibisafe/uploader-client';
+import type { UploaderOptions } from '@safestorage/uploader-client';
+import { safeStorageUploader } from '@safestorage/uploader-client';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useCallback } from 'react';
 import { debug } from '@/lib/utils';
@@ -205,7 +205,7 @@ export const useUploadFile = ({ albumUuid }: { readonly albumUuid?: string | und
 				};
 			}
 
-			await chibiUploader({
+			await safeStorageUploader({
 				...options,
 				onStart: (uuid: string, totalChunks: number) => {
 					debug(`Started uploading ${file.name} with uuid ${uuid} and ${totalChunks} chunks`);

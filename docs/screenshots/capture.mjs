@@ -199,11 +199,11 @@ const seedDemoContent = async () => {
 			name: 'upload.ts',
 			language: 'typescript',
 			content: [
-				"import { chibiUploader } from '@chibisafe/uploader-client';",
+				"import { safeStorageUploader } from '@safestorage/uploader-client';",
 				'',
 				'// Files are split into chunks, so multi-gigabyte uploads',
 				'// stream straight through nginx without buffering.',
-				'await chibiUploader({',
+				'await safeStorageUploader({',
 				"\tendpoint: '/api/upload',",
 				'\tfile,',
 				'\tonProgress: (_uuid, progress) => console.log(progress),',

@@ -140,10 +140,10 @@ const start = async () => {
 			'Content-Type',
 			'albumUuid',
 			'X-API-KEY',
-			// @chibisafe/uploader headers
-			'chibi-chunk-number',
-			'chibi-chunks-total',
-			'chibi-uuid'
+			// @safestorage/uploader headers
+			'safestorage-chunk-number',
+			'safestorage-chunks-total',
+			'safestorage-uuid'
 		]
 	});
 

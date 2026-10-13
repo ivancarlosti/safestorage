@@ -1,0 +1,46 @@
+{
+	"name": "@safestorage/uploader-module",
+	"version": "1.0.12",
+	"description": "SafeStorage server-side chunked upload handler (vendored, first-party)",
+	"private": true,
+	"main": "lib/index.js",
+	"scripts": {
+		"build": "tsup",
+		"build:watch": "tsup --watch"
+	},
+	"author": "Ivan Carlos",
+	"license": "MIT",
+	"files": [
+		"lib/**/*"
+	],
+	"exports": {
+		"types": "./lib/index.d.ts",
+		"require": "./lib/index.js",
+		"import": "./lib/index.mjs"
+	},
+	"devDependencies": {
+		"@types/busboy": "^1.5.0",
+		"@types/node": "^20.1.0",
+		"@types/uuid": "^9.0.1",
+		"tsup": "^8.3.5",
+		"typescript": "^5.4.4"
+	},
+	"dependencies": {
+		"busboy": "^1.6.0",
+		"fs-jetpack": "^5.1.0",
+		"uuid": "^9.0.0"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"keywords": [
+		"safestorage",
+		"uploader",
+		"upload",
+		"file upload",
+		"file uploader",
+		"chunk",
+		"chunked upload",
+		"chunked uploader"
+	]
+}

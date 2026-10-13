@@ -8,12 +8,14 @@
 
 ## Repository layout
 
-This is a Yarn 4 **monorepo** with four top-level parts:
+This is a Yarn 4 **monorepo** with these top-level parts:
 
 | Path                | Workspace              | Purpose                                                     |
 | ------------------- | ---------------------- | ----------------------------------------------------------- |
 | `packages/backend/` | `@safestorage/backend` | Fastify API, Prisma/SQLite, uploads, thumbnails, cron jobs. |
 | `packages/next/`    | `@safestorage/next`    | Next.js 14 App Router frontend (standalone output).         |
+| `packages/uploader-module/` | `@safestorage/uploader-module` | Server-side chunked upload handler (busboy).       |
+| `packages/uploader-client/` | `@safestorage/uploader-client` | Browser-side chunked upload client.                |
 | `container/`        | —                      | nginx + supervisord + entrypoint used by the Docker image.  |
 | `docker/`           | —                      | Pull-only Compose stack for end users.                      |
 | `docs/`             | —                      | This documentation.                                         |

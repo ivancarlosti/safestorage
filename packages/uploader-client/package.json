@@ -1,0 +1,43 @@
+{
+	"name": "@safestorage/uploader-client",
+	"version": "1.0.12",
+	"description": "SafeStorage browser-side chunked upload client (vendored, first-party)",
+	"private": true,
+	"main": "lib/index.js",
+	"type": "module",
+	"scripts": {
+		"build": "vite build",
+		"build:watch": "vite build --watch"
+	},
+	"author": "Ivan Carlos",
+	"license": "MIT",
+	"files": [
+		"lib/**/*"
+	],
+	"exports": {
+		"types": "./lib/index.d.ts",
+		"import": "./lib/index.js"
+	},
+	"devDependencies": {
+		"@types/node": "^20.1.0",
+		"typescript": "^5.4.4",
+		"vite": "^5.4.11",
+		"vite-plugin-dts": "^4.3.0"
+	},
+	"dependencies": {
+		"uuid": "^9.0.1"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"keywords": [
+		"safestorage",
+		"uploader",
+		"upload",
+		"file upload",
+		"file uploader",
+		"chunk",
+		"chunked upload",
+		"chunked uploader"
+	]
+}
