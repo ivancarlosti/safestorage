@@ -1,6 +1,6 @@
 # @safestorage/next
 
-The SafeStorage web UI — a Next.js 14 (App Router) application built with React 18, TypeScript, Tailwind CSS and Radix UI primitives.
+The SafeStorage web UI — a Next.js 15 (App Router) application built with React 19, TypeScript, Tailwind CSS v4 and Radix UI primitives.
 
 See the repository root [`README.md`](../../README.md) for the project overview and the [`docs/`](../../docs) folder for the API, deployment, storage and development guides.
 
@@ -11,7 +11,7 @@ See the repository root [`README.md`](../../README.md) for the project overview 
 | `yarn dev`                                | Dev server on <http://localhost:8001> (proxies `/api` to `BASE_API_URL`). |
 | `yarn build`                              | Production build (`output: 'standalone'`).                                |
 | `yarn start`                              | Start the production server on port 8001.                                 |
-| `yarn lint` / `yarn lint:fix`             | Run `next lint` (optionally with `--fix`).                                |
+| `yarn lint` / `yarn lint:fix`             | Run `eslint src` (optionally with `--fix`).                               |
 | `yarn typecheck`                          | Run `tsc --noEmit`.                                                       |
 | `yarn format:check` / `yarn format:write` | Check / apply Prettier formatting.                                        |
 

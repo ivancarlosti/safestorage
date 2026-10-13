@@ -1,5 +1,12 @@
 # ESLint flat-config migration (follow-up)
 
+> **Done (2026-10-13):** this plan was executed together with the Tailwind CSS v4 upgrade. The
+> legacy preset chain was **not** replaced by `eslint-config-neon` 0.2+ but by a hand-rolled flat
+> config (which also drops the plugin's `braces` dependency). See
+> `plans/2026-10-13-eslint-9-flat-config-and-tailwind-4.md` for what actually landed: the rule set
+> was calibrated against the resolved legacy config, `eslint-config-neon` and
+> `@next/eslint-plugin-next` are gone, and `next lint` was replaced by `eslint src`.
+
 ## Why
 Dependabot proposed `eslint-config-neon` `^0.1.62 → ^0.5.4`. From `0.2.0`
 onward the package is **flat-config only**: it no longer ships the legacy

@@ -64,18 +64,31 @@ walkers refuse anything deeper than 100, so no input reaches deep recursion. `mi
 swallow both errors and fall back to a literal, non-matching matcher (measured: `isMatch` returns
 `false` without throwing for nesting 99, 100, 101 and 2000), which is why callers never see a crash.
 
-### Accepted risk / residual scanner finding
+### Resolution: `braces` was removed from the tree entirely (2026-10-13)
 
-The installed version string stays `3.0.3`, so **version-based scanners (OSV, `npm audit`,
-Aikido) will continue to report CVE-2026-93687 against this repo**. The vulnerability itself is
-mitigated by the patch above; the report is a version match, not a live finding. This is
-recorded here so the next audit does not treat it as a regression.
+The patch was a stopgap: version-based scanners (OSV, `npm audit`, Aikido) keep reporting
+CVE-2026-93687 for as long as the installed version string stays `3.0.3`. The follow-up work landed
+in `plans/2026-10-13-eslint-9-flat-config-and-tailwind-4.md` and deleted every path that pulled
+`braces` in:
 
-**Optional follow-up:** bump `chokidar` `^3.6.0 -> ^4.0.3` to drop `braces` from the *runtime*
-dependency tree entirely. Not done here because chokidar v4 removed glob support and the
-`alwaysStat` option (which `Watcher.ts` uses) and changed stat delivery on `add`/`change`, so
-`Watcher.ts` would need adjusting and the watcher re-tested. `braces` would still remain in the
-build-time tree via `micromatch`, so this does not fully clear a version-based scan either.
+* runtime: `chokidar` `^3.6.0 -> ^5.0.0` (`Watcher.ts` needed no change - see the correction below);
+* build: `tailwindcss` `^3.4.3 -> ^4.3.3` (v3 dragged in `fast-glob`/`micromatch`),
+  `typescript-eslint` 8 (`fast-glob`/`globby` via `ts-estree`/`@typescript-eslint/typescript-estree`),
+  and the frontend dropping `eslint-config-neon` + `@next/eslint-plugin-next`;
+* the two `resolutions` entries and `.yarn/patches/braces-npm-3.0.3-582c14023c.patch` were deleted.
+
+Verified after `yarn install`: `node_modules/braces` does not exist, `yarn.lock` contains no
+`braces@…` entry and no `braces-npm` patch reference, and `yarn why braces` / `fast-glob` /
+`globby` return nothing (`micromatch` is gone as well). There is nothing left for a version-based
+scanner to match, so the "residual finding" this document recorded no longer applies.
+
+**Correction to the original follow-up note:** chokidar v4 (and v5) did **not** remove the
+`alwaysStat` option - it is still declared in `BasicOpts` in `chokidar@5.0.0/index.d.ts`, and
+`add`/`addDir`/`change` still pass `stats` as the second argument. Confirmed against the installed
+package: `watch(dir, { ignoreInitial: true, alwaysStat: true })` skipped the pre-existing file and
+emitted `add` for a new one with `stats.size === 11`. Only glob support was dropped, and
+`Watcher.ts` watches a single directory path. chokidar 5 makes the package ESM-only (the backend is
+ESM and requires Node >= 22), so `Watcher.ts` is unchanged.
 
 ## 2. Sensitive data in logs
 
@@ -165,8 +178,10 @@ identically in both), and `/tmp/braces-consumer-test.cjs` (12 checks: both crash
 * `LogSanitizer` run over the two real rotated logs (`logs/safestorage-2026-10-12.log`, 71 lines,
   and `-10-13.log`, 18 lines): no absolute path, no client address, no hostname, no credential -
   including the lines the pre-fix code had written with a raw app-root path and a raw client IP.
-* `yarn install --immutable` passes with the patch registered (required by the Docker build).
+* `yarn install --immutable` passes (this ran with the local patch registered; the patch has since
+  been removed entirely - see the resolution section above).
 * Backend `build` + `lint` (prettier + eslint) pass. `uploader-client` and `uploader-module` build.
-  `next lint` reports only the pre-existing `FilesWrapper.tsx` `react/no-unused-prop-types` error
-  (untouched by this change).
+  `next lint` reported only the pre-existing `FilesWrapper.tsx` `react/no-unused-prop-types` error
+  (untouched by this change). Both the tool (`next lint`) and that error are resolved by
+  `plans/2026-10-13-eslint-9-flat-config-and-tailwind-4.md`.
 

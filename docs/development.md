@@ -62,7 +62,7 @@ The first time a user is created, an `admin` account is seeded with the password
 | -------------------------------------- | --------------------------------------------------------------- |
 | `yarn dev`                             | Run every workspace's dev server (Turborepo).                   |
 | `yarn build`                           | Build every workspace.                                          |
-| `yarn lint`                            | Lint every workspace (Prettier check + ESLint for the backend). |
+| `yarn lint`                            | Lint every workspace (ESLint; the backend also runs a Prettier check). |
 | `yarn format`                          | Format every workspace.                                         |
 | `yarn start`                           | Start the backend (`migrate` + `node dist/main.js`).            |
 | `yarn generate`                        | Generate the Prisma client.                                     |
@@ -76,10 +76,10 @@ The first time a user is created, an `admin` account is seeded with the password
 
 | Script             | What it does                                            |
 | ------------------ | ------------------------------------------------------- |
-| `yarn build`       | `rimraf dist && tsc && tsc-alias` — compile to `dist/`. |
+| `yarn build`       | `rimraf dist && tsc && node scripts/rewrite-path-aliases.mjs` — compile and rewrite the `@/`/`~/` aliases into relative specifiers. |
 | `yarn dev`         | `tsx watch src/main.ts`.                                |
-| `yarn lint`        | `prettier --check .` + `eslint src --ext .ts`.          |
-| `yarn format`      | `prettier --write .` + `eslint src --ext .ts --fix`.    |
+| `yarn lint`        | `prettier --check .` + `eslint src`.                    |
+| `yarn format`      | `prettier --write .` + `eslint src --fix`.              |
 | `yarn studio`      | Open Prisma Studio.                                     |
 | `yarn migrate:dev` | Create/apply a dev migration and regenerate the client. |
 
@@ -89,7 +89,7 @@ The first time a user is created, an `admin` account is seeded with the password
 | ------------------------------------ | --------------------------------------- |
 | `yarn dev`                           | `next dev -p 8001`.                     |
 | `yarn build` / `start`               | Production build / server on port 8001. |
-| `yarn lint` / `lint:fix`             | `next lint` (optionally with `--fix`).  |
+| `yarn lint` / `lint:fix`             | `eslint src` (optionally with `--fix`). |
 | `yarn typecheck`                     | `tsc --noEmit`.                         |
 | `yarn format:check` / `format:write` | Prettier check / apply.                 |
 
@@ -97,8 +97,8 @@ The first time a user is created, an `admin` account is seeded with the password
 
 -   **Tabs** for indentation, single quotes, semicolons (see `.editorconfig` / Prettier config).
 -   **Prettier** formats Markdown, JSON, TS and TSX. The frontend also sorts imports with `@ianvs/prettier-plugin-sort-imports`.
--   **ESLint** uses `eslint-config-neon` for the backend and `next lint` for the frontend.
--   Ignore files: `.prettierignore`, `.gitignore` and `packages/next/.eslintignore`.
+-   **ESLint** runs from a hand-rolled flat config: `eslint.config.mjs` in the root is the shared base (`@eslint/js`, `typescript-eslint`, plus the `react`, `react-hooks`, `unicorn`, `promise`, `n` and `import-x` plugins, with `eslint-config-prettier` last), and each workspace adds its own layer on top. `next lint` is not used.
+-   Ignore files: `.prettierignore`, `.gitignore` and the `ignores` entries in the `eslint.config.mjs` files.
 
 Before opening a pull request, run:
 
