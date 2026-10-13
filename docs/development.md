@@ -2,7 +2,7 @@
 
 ## Requirements
 
--   **Node.js ≥ 22.0.0** (the Docker image uses Node 22).
+-   **Node.js ≥ 22.12.0** (the Docker image uses Node 22; `jotai` 3 requires 22.12+).
 -   **Yarn 4** — vendored in the repository (`.yarn/releases`) and pinned via `packageManager: yarn@4.1.1`, so just run `yarn` (Enable Corepack if your shell cannot find it: `corepack enable`).
 -   **ffmpeg** — optional; only needed for video thumbnail generation (`ffmpeg` is bundled in the Docker image).
 
