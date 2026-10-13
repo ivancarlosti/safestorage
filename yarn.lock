@@ -3652,7 +3652,7 @@ __metadata:
     file-saver: "npm:^2.0.5"
     framer-motion: "npm:^11.18.2"
     immer: "npm:^11.1.21"
-    jotai: "npm:^2.7.2"
+    jotai: "npm:^3.0.1"
     jotai-immer: "npm:^0.4.3"
     lucide-react: "npm:^1.55.0"
     media-chrome: "npm:^4.19.3"
@@ -9366,18 +9366,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jotai@npm:^2.7.2":
-  version: 2.7.2
-  resolution: "jotai@npm:2.7.2"
+"jotai@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "jotai@npm:3.0.1"
   peerDependencies:
-    "@types/react": ">=17.0.0"
-    react: ">=17.0.0"
+    "@types/react": ">=18.0.0"
+    react: ">=18.0.0"
   peerDependenciesMeta:
     "@types/react":
       optional: true
     react:
       optional: true
-  checksum: 10c0/247f6a38ded40e92dd814c0b7b3ee25be7890af05342b28c952fe5bc3543a3b3c4a347914113d95cac534924ac0ad5416981b0a02ed16dcb5818be6f5df4e3bd
+  checksum: 10c0/84b6adac2e3c8f7e8fd27c52f3206ceb1b22f9b46dfb81100b3765f652134399e91bfaee49a15e2e25083adf5638b8168aeb338234074e9c80955d51c231b456
   languageName: node
   linkType: hard
 

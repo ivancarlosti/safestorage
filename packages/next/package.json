@@ -47,7 +47,7 @@
 		"file-saver": "^2.0.5",
 		"framer-motion": "^11.18.2",
 		"immer": "^11.1.21",
-		"jotai": "^2.7.2",
+		"jotai": "^3.0.1",
 		"jotai-immer": "^0.4.3",
 		"lucide-react": "^1.55.0",
 		"media-chrome": "^4.19.3",
