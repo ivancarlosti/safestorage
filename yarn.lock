@@ -3534,7 +3534,7 @@ __metadata:
     eslint-config-neon: "npm:^0.1.62"
     file-saver: "npm:^2.0.5"
     framer-motion: "npm:^11.18.2"
-    immer: "npm:^10.0.4"
+    immer: "npm:^11.1.21"
     jotai: "npm:^2.7.2"
     jotai-immer: "npm:^0.4.3"
     lucide-react: "npm:0.365.0"
@@ -8492,10 +8492,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:^10.0.4":
-  version: 10.0.4
-  resolution: "immer@npm:10.0.4"
-  checksum: 10c0/da9da59d6e71cf3f2875024b5cfb58874baef3eefec6425483e53163e31ed0ab24bae85cd2829cb7812acb9723075eedb5946654f8bd47ecf38663388e04d3bd
+"immer@npm:^11.1.21":
+  version: 11.1.21
+  resolution: "immer@npm:11.1.21"
+  checksum: 10c0/0c29182c98d0cea079fc679a198a9bccc4d7d70b528d85f52707e606fbe6fc8fea0a3d583e86ff2d3eb75cd42e25aa359466e8e8edde316db436bb92a917fe84
   languageName: node
   linkType: hard
 

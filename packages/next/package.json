@@ -46,7 +46,7 @@
 		"cmdk": "^1.1.1",
 		"file-saver": "^2.0.5",
 		"framer-motion": "^11.18.2",
-		"immer": "^10.0.4",
+		"immer": "^11.1.21",
 		"jotai": "^2.7.2",
 		"jotai-immer": "^0.4.3",
 		"lucide-react": "0.365.0",
