@@ -4,6 +4,13 @@
 		// Next.js
 		"jsx": "preserve",
 		"baseUrl": ".",
+		// This app never emits declarations, so opt out of declaration emit /
+		// portability analysis inherited from the root tsconfig. TypeScript 5.9
+		// reports TS2742 ("inferred type cannot be named ... not portable") for
+		// re-exported third-party component types, which is only relevant when
+		// emitting `.d.ts` files.
+		"declaration": false,
+		"declarationMap": false,
 		"noEmit": true,
 		"allowJs": true,
 		"incremental": true,

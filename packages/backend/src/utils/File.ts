@@ -97,7 +97,7 @@ export const deleteFiles = async ({
 				Bucket: SETTINGS.S3Bucket,
 				Delete: {
 					Objects: s3Files.map(file => ({
-						Key: file.quarantine ? (`quarantine/${file.quarantineFile?.name}` ?? file.name) : file.name
+						Key: file.quarantine ? `quarantine/${file.quarantineFile?.name ?? file.name}` : file.name
 					})),
 					Quiet: true
 				}

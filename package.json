@@ -34,6 +34,6 @@
 	},
 	"devDependencies": {
 		"turbo": "^2.11.7",
-		"typescript": "^5.4.4"
+		"typescript": "^5.9.3"
 	}
 }

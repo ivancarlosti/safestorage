@@ -84,6 +84,13 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'eslint'
         update-types: ['version-update:semver-major']
+      # ── Lint toolchain ────────────────────────────────────────────────────
+      # eslint-config-neon 0.2.0+ is flat-config-only and pulls ESLint 9/10 +
+      # typescript-eslint 8. The repo still runs the legacy `.eslintrc.json`
+      # preset chain (neon/common, neon/react, neon/next, …), which no longer
+      # exists in those releases. Migrate to `eslint.config.*` first; see
+      # plans/2026-10-12-eslint-flat-config-migration.md.
+      - dependency-name: 'eslint-config-neon'
 
   # ── GitHub Actions ────────────────────────────────────────────────────────
   - package-ecosystem: github-actions

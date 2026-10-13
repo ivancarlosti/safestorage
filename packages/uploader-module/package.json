@@ -3,7 +3,6 @@
 	"version": "1.0.12",
 	"description": "SafeStorage server-side chunked upload handler (vendored, first-party)",
 	"private": true,
-	"main": "lib/index.js",
 	"scripts": {
 		"build": "tsup",
 		"build:watch": "tsup --watch"
@@ -14,21 +13,19 @@
 		"lib/**/*"
 	],
 	"exports": {
-		"types": "./lib/index.d.ts",
-		"require": "./lib/index.js",
+		"types": "./lib/index.d.mts",
 		"import": "./lib/index.mjs"
 	},
 	"devDependencies": {
 		"@types/busboy": "^1.5.0",
 		"@types/node": "^20.1.0",
-		"@types/uuid": "^9.0.1",
 		"tsup": "^8.3.5",
-		"typescript": "^5.4.4"
+		"typescript": "^5.9.3"
 	},
 	"dependencies": {
 		"busboy": "^1.6.0",
 		"fs-jetpack": "^5.1.0",
-		"uuid": "^9.0.0"
+		"uuid": "^14.0.3"
 	},
 	"engines": {
 		"node": ">=22.0.0"

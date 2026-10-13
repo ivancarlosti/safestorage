@@ -65,7 +65,7 @@
 	"devDependencies": {
 		"@types/bcryptjs": "^2.4.6",
 		"@types/envinfo": "^7.8.4",
-		"@types/fluent-ffmpeg": "^2.1.24",
+		"@types/fluent-ffmpeg": "^2.1.28",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/node": "^22.20.5",
 		"@types/node-schedule": "^2.1.8",
@@ -76,7 +76,7 @@
 		"prisma": "7.10.0",
 		"rimraf": "^5.0.5",
 		"tsx": "^4.23.15",
-		"typescript": "^5.4.4"
+		"typescript": "^5.9.3"
 	},
 	"keywords": [
 		"safestorage",
