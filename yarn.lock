@@ -3568,7 +3568,7 @@ __metadata:
     tsconfig-paths: "npm:^4.2.0"
     tsx: "npm:^4.23.15"
     typescript: "npm:^5.9.3"
-    unzipit: "npm:^1.4.3"
+    unzipit: "npm:^2.1.1"
     uuid: "npm:^14.0.3"
     zod: "npm:^3.25.76"
   languageName: unknown
@@ -14610,12 +14610,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"unzipit@npm:^1.4.3":
-  version: 1.4.3
-  resolution: "unzipit@npm:1.4.3"
-  dependencies:
-    uzip-module: "npm:^1.0.2"
-  checksum: 10c0/6f710615aaafb6283d5f489950e54d158deaa1c8757ba486d98ddc76f3ae3b7eab24cd24017185dd5f4edcd2df43b04431bca009538d4116c60229b60db8dd3b
+"unzipit@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "unzipit@npm:2.1.1"
+  checksum: 10c0/fb1ef8e5f014abef605838214818332f472895779cfc1334bf3575afe1199b6be78ce99f03c3fdc7d1acb3dd5ea80816975be3b323deee10772b286e105361b7
   languageName: node
   linkType: hard
 
@@ -14720,13 +14718,6 @@ __metadata:
   bin:
     uvu: bin.js
   checksum: 10c0/ad32eb5f7d94bdeb71f80d073003f0138e24f61ed68cecc8e15d2f30838f44c9670577bb1775c8fac894bf93d1bc1583d470a9195e49bfa6efa14cc6f4942bff
-  languageName: node
-  linkType: hard
-
-"uzip-module@npm:^1.0.2":
-  version: 1.0.3
-  resolution: "uzip-module@npm:1.0.3"
-  checksum: 10c0/206e09cf620aa178e5d8ab20425d1a4f4484de9a86673e8a5913087b7b0febb12d49a22b15574a3c5b0c9d911a0d600c9f51651de2a78ffbc6e0345b8ef3af8d
   languageName: node
   linkType: hard
 
