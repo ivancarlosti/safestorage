@@ -110,9 +110,8 @@ export const generateThumbnails = async ({
 
 	log.debug(`Generating thumbnails for ${filename}`);
 
-	// eslint-disable-next-line max-len
 	if (imageExtensions.includes(ext)) return generateThumbnailForImage({ filename, output, tmp, watched });
-	// eslint-disable-next-line max-len
+
 	if (videoExtensions.includes(ext))
 		return generateThumbnailForVideo({ filename, output: previewOutput, tmp, watched });
 	return null;

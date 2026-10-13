@@ -121,7 +121,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	} catch (error: any) {
 		logError(req.log, 'Could not complete the multipart upload', error);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (error?.name === 'NoSuchUpload') {
 			void res.badRequest('The multipart upload does not exist (it may have expired or been aborted)');
 			return;

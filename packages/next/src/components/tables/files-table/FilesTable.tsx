@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
 
 import type { ColumnFiltersState, RowData, SortingState, VisibilityState } from '@tanstack/react-table';
 import {

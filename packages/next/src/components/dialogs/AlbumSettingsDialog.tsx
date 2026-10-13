@@ -32,7 +32,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import request from '@/lib/request';
 import { Plus } from 'lucide-react';
 
-export function AlbumSettingsDialog({ children }: PropsWithChildren<{}>) {
+export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 	const defaultSortValue = '_default';
 	const [open, setOpen] = useAtom(isDialogOpenAtom);
 	const album = useAtomValue(selectedAlbumAtom);
@@ -132,7 +132,7 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren<{}>) {
 								<Label htmlFor="description">Description</Label>
 								<Textarea id="description" name="description" defaultValue={album?.description} />
 							</div>
-							<div className="space-y-2 flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+							<div className="space-y-2 flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
 								<div className="space-y-0.5">
 									<Label
 										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

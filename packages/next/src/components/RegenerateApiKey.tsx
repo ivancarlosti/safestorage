@@ -38,7 +38,7 @@ export const RegenerateApiKey = ({ apiKey }: PropsWithChildren<{ readonly apiKey
 					id="apikey"
 					value={apiKey ?? ''}
 					readOnly
-					className={apiKey ? 'blur-sm hover:blur-none' : ''}
+					className={apiKey ? 'blur-xs hover:blur-none' : ''}
 				/>
 				<p className="text-[0.8rem] text-muted-foreground">
 					You can use the API key for 3rd-party services and scripts to gain access to your account. <br />

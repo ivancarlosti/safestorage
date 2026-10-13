@@ -45,8 +45,8 @@ export const Album = ({ album }: { readonly album: AlbumType }) => {
 			<div className="group">
 				<div
 					className={cn(
-						"absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-200 after:absolute after:-inset-0 after:bg-gradient-to-t after:from-[rgb(4_21_47)] after:via-[rgb(19_36_61_/_0.6)] after:via-30% after:content-[''] group-hover:scale-105 group-hover:duration-150 group-hover:outline-4 group-hover:outline-[hsl(216_77%_45%)] outline outline-transparent",
-						album.nsfw ? 'blur group-hover:blur-0' : ''
+						"absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-200 after:absolute after:-inset-0 after:bg-linear-to-t after:from-[rgb(4_21_47)] after:via-[rgb(19_36_61_/_0.6)] after:via-30% after:content-[''] group-hover:scale-105 group-hover:duration-150 group-hover:outline-4 group-hover:outline-[hsl(216_77%_45%)] outline outline-transparent",
+						album.nsfw ? 'blur-sm group-hover:blur-none' : ''
 					)}
 					style={{
 						backgroundImage: `url(${album.cover})`

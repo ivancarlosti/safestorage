@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { FastifyReply } from 'fastify';
 import jetpack from 'fs-jetpack';
-import { getHighlighter, bundledLanguagesInfo, bundledLanguages } from 'shiki/bundle/full';
+import { createHighlighter, bundledLanguagesInfo, bundledLanguages } from 'shiki';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
 import type { ExtendedFile, RequestWithUser } from '@/structures/interfaces.js';
@@ -91,7 +91,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
-	const highlighter = await getHighlighter({
+	const highlighter = await createHighlighter({
 		langs: Object.keys(bundledLanguages),
 		themes: ['github-dark-dimmed']
 	});

@@ -226,7 +226,7 @@ export const purgeIpFiles = async (ip: string) => {
 	}
 };
 
-export const getFilenameFromPath = (fullPath: string) => fullPath.replace(/^.*[/\\]/, ''); // eslint-disable-line no-useless-escape
+export const getFilenameFromPath = (fullPath: string) => fullPath.replace(/^.*[/\\]/, '');
 
 export const createZip = (files: string[], albumUuid: string) => {
 	try {

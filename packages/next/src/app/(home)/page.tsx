@@ -57,7 +57,7 @@ export default async function Home() {
 					<div className="flex flex-col-reverse lg:flex-row justify-between gap-8 lg:gap-0">
 						<div className="flex flex-col gap-6 items-center lg:items-start">
 							<h1 className="font-heading text-2xl sm:text-5xl text-center lg:text-left">
-								<span className="bg-clip-text font-bold text-transparent bg-gradient-to-r from-blue-500 to-sky-500">
+								<span className="bg-clip-text font-bold text-transparent bg-linear-to-r from-blue-500 to-sky-500">
 									safestorage{' '}
 								</span>
 								is a beautiful <br />

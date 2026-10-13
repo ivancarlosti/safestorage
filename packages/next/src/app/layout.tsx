@@ -90,7 +90,7 @@ export async function generateMetadata() {
 	};
 }
 
-export default async function RootLayout({ children }: PropsWithChildren<{}>) {
+export default async function RootLayout({ children }: PropsWithChildren) {
 	const hasTokenCookie = (await cookies()).has('token');
 
 	return (

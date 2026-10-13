@@ -41,7 +41,7 @@ export default async function AdminFilesPage({ searchParams }: { readonly search
 				<div className="grid gap-4">
 					<Suspense>
 						<Pagination itemsTotal={response.count} type="admin" />
-						<FilesWrapper files={response.files} total={response.count} type="admin" />
+						<FilesWrapper files={response.files} type="admin" />
 						<Pagination itemsTotal={response.count} type="admin" />
 					</Suspense>
 					<FileDialog />

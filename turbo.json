@@ -1,6 +1,6 @@
 {
 	"$schema": "https://turbo.build/schema.json",
-	"globalDependencies": ["yarn.lock", "**/tsconfig.json"],
+	"globalDependencies": ["yarn.lock", "**/tsconfig.json", "eslint.config.mjs"],
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
@@ -13,10 +13,10 @@
 			"persistent": true
 		},
 		"lint": {
-			"inputs": ["src/**/*.ts", "**/.eslintrc.json", "**/.prettierignore", "**/.prettierrc.cjs"]
+			"inputs": ["src/**/*.{ts,tsx}", "**/eslint.config.mjs", "**/.prettierignore", "**/.prettierrc.json"]
 		},
 		"format": {
-			"inputs": ["src/**/*.ts", "**/.eslintrc.json", "**/.prettierignore", "**/.prettierrc.cjs"]
+			"inputs": ["src/**/*.{ts,tsx}", "**/eslint.config.mjs", "**/.prettierignore", "**/.prettierrc.json"]
 		}
 	}
 }

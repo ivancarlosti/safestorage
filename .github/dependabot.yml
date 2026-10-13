@@ -91,20 +91,21 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'eslint'
         update-types: ['version-update:semver-major']
-      # ── Lint toolchain ────────────────────────────────────────────────────
-      # eslint-config-neon 0.2.0+ is flat-config-only and pulls ESLint 9/10 +
-      # typescript-eslint 8. The repo still runs the legacy `.eslintrc.json`
-      # preset chain (neon/common, neon/react, neon/next, …), which no longer
-      # exists in those releases. Migrate to `eslint.config.*` first; see
-      # plans/2026-10-12-eslint-flat-config-migration.md.
-      - dependency-name: 'eslint-config-neon'
-      # …and a lone `@typescript-eslint/*` major is not safe either: neon 0.1.62
-      # pins parser, plugin and typescript-eslint to ^7.5.0, and typescript-eslint
-      # requires the parser and the plugin to share a major. Unpin both together
-      # as part of the flat-config migration below.
-      - dependency-name: '@typescript-eslint/parser'
+      # Flat config since the 2026-10-14 migration: `eslint.config.mjs` in the
+      # root (shared base) plus one per workspace, replacing the
+      # `eslint-config-neon` preset chain. See
+      # plans/2026-10-13-eslint-9-flat-config-and-tailwind-4.md.
+      - dependency-name: 'typescript-eslint'
         update-types: ['version-update:semver-major']
-      - dependency-name: '@typescript-eslint/eslint-plugin'
+      # eslint-plugin-unicorn 66+ requires eslint >= 10.4, so it stays on the 65
+      # line until ESLint itself moves.
+      - dependency-name: 'eslint-plugin-unicorn'
+        update-types: ['version-update:semver-major']
+      # ── Styling ───────────────────────────────────────────────────────────
+      # Tailwind v4 arrived in the 2026-10-14 migration; v5 is its own pass.
+      - dependency-name: 'tailwindcss'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@tailwindcss/postcss'
         update-types: ['version-update:semver-major']
 
   # ── GitHub Actions ────────────────────────────────────────────────────────

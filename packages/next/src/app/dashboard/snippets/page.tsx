@@ -61,7 +61,7 @@ export default async function DashboardSnippetsPage({ searchParams }: { readonly
 				</Suspense>
 				<div className="flex flex-col gap-6 mt-8">
 					{response?.snippets.map((snippet: Snippet) => {
-						return <SnippetViewer snippet={snippet} maxLines={10} />;
+						return <SnippetViewer key={snippet.uuid} snippet={snippet} maxLines={10} />;
 					})}
 				</div>
 			</div>

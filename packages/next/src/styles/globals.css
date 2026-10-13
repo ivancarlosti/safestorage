@@ -1,6 +1,38 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* The theme (Tremor tokens plus the custom borderRadius/boxShadow/fontSize
+   scales and keyframes) stays in tailwind.config.js: v4 reads it through
+   @config, so every custom token keeps the exact value it had on v3. The v3
+   `safelist` becomes @source inline() below and `darkMode` a custom variant,
+   because v4 ignores `safelist`, `corePlugins` and `separator`. */
+@config '../../tailwind.config.js';
+
+/* `darkMode: ['class']` from the legacy config (next-themes toggles `.dark`). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tremor renders its classes from the hoisted node_modules, which v4's
+   automatic content detection ignores. */
+@source '../../../../node_modules/@tremor/**/*.{js,ts,jsx,tsx}';
+
+/* Replaces the v3 `safelist`: these colours are chosen at runtime (Tremor chart
+   configs, dynamic badges), so the utilities have to exist up front.
+   `ui-selected:*` was listed as a variant in the legacy safelist but the variant
+   was never registered, so it never produced CSS and is not carried over. */
+@source inline("{bg,text,border,ring,stroke,fill}-{slate,gray,zinc,neutral,stone,red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("hover:{bg,text,border}-{slate,gray,zinc,neutral,stone,red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose}-{50,100,200,300,400,500,600,700,800,900,950}");
+
+/* v4 dropped `theme.container`. The legacy config centred it, added 2rem of
+   inline padding and capped the width at 1400px from that breakpoint up. */
+@utility container {
+	width: 100%;
+	margin-inline: auto;
+	padding-inline: 2rem;
+
+	@media (min-width: 1400px) {
+		max-width: 1400px;
+	}
+}
 
 @layer base {
 	:root {
@@ -123,13 +155,13 @@ section.mdx-code > pre.shiki > code {
 	color: gray;
 }
 [data-rehype-pretty-code-figure] .line--highlighted {
-	@apply bg-slate-300 bg-opacity-10;
+	@apply bg-slate-300/10;
 }
 [data-rehype-pretty-code-figure] .line-highlighted span {
 	@apply relative;
 }
 [data-rehype-pretty-code-figure] .word--highlighted {
-	@apply rounded-md bg-slate-300 bg-opacity-10 p-1;
+	@apply rounded-md bg-slate-300/10 p-1;
 }
 [data-rehype-pretty-code-title] {
 	@apply mt-4 py-2 px-4 text-sm font-medium;

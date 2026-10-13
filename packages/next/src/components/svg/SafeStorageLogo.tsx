@@ -1,6 +1,3 @@
-/* eslint-disable react/no-unknown-property */
-/* eslint-disable react/style-prop-object */
-
 import request from '@/lib/request';
 
 export const SafeStorageDefaultLogo = ({

@@ -157,7 +157,6 @@ export default {
 				});
 
 				server.log.debug(
-					// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 					`Found route |${route.schema ? ' SCHEMA |' : addSpaces('') + ' |'}${addSpaces(
 						options.method.toUpperCase()
 					)} ${options.url}`

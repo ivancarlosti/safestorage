@@ -78,7 +78,7 @@ export function FancyMultiSelect({
 								{option.label}
 								<button
 									type="button"
-									className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+									className="ml-1 ring-offset-background rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
 									onKeyDown={e => {
 										if (e.key === 'Enter') {
 											handleUnselect(option);
@@ -102,14 +102,14 @@ export function FancyMultiSelect({
 						onBlur={() => setOpen(false)}
 						onFocus={() => setOpen(true)}
 						placeholder={placeholder}
-						className="ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1"
+						className="ml-2 bg-transparent outline-hidden placeholder:text-muted-foreground flex-1"
 					/>
 				</div>
 			</div>
 			<div className="relative mt-2">
 				<CommandList>
 					{open && selectables.length > 0 ? (
-						<div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+						<div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-hidden animate-in">
 							<CommandGroup className="h-full overflow-auto">
 								{selectables.map(option => {
 									return (

@@ -31,7 +31,7 @@ const OpenButton = () => {
 	);
 };
 
-const ComponentToRender = ({ children }: PropsWithChildren<{}>) => {
+const ComponentToRender = ({ children }: PropsWithChildren) => {
 	const isMobile = useMediaQuery('(max-width: 768px)');
 	return isMobile ? (
 		<Drawer>

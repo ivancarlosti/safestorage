@@ -7,7 +7,9 @@ export async function CodeBlock({ code }: { readonly code: any }) {
 
 	if (!multiLine) {
 		return (
-			<span className="relative rounded border px-[0.3rem] py-[0.2rem] font-mono text-sm">{code.children}</span>
+			<span className="relative rounded-sm border px-[0.3rem] py-[0.2rem] font-mono text-sm">
+				{code.children}
+			</span>
 		);
 	}
 

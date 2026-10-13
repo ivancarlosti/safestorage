@@ -101,11 +101,7 @@ export default async function PublicAlbumPage({
 					<div className="grid gap-4">
 						<Suspense>
 							<Pagination itemsTotal={response.album.count} type="publicAlbum" />
-							<FilesWrapper
-								files={response.album.files}
-								total={response.album.count}
-								type="publicAlbum"
-							/>
+							<FilesWrapper files={response.album.files} type="publicAlbum" />
 							<Pagination itemsTotal={response.album.count} type="publicAlbum" />
 						</Suspense>
 						<FileDialog />

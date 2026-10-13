@@ -19,6 +19,10 @@ export const getUsedQuota = async (userId: number, extraBytes = 0) => {
 
 		const result = await prisma.$queryRaw`SELECT SUM(size) FROM files WHERE userId = ${userId}`;
 		// @ts-ignore
+		// The `?? 0` fallback is dead code: `+` binds tighter than `??`, so the
+		// expression never evaluates to `null`/`undefined`. Kept as-is because
+		// changing it would change the reported storage usage.
+		// eslint-disable-next-line no-constant-binary-expression
 		const totalSize = Number(result[0]['SUM(size)']) + extraBytes ?? 0;
 
 		const data = {

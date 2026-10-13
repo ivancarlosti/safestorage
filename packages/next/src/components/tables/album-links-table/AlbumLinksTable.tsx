@@ -25,7 +25,12 @@ const columns = [
 		id: 'link',
 		header: 'Link',
 		cell: props => (
-			<a href={`/a/${props.row.original.identifier}`} target="_blank" className="link inline-flex items-center">
+			<a
+				href={`/a/${props.row.original.identifier}`}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="link inline-flex items-center"
+			>
 				{props.row.original.identifier} <ArrowUpRightFromSquare className="w-3 h-3 ml-1" />
 			</a>
 		)

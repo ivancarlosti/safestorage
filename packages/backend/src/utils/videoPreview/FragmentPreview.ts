@@ -2,14 +2,12 @@
 import probe from 'ffmpeg-probe';
 import ffmpeg from 'fluent-ffmpeg';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
 const getRandomInt = (min: number, max: number) => {
 	const minInt = Math.ceil(min);
 	const maxInt = Math.floor(max);
 
-	// eslint-disable-next-line no-mixed-operators
 	return Math.floor(Math.random() * (maxInt - minInt + 1) + minInt);
 };
 

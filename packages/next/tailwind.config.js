@@ -1,19 +1,19 @@
-/* eslint-disable prefer-named-capture-group */
 const { fontFamily } = require('tailwindcss/defaultTheme');
 const colors = require('tailwindcss/colors');
 
-/** @type {import('tailwindcss').Config} */
+/**
+ * Legacy (v3-shaped) JavaScript config, still loaded by Tailwind v4 through
+ * `@config` in `src/styles/globals.css`, so every custom token below keeps the
+ * value it had on v3. Only the theme lives here: v4 ignores `safelist`,
+ * `corePlugins` and `separator`, and the CSS-first equivalents
+ * (`@custom-variant dark`, `@source inline(...)`, `@utility container`) are
+ * declared next to that directive.
+ *
+ * @type {import('tailwindcss').Config}
+ */
 module.exports = {
-	darkMode: ['class'],
-	content: ['src/**/*.{ts,tsx,mdx}', './mdx-components.tsx', '../../node_modules/@tremor/**/*.{js,ts,jsx,tsx}'],
+	content: ['src/**/*.{ts,tsx,mdx}', '../../node_modules/@tremor/**/*.{js,ts,jsx,tsx}'],
 	theme: {
-		container: {
-			center: true,
-			padding: '2rem',
-			screens: {
-				'2xl': '1400px'
-			}
-		},
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',
@@ -153,35 +153,5 @@ module.exports = {
 				'tremor-metric': ['1.875rem', { lineHeight: '2.25rem' }]
 			}
 		}
-	},
-	safelist: [
-		{
-			pattern:
-				/^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
-			variants: ['hover', 'ui-selected']
-		},
-		{
-			pattern:
-				/^(text-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
-			variants: ['hover', 'ui-selected']
-		},
-		{
-			pattern:
-				/^(border-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
-			variants: ['hover', 'ui-selected']
-		},
-		{
-			pattern:
-				/^(ring-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/
-		},
-		{
-			pattern:
-				/^(stroke-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/
-		},
-		{
-			pattern:
-				/^(fill-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/
-		}
-	],
-	plugins: [require('tailwindcss-animate'), require('@tailwindcss/container-queries')]
+	}
 };

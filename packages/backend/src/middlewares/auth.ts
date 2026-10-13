@@ -32,7 +32,7 @@ export default (
 		return;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises, promise/prefer-await-to-callbacks
+	// eslint-disable-next-line promise/prefer-await-to-callbacks
 	JWT.verify(token, SETTINGS.secret ?? '', async (error, decoded) => {
 		if (error) {
 			void res.unauthorized('Invalid token');

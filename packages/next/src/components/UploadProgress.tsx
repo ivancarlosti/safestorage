@@ -169,7 +169,7 @@ export const UploadProgress = () => {
 													</div>
 												) : null}
 											</div>
-											<div className="h-2 top-[50%] transform translate-y-[-50%] w-full rounded-full bg-white bg-opacity-40">
+											<div className="h-2 top-[50%] transform translate-y-[-50%] w-full rounded-full bg-white/40">
 												<div
 													className={cn(
 														'absolute h-2 top-[50%] transform translate-y-[-50%] rounded-full',
