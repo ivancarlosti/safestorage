@@ -25,7 +25,7 @@ SafeStorage is a TypeScript monorepo that ships as a single container. This page
 | `container`         | `nginx.conf`, `supervisord.conf` and `entrypoint.sh` baked into the image.                   |
 | `docker`            | Pull-only `docker-compose.yml` and `.env.example` for operators.                             |
 | `docs`              | This documentation.                                                                          |
-| `.github/workflows` | CI: release, image build, README sync, keepalive.                                            |
+| `.github/workflows` | Code review, release, image build, README sync, keepalive.                                   |
 
 ## Backend
 

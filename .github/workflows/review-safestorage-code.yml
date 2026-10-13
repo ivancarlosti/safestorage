@@ -1,4 +1,4 @@
-name: 🧪 CI
+name: 🔎 Review SafeStorage Code
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
 
 # Only keep the newest run for a given branch/PR; a new push cancels the stale build.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: review-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
