@@ -70,6 +70,13 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'prisma'
         update-types: ['version-update:semver-major']
+      # @prisma/adapter-better-sqlite3@7.x declares `better-sqlite3: ^12.6.0` as a
+      # hard dependency, and it is *its* copy that opens database/database.sqlite.
+      # A top-level major bump cannot be deduped against that range, so it only
+      # adds a second, unused native module (+26 MiB) while the driver actually in
+      # use stays on 12.x. Revisit once the adapter widens its range.
+      - dependency-name: 'better-sqlite3'
+        update-types: ['version-update:semver-major']
       # ── Validation ────────────────────────────────────────────────────────
       - dependency-name: 'zod'
         update-types: ['version-update:semver-major']
@@ -91,6 +98,14 @@ updates:
       # exists in those releases. Migrate to `eslint.config.*` first; see
       # plans/2026-10-12-eslint-flat-config-migration.md.
       - dependency-name: 'eslint-config-neon'
+      # …and a lone `@typescript-eslint/*` major is not safe either: neon 0.1.62
+      # pins parser, plugin and typescript-eslint to ^7.5.0, and typescript-eslint
+      # requires the parser and the plugin to share a major. Unpin both together
+      # as part of the flat-config migration below.
+      - dependency-name: '@typescript-eslint/parser'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@typescript-eslint/eslint-plugin'
+        update-types: ['version-update:semver-major']
 
   # ── GitHub Actions ────────────────────────────────────────────────────────
   - package-ecosystem: github-actions
