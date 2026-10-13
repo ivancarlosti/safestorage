@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
 import { Loader2 } from 'lucide-react';
 import { currentUserAtom } from '@/lib/atoms/currentUser';
-import { cn } from '@/lib/utils';
+import { cn, debug } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { buttonVariants } from '@/styles/button';
@@ -43,7 +43,9 @@ export const LoginForm = () => {
 			router.push('/dashboard');
 		} catch (error: any) {
 			toast.error(error);
-			console.error(error);
+			// The caught value can hold the request that was sent (form body
+			// included), so only its message is ever printed
+			debug('Login failed', error instanceof Error ? error.message : error);
 		} finally {
 			setIsLoading(false);
 		}

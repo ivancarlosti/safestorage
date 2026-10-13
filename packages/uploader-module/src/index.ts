@@ -29,6 +29,22 @@ interface Result {
 
 let DEBUG = false;
 
+/*
+	Anything the filesystem (`ENOENT: ... open '/app/uploads/tmp/<uuid>'`) or
+	busboy throws carries absolute paths and, on a chunked upload, the file
+	metadata: only the message is ever printed, and only while debugging.
+*/
+const debugError = (context: string, error: unknown) => {
+	if (!DEBUG) return;
+
+	if (error instanceof Error) {
+		console.error(`[SafeStorage Uploader] ${context}:`, error.message);
+		return;
+	}
+
+	console.error(`[SafeStorage Uploader] ${context}`);
+};
+
 export const checkIfUuid = (headers: IncomingHttpHeaders) => {
 	if (!headers['safestorage-uuid']) return false;
 	if (typeof headers['safestorage-uuid'] !== 'string') throw new Error('safestorage-uuid is not a string');
@@ -61,7 +77,7 @@ const joinChunks = async (finalFile: string, dirPath: string, totalChunks: numbe
 	return new Promise((resolve, reject) => {
 		const pipeChunk = async () => {
 			try {
-				if (DEBUG) console.log('[SafeStorage Uploader] Chunk file:', path.join(dirPath, chunkCount.toString()));
+				if (DEBUG) console.log('[SafeStorage Uploader] Chunk file:', path.basename(path.join(dirPath, chunkCount.toString())));
 				const readStream = createReadStream(path.join(dirPath, chunkCount.toString()));
 
 				readStream.on('error', () => {
@@ -82,13 +98,13 @@ const joinChunks = async (finalFile: string, dirPath: string, totalChunks: numbe
 						await pipeChunk();
 					} else {
 						writeStream.end();
-						if (DEBUG) console.log('[SafeStorage Uploader] All chunks joined, deleting temp folder', dirPath);
+						if (DEBUG) console.log('[SafeStorage Uploader] All chunks joined, deleting temp folder', path.basename(dirPath));
 						await jetpack.removeAsync(dirPath);
 						resolve({ path: finalFile });
 					}
 				});
 			} catch (error: any) {
-				console.error(error);
+				debugError('Failed to join the chunks', error);
 				return reject;
 			}
 		};
@@ -159,7 +175,7 @@ const handleFileWithChunks = (
 				try {
 					await joinChunks(`${filePath}${path.extname(metadata.name)}`, dirPath, totalChunks);
 				} catch (error) {
-					console.error(error);
+					debugError('Failed to join the file chunks', error);
 				}
 
 				resolve(true);
@@ -192,9 +208,9 @@ const handleFileWithChunks = (
 };
 
 export const processFile = async (req: IncomingMessage, options: Options) => {
-	if (options.debug) {
-		DEBUG = true;
-	}
+	// The flag is not sticky: a request that does not ask for debug output must
+	// not inherit it from a previous one
+	DEBUG = Boolean(options.debug);
 
 	// Make sure the destination folder exists
 	await jetpack.dirAsync(options.destination);
@@ -304,7 +320,7 @@ export const processFile = async (req: IncomingMessage, options: Options) => {
 						if (resultPromise) {
 							filePath = `${resultPromise}${path.extname(metadata.name)}`;
 
-							if (DEBUG) console.log('[SafeStorage Uploader] Filename:', filePath);
+							if (DEBUG) console.log('[SafeStorage Uploader] Filename:', path.basename(filePath));
 						}
 
 						resolve({
@@ -316,7 +332,7 @@ export const processFile = async (req: IncomingMessage, options: Options) => {
 						return;
 					}
 
-					if (DEBUG) console.log('[SafeStorage Uploader] Filename:', resultPromise.path);
+					if (DEBUG) console.log('[SafeStorage Uploader] Filename:', path.basename(resultPromise.path));
 
 					try {
 						const stat = await jetpack.inspectAsync(resultPromise.path);
@@ -337,8 +353,8 @@ export const processFile = async (req: IncomingMessage, options: Options) => {
 
 			req.pipe(busboy);
 		} catch (error) {
+			debugError('Failed to process the uploaded file', error);
 			reject(error);
-			console.log(error);
 		}
 	}) as Promise<Result>;
 };

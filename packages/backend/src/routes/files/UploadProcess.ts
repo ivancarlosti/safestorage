@@ -10,6 +10,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { storeFileToDb, constructFilePublicLink, checkFileHashOnDB, deleteTmpFile } from '@/utils/File.js';
+import { logError } from '@/utils/Logger.js';
 import { fetchNetworkStorageFile, getNetworkStorageTmpPath, isValidFileIdentifier } from '@/utils/NetworkStorage.js';
 import { generateThumbnails, imageExtensions, videoExtensions } from '@/utils/Thumbnails.js';
 import { validateAlbum } from '@/utils/UploadHelpers.js';
@@ -90,7 +91,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		fileSize = response.ContentLength ?? 0;
 		hash = response.ETag?.replace(/"/g, '') ?? '';
 	} catch (error) {
-		req.log.error(error);
+		logError(req.log, 'Failed to fetch the file from the network storage', error);
 		return res.internalServerError('Failed to fetch file');
 	}
 
@@ -147,7 +148,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 				})
 				// eslint-disable-next-line promise/prefer-await-to-callbacks, promise/prefer-await-to-then
 				.catch(error => {
-					req.log.error(error);
+					logError(req.log, 'Failed to store the uploaded file from the network storage', error);
 					void deleteTmpFile(newPath);
 				});
 		}

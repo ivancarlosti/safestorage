@@ -6,6 +6,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { logError } from '@/utils/Logger.js';
 
 export const schema = {
 	summary: 'Remove files from album',
@@ -87,7 +88,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			});
 		}
 	} catch (error: any) {
-		console.error(error);
+		logError(req.log, 'Failed to remove the files from the album', error);
 		void res.internalServerError('Failed to remove files to album');
 		return;
 	}

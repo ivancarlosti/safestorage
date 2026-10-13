@@ -10,6 +10,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { deleteTmpFile } from '@/utils/File.js';
+import { logError } from '@/utils/Logger.js';
 import { fetchNetworkStorageFile, getNetworkStorageTmpPath } from '@/utils/NetworkStorage.js';
 import { generateThumbnails, imageExtensions, videoExtensions } from '@/utils/Thumbnails.js';
 
@@ -80,7 +81,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 					// @ts-expect-error wrong types
 					await finished(Readable.fromWeb(fetchResponse.body).pipe(fs.createWriteStream(newPath)));
 				} catch (error) {
-					req.log.error(error);
+					logError(req.log, 'Failed to fetch a file to regenerate its thumbnail', error);
 					void deleteTmpFile(newPath);
 					return res.internalServerError('Failed to fetch file');
 				}

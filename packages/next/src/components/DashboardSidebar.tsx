@@ -20,6 +20,7 @@ import { currentUserAtom } from '@/lib/atoms/currentUser';
 import { DashboardSidebarItem } from '@/components/DashboardSidebarItem';
 import { saveAs } from 'file-saver';
 import request from '@/lib/request';
+import { debug } from '@/lib/utils';
 import type { UpdateCheck } from '@/types';
 import { useEffect, useState } from 'react';
 import { settingsAtom } from '@/lib/atoms/settings';
@@ -37,7 +38,7 @@ export function DashboardSidebar({ onClick }: { onClick?(): void }) {
 				});
 
 				if (error) {
-					console.error(error);
+					debug('Could not check for the updates', error);
 					return;
 				}
 

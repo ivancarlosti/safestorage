@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { FancyMultiSelect } from '@/components/FancyMultiSelect';
 import request from '@/lib/request';
+import { debug } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { customRevalidateTag } from '@/actions/Revalidate';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -70,7 +71,7 @@ export const BulkAlbumActions = ({
 
 			setAllAlbums(data.albums);
 		} catch (error) {
-			console.error(error);
+			debug('Could not fetch the albums', error instanceof Error ? error.message : error);
 		}
 	}, []);
 
@@ -96,7 +97,7 @@ export const BulkAlbumActions = ({
 
 			setSelectedAlbums(data.albums?.map((album: Album) => album.uuid) ?? []);
 		} catch (error) {
-			console.error(error);
+			debug('Could not fetch the albums of the files', error instanceof Error ? error.message : error);
 		}
 	}, [files]);
 

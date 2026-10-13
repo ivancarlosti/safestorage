@@ -4,7 +4,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import jetpack from 'fs-jetpack';
 import { SETTINGS } from '@/structures/settings.js';
 import { deleteTmpFile } from './File.js';
-import { log } from './Logger.js';
+import { log, logError } from './Logger.js';
 import previewUtil from './videoPreview/FragmentPreview.js';
 
 export const imageExtensions = ['.jpg', '.jpeg', '.gif', '.png', '.webp', '.svg', '.ico', '.heic', '.avif'];
@@ -38,7 +38,7 @@ const generateThumbnailForImage = async ({
 			// fail with "Output format webp is not available".
 			.output(path.join(thumbPath, output))
 			.on('error', error => {
-				log.error(error.message);
+				logError(log, 'Could not generate the image thumbnail', error);
 				return reject;
 			})
 			.on('end', resolve)
@@ -72,7 +72,7 @@ const generateThumbnailForVideo = async ({
 				size: '256x?'
 			})
 			.on('error', error => {
-				log.error(error.message);
+				logError(log, 'Could not generate the video thumbnail', error);
 				return reject;
 			})
 			.on('end', resolve);
@@ -87,7 +87,7 @@ const generateThumbnailForVideo = async ({
 
 		if (tmp) await deleteTmpFile(filePath);
 	} catch (error) {
-		log.error(error);
+		logError(log, 'Could not generate the video preview', error);
 	}
 };
 

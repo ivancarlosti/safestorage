@@ -16,8 +16,10 @@ export default async function Home() {
 		}
 	});
 
-	if (error) {
-		console.log(error);
+	// The fallback below already tells the visitor what happened and the
+	// backend logs the cause, so this stays a development aid
+	if (error && process.env.NODE_ENV !== 'production') {
+		console.error(error);
 	}
 
 	if (!settings) {

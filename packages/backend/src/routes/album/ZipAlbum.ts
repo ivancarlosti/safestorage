@@ -5,6 +5,7 @@ import moment from 'moment';
 import prisma from '@/structures/database.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { createZip } from '@/utils/File.js';
+import { logError } from '@/utils/Logger.js';
 
 export const options = {
 	// url: '/album/:identifier/zip',
@@ -83,7 +84,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		const fileName = `${SETTINGS.serviceName}-${identifier}.zip`;
 		await res.download(filePath, fileName);
 	} catch (error) {
-		res.log.error(error);
+		logError(res.log, 'Could not download the album as a zip', error);
 		void res.internalServerError('There was a problem downloading the album');
 	}
 };

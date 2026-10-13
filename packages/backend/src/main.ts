@@ -12,7 +12,7 @@ import { cleanup } from 'unzipit';
 import Routes from './structures/routes.js';
 import { SETTINGS, loadSettings } from './structures/settings.js';
 import Docs from './utils/Docs.js';
-import { log } from './utils/Logger.js';
+import { log, logError } from './utils/Logger.js';
 import Requirements from './utils/Requirements.js';
 import { jumpstartStatistics } from './utils/StatsGenerator.js';
 import { startUpdateCheckSchedule } from './utils/UpdateCheck.js';
@@ -47,13 +47,11 @@ process.on('SIGTERM', async () => {
 
 // Stray errors and exceptions capturers
 process.on('uncaughtException', error => {
-	server.log.error('Uncaught Exception:');
-	server.log.error(error);
+	logError(server.log, 'Uncaught exception', error);
 });
 
 process.on('unhandledRejection', error => {
-	server.log.error('Unhandled Rejection:');
-	server.log.error(error);
+	logError(server.log, 'Unhandled rejection', error);
 });
 
 const start = async () => {
@@ -94,7 +92,7 @@ const start = async () => {
 		if (error.statusCode) {
 			return res.send(error);
 		} else {
-			server.log.error(error);
+			logError(server.log, 'Request failed', error);
 			return res.internalServerError('Something went wrong');
 		}
 	});

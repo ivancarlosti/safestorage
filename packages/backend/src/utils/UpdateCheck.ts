@@ -47,8 +47,7 @@ export const checkForUpdates = async () => {
 	const res = await fetch('https://api.github.com/repos/ivancarlosti/safestorage/releases');
 
 	if (!res.ok || res.status !== 200) {
-		log.error('Failed to check for updates');
-		log.error(await res.json());
+		log.error(`Failed to check for updates (HTTP ${res.status})`);
 		clearUpdate();
 		return;
 	}

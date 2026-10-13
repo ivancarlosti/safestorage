@@ -12,6 +12,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { getUniqueFileIdentifier, constructFilePublicLink, deleteTmpFile, handleUploadFile } from '@/utils/File.js';
+import { logError } from '@/utils/Logger.js';
 import { validateAlbum } from '@/utils/UploadHelpers.js';
 import { getUsedQuota } from '@/utils/User.js';
 
@@ -223,7 +224,7 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 			}
 		});
 	} catch (error) {
-		req.log.error(error);
+		logError(req.log, 'Could not generate the signed URL', error);
 		void res.internalServerError('Could not generate signed URL');
 	}
 };
@@ -338,6 +339,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 				break;
 		}
 
-		res.log.error(error);
+		logError(res.log, 'Failed to process the file upload', error);
 	}
 };

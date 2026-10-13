@@ -23,8 +23,8 @@ export default async function LoginPage() {
 		}
 	});
 
-	if (error || !settings) {
-		console.log(error);
+	if ((error || !settings) && process.env.NODE_ENV !== 'production') {
+		console.error(error);
 	}
 
 	return (

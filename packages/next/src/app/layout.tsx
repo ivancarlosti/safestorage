@@ -43,8 +43,8 @@ export async function generateMetadata() {
 		}
 	});
 
-	if (error) {
-		console.log(error);
+	if (error && process.env.NODE_ENV !== 'production') {
+		console.error(error);
 	}
 
 	return {

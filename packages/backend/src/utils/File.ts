@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import prisma from '@/structures/database.js';
 import type { FileInProgress, RequestUser, User } from '@/structures/interfaces.js';
 import { SETTINGS } from '@/structures/settings.js';
-import { log } from '@/utils/Logger.js';
+import { log, logError } from '@/utils/Logger.js';
 import { generateThumbnails, getFileThumbnail, removeThumbs } from './Thumbnails.js';
 import { getHost } from './Util.js';
 
@@ -66,8 +66,7 @@ export const deleteTmpFile = async (uploadPath: string) => {
 	try {
 		await jetpack.removeAsync(uploadPath);
 	} catch (error) {
-		log.error(`There was an error removing the file at < ${uploadPath} >`);
-		log.error(error);
+		logError(log, `There was an error removing the file at < ${uploadPath} >`, error);
 	}
 };
 
@@ -145,8 +144,11 @@ export const deleteFiles = async ({
 			});
 		}
 	} catch (error) {
-		log.error(`There was an error removing one/all of the files < [${files.map(file => file.name).join(', ')}] >`);
-		log.error(error);
+		logError(
+			log,
+			`There was an error removing one/all of the files < [${files.map(file => file.name).join(', ')}] >`,
+			error
+		);
 	}
 };
 
@@ -174,7 +176,7 @@ export const purgeUserFiles = async (userId: number) => {
 			}
 		});
 	} catch (error) {
-		log.error(error);
+		logError(log, 'Failed to purge the files of a user', error);
 	}
 };
 
@@ -197,7 +199,7 @@ export const purgePublicFiles = async () => {
 			}
 		});
 	} catch (error) {
-		log.error(error);
+		logError(log, 'Failed to purge the public files', error);
 	}
 };
 
@@ -220,7 +222,7 @@ export const purgeIpFiles = async (ip: string) => {
 			}
 		});
 	} catch (error) {
-		log.error(error);
+		logError(log, 'Failed to purge the files of an IP address', error);
 	}
 };
 
@@ -235,7 +237,7 @@ export const createZip = (files: string[], albumUuid: string) => {
 
 		zip.writeZip(fileURLToPath(new URL(`../../../../uploads/zips/${albumUuid}.zip`, import.meta.url)));
 	} catch (error) {
-		log.error(error);
+		logError(log, `Failed to create the zip for the album ${albumUuid}`, error);
 	}
 };
 

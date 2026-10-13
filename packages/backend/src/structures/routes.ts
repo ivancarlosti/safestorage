@@ -1,10 +1,10 @@
 import process from 'node:process';
 import { URL, fileURLToPath, pathToFileURL } from 'node:url';
-import { inspect } from 'node:util';
 import type { FastifyInstance, FastifyRequest, FastifyReply, HookHandlerDoneFunction } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import jetpack from 'fs-jetpack';
+import { logError } from '@/utils/Logger.js';
 import { addSpaces } from '@/utils/Util.js';
 import type { RouteOptions } from './interfaces.js';
 import { SETTINGS } from './settings.js';
@@ -122,8 +122,15 @@ export default {
 				}
 
 				// Insert built middlewares array into route's options object
+				// Only the shape of the route is logged: the whole route object,
+				// middlewares options included, used to be dumped here
 				if (options.debug) {
-					server.log.debug(inspect(options));
+					const middlewareNames = (options.middlewares ?? []).map(middleware =>
+						typeof middleware === 'string' ? middleware : String(middleware.name as string)
+					);
+					const middlewareList = middlewareNames.length > 0 ? middlewareNames.join(', ') : 'no middlewares';
+
+					server.log.debug(`Route ${options.method.toUpperCase()} ${options.url} [${middlewareList}]`);
 				}
 
 				// Check one last time if there's a schema attached to the options object
@@ -156,9 +163,7 @@ export default {
 					)} ${options.url}`
 				);
 			} catch (error) {
-				// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-				server.log.error(routeFile);
-				server.log.error(error);
+				logError(server.log, `Failed to load the route file ${routeFile}`, error);
 			}
 		}
 	}

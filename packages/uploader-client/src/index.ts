@@ -259,7 +259,7 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 								options.onError?.(uuid, new Error('No URL returned by the server'));
 							}
 						} catch (error) {
-							console.log(error);
+							debug('There was a problem parsing the JSON response', error instanceof Error ? error.message : error);
 							options.onError?.(uuid, new Error('There was a problem parsing the JSON response'));
 						}
 					}
@@ -278,7 +278,7 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 			}
 		} catch (error: any) {
 			if (uploader.paused || uploader.offline) return;
-			console.log(error);
+			debug('There was a problem sending a chunk', error instanceof Error ? error.message : error);
 			manageRetries(index);
 		}
 	};

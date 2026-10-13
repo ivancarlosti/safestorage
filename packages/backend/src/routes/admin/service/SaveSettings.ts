@@ -7,6 +7,7 @@ import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import type { SETTINGS } from '@/structures/settings.js';
 import { loadSettings } from '@/structures/settings.js';
+import { logError } from '@/utils/Logger.js';
 import { isValidSortOrder } from '@/utils/SortOrder.js';
 import { updateCheck, startUpdateCheckSchedule, stopUpdateCheckSchedule } from '@/utils/UpdateCheck.js';
 
@@ -106,7 +107,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			stopUpdateCheckSchedule();
 		}
 	} catch (error) {
-		req.log.error(error);
+		logError(req.log, 'Could not save the settings', error);
 		void res.internalServerError(error as string);
 	}
 };

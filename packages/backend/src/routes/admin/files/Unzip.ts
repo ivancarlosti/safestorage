@@ -13,6 +13,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { handleUploadFile } from '@/utils/File.js';
+import { logError } from '@/utils/Logger.js';
 
 const require = createRequire(import.meta.url);
 setOptions({
@@ -96,8 +97,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			});
 		}
 	} catch (error) {
-		req.log.error(`There was an error unzipping the file at < ${zipPath} >`);
-		req.log.error(error);
+		logError(req.log, `There was an error unzipping the file at < ${zipPath} >`, error);
 		void res.badRequest('An error occurred while unzipping the file');
 		return;
 	}

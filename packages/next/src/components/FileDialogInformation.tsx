@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip } from './Tooltip';
 import { Button } from './ui/button';
 import request from '@/lib/request';
+import { debug } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useSetAtom } from 'jotai';
 import { isDialogOpenAtom } from '@/lib/atoms/fileDialog';
@@ -95,7 +96,7 @@ export const FileDialogInformation = ({
 
 				toast.success('File removed from album');
 			} catch (error) {
-				console.error(error);
+				debug('Could not remove the file from the album', error instanceof Error ? error.message : error);
 			}
 		},
 		[file?.uuid]
@@ -133,7 +134,7 @@ export const FileDialogInformation = ({
 
 				toast.success('Tag removed from file');
 			} catch (error) {
-				console.error(error);
+				debug('Could not remove the tag from the file', error instanceof Error ? error.message : error);
 			}
 		},
 		[file?.uuid]
@@ -185,7 +186,7 @@ export const FileDialogInformation = ({
 			setFileAlbums(userFile.file.albums);
 			setFileTags(userFile.file.tags);
 		} catch (error) {
-			console.error(error);
+			debug('Could not fetch the file information', error instanceof Error ? error.message : error);
 		}
 	}, [file?.uuid, type]);
 

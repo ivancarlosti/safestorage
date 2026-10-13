@@ -16,7 +16,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ identifier
 				}
 			});
 		} catch (error) {
-			console.error('Failed to update link view count', error);
+			if (process.env.NODE_ENV !== 'production') console.error('Failed to update link view count', error);
 		}
 	})();
 

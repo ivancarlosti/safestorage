@@ -3,7 +3,7 @@ import request from '@/lib/request';
 import { toast } from 'sonner';
 import { FileQuestionIcon, Loader2Icon } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { cn, debug } from '@/lib/utils';
 
 export const FileTextViewer = ({ uuid }: { readonly uuid?: string }) => {
 	const [content, setContent] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export const FileTextViewer = ({ uuid }: { readonly uuid?: string }) => {
 				toast.error(error);
 			}
 		} catch (error) {
-			console.error(error);
+			debug('Could not fetch the file contents', error instanceof Error ? error.message : error);
 		} finally {
 			setLoading(false);
 		}

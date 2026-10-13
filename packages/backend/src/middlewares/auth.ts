@@ -88,7 +88,9 @@ export default (
 			apiKey: user.apiKey,
 			passwordEditedAt: user.passwordEditedAt
 		};
-		req.log.debug(`Request from user: ${user.username}`);
+		// The username is PII and the id is all that is needed to correlate
+		// the request with the rest of the log
+		req.log.debug(`Request from user ${user.id}`);
 		next();
 	});
 };

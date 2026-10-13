@@ -6,6 +6,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { logError } from '@/utils/Logger.js';
 
 export const schema = {
 	summary: 'Complete multipart upload',
@@ -118,7 +119,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 
 		await res.code(200).send({ identifier: key });
 	} catch (error: any) {
-		req.log.error(error);
+		logError(req.log, 'Could not complete the multipart upload', error);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (error?.name === 'NoSuchUpload') {

@@ -7,6 +7,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { logError } from '@/utils/Logger.js';
 
 export const schema = {
 	summary: 'Change password',
@@ -68,7 +69,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	try {
 		hash = await bcrypt.hash(newPassword, 10);
 	} catch (error) {
-		res.log.error(error);
+		logError(res.log, 'Could not hash the new password', error);
 		void res.internalServerError('There was a problem processing your account');
 		return;
 	}

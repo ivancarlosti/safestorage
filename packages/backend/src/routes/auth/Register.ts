@@ -9,6 +9,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { logError } from '@/utils/Logger.js';
 
 export const schema = {
 	summary: 'Register',
@@ -101,7 +102,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 	try {
 		hash = await bcrypt.hash(password, 10);
 	} catch (error) {
-		res.log.error(error);
+		logError(res.log, 'Could not hash the password', error);
 		void res.internalServerError('There was a problem processing your account');
 		return;
 	}
