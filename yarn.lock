@@ -3538,7 +3538,7 @@ __metadata:
     jotai: "npm:^2.7.2"
     jotai-immer: "npm:^0.4.3"
     lucide-react: "npm:0.365.0"
-    media-chrome: "npm:^2.2.5"
+    media-chrome: "npm:^4.19.3"
     next: "npm:15.5.27"
     next-mdx-remote: "npm:^6.0.0"
     next-themes: "npm:^0.4.6"
@@ -5565,6 +5565,15 @@ __metadata:
   version: 2.0.1
   resolution: "ccount@npm:2.0.1"
   checksum: 10c0/3939b1664390174484322bc3f45b798462e6c07ee6384cb3d645e0aa2f318502d174845198c1561930e1d431087f74cf1fe291ae9a4722821a9f4ba67e574350
+  languageName: node
+  linkType: hard
+
+"ce-la-react@npm:^0.3.2":
+  version: 0.3.2
+  resolution: "ce-la-react@npm:0.3.2"
+  peerDependencies:
+    react: ">=17.0.0"
+  checksum: 10c0/cbee7602c1e4efc1278e5c0847b8201fa291ad3a5bde4137da139a7b6a2b7b8de029530fb2c474e62fcc544e62669003e4a34fd1abafac8110d89ffade588c37
   languageName: node
   linkType: hard
 
@@ -9730,10 +9739,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"media-chrome@npm:^2.2.5":
-  version: 2.2.5
-  resolution: "media-chrome@npm:2.2.5"
-  checksum: 10c0/ba2d6884394b954a1dd2a639cf534d5139464f5862041062001a4f500e2ad7a4b996d8c12e676ebf8830ff09f12375598f4abb6fc6e6c81654c6c5836250c23e
+"media-chrome@npm:^4.19.3":
+  version: 4.19.3
+  resolution: "media-chrome@npm:4.19.3"
+  dependencies:
+    ce-la-react: "npm:^0.3.2"
+  checksum: 10c0/c3f53d13339cf66f0ca5104ef86625848ae70c5505e3efeffdc5092dfe0041e75dfe16f10767d4c2da4cec9eea6693ec9886ac6150e3ac63f1f22fbadb5d6c7b
   languageName: node
   linkType: hard
 
