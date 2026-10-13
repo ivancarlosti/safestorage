@@ -3547,7 +3547,7 @@ __metadata:
     prettier: "npm:^3.9.10"
     react: "npm:^19.0.0"
     react-aria-components: "npm:^1.22.1"
-    react-compare-slider: "npm:^4.0.0-0"
+    react-compare-slider: "npm:^4.0.0"
     react-dom: "npm:^19.0.0"
     react-hook-form: "npm:^7.90.0"
     sharp: "npm:^0.35.5"
@@ -11494,13 +11494,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compare-slider@npm:^4.0.0-0":
-  version: 4.0.0-0
-  resolution: "react-compare-slider@npm:4.0.0-0"
+"react-compare-slider@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "react-compare-slider@npm:4.0.0"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
-  checksum: 10c0/90971a043af35551c267f832e7849ecff33286351bf812bcb21346c7ca26255cef3dd35a399a6a612e84f2bb76d1d255fc8ae9b792302d334439fc23bd2b2f81
+  checksum: 10c0/2cd5b23a5b8d8fce9ced19e9fd6c9fcf3f7ca5ffa6b6d6f862392fe76ae471c061e2291fd678d991d9fa7d9d1c358224eb4a056e2d4bff73675d63907160e3ee
   languageName: node
   linkType: hard
 
