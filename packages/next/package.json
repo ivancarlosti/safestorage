@@ -45,7 +45,7 @@
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
 		"file-saver": "^2.0.5",
-		"framer-motion": "^11.18.2",
+		"framer-motion": "^14.1.0",
 		"immer": "^11.1.21",
 		"jotai": "^2.7.2",
 		"jotai-immer": "^0.4.3",
