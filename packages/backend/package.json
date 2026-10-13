@@ -35,7 +35,7 @@
 		"@sindresorhus/slugify": "^3.0.1",
 		"adm-zip": "^0.6.1",
 		"bcryptjs": "^3.0.3",
-		"better-sqlite3": "^12.11.1",
+		"better-sqlite3": "^13.0.3",
 		"chokidar": "^3.6.0",
 		"cross-env": "^10.1.0",
 		"dotenv": "^18.0.7",
