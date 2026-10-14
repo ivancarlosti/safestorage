@@ -33,6 +33,17 @@ throwaway container with temporary volumes, seeds it with **synthetic demo
 data**, captures the pages above and then removes everything (container and
 data) again. Nothing from a real instance ends up in the images.
 
+The committed set was captured from an image **built from the checkout** instead:
+
+```bash
+docker build -t safestorage:local .                 # repository root
+cd docs/screenshots
+SAFESTORAGE_IMAGE=safestorage:local ./generate.sh
+```
+
+That is what you want whenever the change being documented lives in the source —
+a published image only ever shows the state of its own release.
+
 `authMethod` is resolved on the server from `AUTH_METHOD`, so the single sign-on
 login screen cannot be captured from the same instance as the account form. The
 script therefore boots a **second** throwaway container with

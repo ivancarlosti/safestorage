@@ -39,11 +39,14 @@ Geometry (identical in all three source files):
 | `packages/next/scripts/generate-icons.mjs` | new reproducible generator (`sharp` + a hand-rolled PNG-in-ICO writer) |
 | `packages/next/package.json` | added the `icons` script |
 
-Consumers were **not** touched: `Header.tsx`, `Footer.tsx`, `(home)/page.tsx`,
-the auth pages and `app/og/route.tsx` import the component, and the raster files
-keep their names/sizes, so `layout.tsx`, `site.webmanifest` and
-`browserconfig.xml` need no edits either. `logo.svg` is not imported by any code
-— it stays as the public master the raster set is generated from.
+Consumers mostly stayed untouched, because they import the component and the
+raster files keep their names/sizes — so `layout.tsx`, `site.webmanifest` and
+`browserconfig.xml` need no edits, and `Header.tsx`, `Footer.tsx`,
+`(home)/page.tsx` and the auth pages only size the mark through `className`.
+`app/og/route.tsx` was the exception: it had the *old* aspect ratio baked into
+its boxes (`175px`/`184px`, plus the `234px`/`245px` component defaults), so both
+are square now. `logo.svg` is not imported by any code — it stays as the public
+master the raster set is generated from.
 
 ## Notes
 
@@ -53,10 +56,34 @@ keep their names/sizes, so `layout.tsx`, `site.webmanifest` and
   dependency was added.
 - Raster sizes are unchanged from before: 16/32, 180 (Apple), 192/512 (PWA),
   270 for `mstile-150x150.png` (the file was already 270×270), ICO 16/32/48.
-- `app/og/route.tsx` passes `width="175px" height="184px"`; with a square
-  `viewBox` and the default `xMidYMid meet` this letterboxes by a couple of
-  pixels — harmless, and the file was left untouched.
+- `app/og/route.tsx` carried the old aspect ratio in its boxes (`175px`/`184px`
+  for the section variant and the `234px`/`245px` component defaults). Both are
+  square now, and they match the boxes the admin-uploaded logo already used:
+  `175px`/`175px` mirrors `w-44 h-44` and `208px`/`208px` mirrors `w-52 h-52`,
+  so the OG card is the same size with or without a custom logo.
 - Regenerate the rasters any time with
   `yarn workspace @safestorage/next icons`.
 - Verified: `typecheck` and `lint` pass; rasterised pixels confirm the plate is
   `#2563eb`, the arrow white and the corners transparent.
+
+## Follow-up: README screenshots
+
+The 14 images in [`docs/screenshots`](../docs/screenshots) are generated, so they
+still showed the old mark — and, because they had not been re-captured since
+before the MariaDB switch, a stale SQLite-era `snippet.png`. All of them were
+regenerated from an image built from this checkout:
+
+```bash
+docker build -t safestorage:local .
+cd docs/screenshots
+SAFESTORAGE_IMAGE=safestorage:local ./generate.sh
+```
+
+Beyond the mark itself this also picks up the MariaDB-era demo snippet, so the
+committed set now matches the source. `api-docs.png` has no brand mark in it (the
+Scalar page is served by the backend) and was regenerated like the rest.
+
+The stale build output that still contained the old paths
+(`packages/next/.next`, ~1 GB of regenerable chunks) was deleted; the tree no
+longer holds a single copy of the old art.
+

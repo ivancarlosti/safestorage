@@ -83,7 +83,9 @@ export async function GET(request: Request) {
 							<img tw="w-44 h-44" src={data.logoURL} />
 						</picture>
 					) : (
-						<SafeStorageDefaultLogo width="175px" height="184px" />
+						// Square, like the mark itself: the old art was 234x245, so a
+						// non-square box would now letterbox it.
+						<SafeStorageDefaultLogo width="175px" height="175px" />
 					)}
 
 					<h1
@@ -106,7 +108,8 @@ export async function GET(request: Request) {
 						</picture>
 					) : (
 						<picture tw="mt-4">
-							<SafeStorageDefaultLogo />
+							{/* Same square box as the `w-52 h-52` custom-logo sibling above. */}
+							<SafeStorageDefaultLogo width="208px" height="208px" />
 						</picture>
 					)}
 					<h1 tw="text-[100px] text-white" style={{ fontFamily: 'CalSans' }}>
