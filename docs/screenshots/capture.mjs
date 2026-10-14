@@ -7,7 +7,9 @@
  * referenced from the root README into `docs/screenshots`.
  *
  * Configuration (all optional):
- *   BASE_URL        Base URL of the instance (default http://localhost:24424)
+ *   BASE_URL        Base URL of the account instance (default http://localhost:24424)
+ *   KEYCLOAK_URL    Base URL of an instance booted with AUTH_METHOD=keycloak, used
+ *                   to capture the single sign-on login screen (skipped when unset)
  *   ADMIN_USERNAME  Login username (default `admin`)
  *   ADMIN_PASSWORD  Login password (default `admin`)
  *   OUTPUT_DIR      Where the PNGs are written (default this folder)
@@ -27,6 +29,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // secret (and `*user*name` / `*id` names such as ADMIN_USERNAME as sensitive
 // outright), so this script logs static messages only.
 const BASE_URL = (process.env.BASE_URL ?? 'http://localhost:24424').replace(/\/+$/, '');
+// `authMethod` is resolved server-side from the environment, so the single
+// sign-on login screen can only be photographed on an instance booted with
+// `AUTH_METHOD=keycloak`. That instance is booted separately (see generate.sh).
+const KEYCLOAK_URL = (process.env.KEYCLOAK_URL ?? '').replace(/\/+$/, '');
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin';
 const OUTPUT_DIR = process.env.OUTPUT_DIR ? path.resolve(process.env.OUTPUT_DIR) : here;
@@ -362,13 +368,17 @@ const main = async () => {
 		);
 	};
 
-	const shot = async (name, url, { fullPage = false, waitFor, settle = 1200, target = page } = {}) => {
+	const shot = async (
+		name,
+		url,
+		{ fullPage = false, waitFor, settle = 1200, target = page, base = BASE_URL } = {}
+	) => {
 		// `networkidle` is the nicest signal for these pages, but it can be slow or
 		// never settle; falling back to `load` keeps the whole run moving.
 		try {
-			await target.goto(`${BASE_URL}${url}`, { waitUntil: 'networkidle', timeout: 20_000 });
+			await target.goto(`${base}${url}`, { waitUntil: 'networkidle', timeout: 20_000 });
 		} catch {
-			await target.goto(`${BASE_URL}${url}`, { waitUntil: 'load', timeout: 30_000 });
+			await target.goto(`${base}${url}`, { waitUntil: 'load', timeout: 30_000 });
 		}
 
 		if (waitFor) {
@@ -388,6 +398,18 @@ const main = async () => {
 	log('capturing pages');
 	await shot('home', '/', { fullPage: true, target: anonymousPage });
 	await shot('login', '/login', { waitFor: 'input', target: anonymousPage });
+	if (KEYCLOAK_URL) {
+		// The button is the only interactive element on this variant, so it is what
+		// we wait for instead of the account form's <input>.
+		await shot('login-keycloak', '/login', {
+			base: KEYCLOAK_URL,
+			waitFor: 'a[href="/api/auth/keycloak/login"]',
+			target: anonymousPage
+		});
+	} else {
+		log('KEYCLOAK_URL not set, skipping the single sign-on login capture');
+	}
+
 	await shot('dashboard', '/dashboard', { waitFor: 'img' });
 	await shot('albums', '/dashboard/albums');
 	await shot('album', `/dashboard/albums/${album.uuid}`, { waitFor: 'img' });

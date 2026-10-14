@@ -47,14 +47,15 @@ It runs as **one container** (nginx + Fastify backend + Next.js frontend) and ke
 
 Every image below comes from a real SafeStorage instance, seeded with synthetic demo data and captured by a headless browser. See [`docs/screenshots`](docs/screenshots) to regenerate them.
 
-|                                                                                               |                                                                                             |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **Landing page**<br>![The public landing page](docs/screenshots/home.png)                     | **Login**<br>![The login form](docs/screenshots/login.png)                                  |
-| **Albums**<br>![The album list](docs/screenshots/albums.png)                                  | **Album**<br>![A single album with its files](docs/screenshots/album.png)                   |
-| **Public album**<br>![A shared album page](docs/screenshots/public-album.png)                 | **Tags**<br>![The tag list](docs/screenshots/tags.png)                                      |
-| **Snippets**<br>![The snippet list](docs/screenshots/snippets.png)                            | **Snippet**<br>![A single code snippet](docs/screenshots/snippet.png)                       |
-| **Short URLs**<br>![The short URL manager](docs/screenshots/short-urls.png)                   | **Admin · Settings**<br>![The admin settings page](docs/screenshots/admin-settings.png)     |
-| **Admin · Statistics**<br>![The admin statistics page](docs/screenshots/admin-statistics.png) | **API reference**<br>![The generated API reference at /docs](docs/screenshots/api-docs.png) |
+|                                                                                               |                                                                                                       |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Login · Account**<br>![The email and password login form](docs/screenshots/login.png)       | **Login · Single sign-on**<br>![The single sign-on login screen](docs/screenshots/login-keycloak.png) |
+| **Landing page**<br>![The public landing page](docs/screenshots/home.png)                     | **Albums**<br>![The album list](docs/screenshots/albums.png)                                          |
+| **Album**<br>![A single album with its files](docs/screenshots/album.png)                     | **Public album**<br>![A shared album page](docs/screenshots/public-album.png)                         |
+| **Tags**<br>![The tag list](docs/screenshots/tags.png)                                        | **Snippets**<br>![The snippet list](docs/screenshots/snippets.png)                                    |
+| **Snippet**<br>![A single code snippet](docs/screenshots/snippet.png)                         | **Short URLs**<br>![The short URL manager](docs/screenshots/short-urls.png)                           |
+| **Admin · Settings**<br>![The admin settings page](docs/screenshots/admin-settings.png)       | **Admin · Statistics**<br>![The admin statistics page](docs/screenshots/admin-statistics.png)         |
+| **API reference**<br>![The generated API reference at /docs](docs/screenshots/api-docs.png)   |                                                                                                       |
 
 ## Quick start (Docker)
 

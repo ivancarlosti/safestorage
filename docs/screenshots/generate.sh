@@ -17,7 +17,9 @@
 #   SAFESTORAGE_IMAGE=safestorage:local ./generate.sh          # use a locally built image
 #
 # The script starts a throwaway MariaDB container next to the application one, so
-# it needs no database of its own.
+# it needs no database of its own. It also starts a second application container
+# with `AUTH_METHOD=keycloak`, purely so the single sign-on login screen can be
+# photographed next to the account one.
 set -eu
 
 cd "$(dirname "$0")"
@@ -31,8 +33,17 @@ DB_CONTAINER="${SAFESTORAGE_DB_CONTAINER:-safestorage-screenshots-db}"
 NETWORK="${SAFESTORAGE_NETWORK:-safestorage-screenshots-net}"
 BASE_URL="${SAFESTORAGE_BASE_URL:-http://localhost:${PORT}}"
 
+# The single sign-on login screen only renders when the instance was booted with
+# `AUTH_METHOD=keycloak`, so a second throwaway container serves it on its own
+# port. The provider is never contacted (the login page only links to it), which
+# is why dummy `KEYCLOAK_*` values are enough to get the page rendered.
+KEYCLOAK_PORT="${SAFESTORAGE_KEYCLOAK_PORT:-$((PORT + 1))}"
+KEYCLOAK_CONTAINER="${SAFESTORAGE_KEYCLOAK_CONTAINER:-safestorage-screenshots-keycloak}"
+KEYCLOAK_URL="${SAFESTORAGE_KEYCLOAK_URL:-}"
+
 DATA_DIR=""
 STARTED_CONTAINER=0
+STARTED_KEYCLOAK=0
 STARTED_DB=0
 STARTED_NETWORK=0
 
@@ -41,6 +52,10 @@ cleanup() {
 		echo "[generate] stopping ${CONTAINER}"
 		# Anonymous volumes are removed together with the container.
 		docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+	fi
+	if [ "$STARTED_KEYCLOAK" = "1" ]; then
+		echo "[generate] stopping ${KEYCLOAK_CONTAINER}"
+		docker rm -f "$KEYCLOAK_CONTAINER" >/dev/null 2>&1 || true
 	fi
 	if [ "$STARTED_DB" = "1" ]; then
 		echo "[generate] stopping ${DB_CONTAINER}"
@@ -59,6 +74,7 @@ if [ -z "${SAFESTORAGE_BASE_URL:-}" ]; then
 	echo "[generate] starting ${IMAGE} on port ${PORT}"
 
 	docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+	docker rm -f "$KEYCLOAK_CONTAINER" >/dev/null 2>&1 || true
 	docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true
 	docker network rm "$NETWORK" >/dev/null 2>&1 || true
 	docker network create "$NETWORK" >/dev/null
@@ -102,8 +118,34 @@ if [ -z "${SAFESTORAGE_BASE_URL:-}" ]; then
 		"$IMAGE" >/dev/null
 
 	STARTED_CONTAINER=1
+
+	# Second instance: same image and database, but `AUTH_METHOD=keycloak`, so its
+	# `/login` renders the single sign-on button. It is never logged into and its
+	# account seeding is a no-op under keycloak.
+	echo "[generate] starting the single sign-on instance on port ${KEYCLOAK_PORT}"
+	docker run -d --rm \
+		--name "$KEYCLOAK_CONTAINER" \
+		--network "$NETWORK" \
+		-p "${KEYCLOAK_PORT}:80" \
+		-e AUTH_METHOD=keycloak \
+		-e KEYCLOAK_BASE_URL=https://sso.screenshots.invalid \
+		-e KEYCLOAK_REALM=safestorage \
+		-e KEYCLOAK_CLIENT_ID=safestorage \
+		-e "KEYCLOAK_REDIRECT_URI=http://localhost:${KEYCLOAK_PORT}/api/auth/keycloak/callback" \
+		-e KEYCLOAK_RESTRICT=example.com \
+		-e "DATABASE_URL=mysql://safestorage:safestorage@${DB_CONTAINER}:3306/safestorage" \
+		-e TZ=UTC \
+		-v /app/uploads \
+		-v /app/logs \
+		"$IMAGE" >/dev/null
+
+	STARTED_KEYCLOAK=1
+	KEYCLOAK_URL="http://localhost:${KEYCLOAK_PORT}"
 else
 	echo "[generate] using the instance already running at ${BASE_URL}"
+	if [ -z "$KEYCLOAK_URL" ]; then
+		echo '[generate] no SAFESTORAGE_KEYCLOAK_URL set, the single sign-on login will be skipped'
+	fi
 fi
 
 if [ ! -d node_modules/playwright ]; then
@@ -111,6 +153,6 @@ if [ ! -d node_modules/playwright ]; then
 	npm install --no-fund --no-audit
 fi
 
-BASE_URL="$BASE_URL" ADMIN_PASSWORD="$ADMIN_PASSWORD" node capture.mjs
+BASE_URL="$BASE_URL" KEYCLOAK_URL="$KEYCLOAK_URL" ADMIN_PASSWORD="$ADMIN_PASSWORD" node capture.mjs
 
 echo "[generate] done. Screenshots written to $(pwd)"
