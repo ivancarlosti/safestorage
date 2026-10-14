@@ -1,5 +1,4 @@
 import type { FastifyReply } from 'fastify';
-import moment from 'moment';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
@@ -41,7 +40,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
-	const now = moment.utc().toDate();
+	const now = new Date();
 	// Prisma doesn't support updating relations in bulk :D
 	// https://github.com/prisma/prisma/issues/3143
 	//

@@ -1,6 +1,5 @@
 import slugify from '@sindresorhus/slugify';
 import type { FastifyReply } from 'fastify';
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
@@ -53,7 +52,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	}
 
 	const { url, vanity } = req.body as { url: string; vanity?: string | undefined };
-	const now = moment.utc().toDate();
+	const now = new Date();
 
 	let linkToUse;
 

@@ -1,5 +1,4 @@
 import type { FastifyReply } from 'fastify';
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
@@ -55,7 +54,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
-	const now = moment.utc().toDate();
+	const now = new Date();
 	const uniqueIdentifier = await getUniqueSnippetIdentifier();
 	if (!uniqueIdentifier) {
 		void res.internalServerError('Couldnt allocate identifier for snippet');

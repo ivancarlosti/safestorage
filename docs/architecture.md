@@ -71,7 +71,7 @@ Cron jobs run in-process (`node-schedule`): nightly **statistics** collection an
 A Next.js 14 **App Router** application (`output: 'standalone'`):
 
 -   **`src/app`** — routes: home (`(home)`), auth (`(auth)`), dashboard, `s/[identifier]` (public snippets), `a/…` (public albums), `l/…` (links), `compare/…`, `og/…` (Open Graph image generation).
--   **`src/components`** — UI built on Tailwind CSS + Radix UI primitives, plus app-specific components (upload dropzone, image grid, file viewer).
+-   **`src/components`** — UI built on Tailwind CSS + Radix UI primitives for overlays and form controls, with `react-aria-components` supplying the accessible drag-and-drop dropzone and file-trigger primitives (which have no Radix equivalent), plus app-specific components (upload dropzone, image grid, file viewer).
 -   **`src/actions`** — server actions.
 -   **`src/lib`** — API client helpers and utilities.
 -   **`src/hooks`** — shared React hooks.

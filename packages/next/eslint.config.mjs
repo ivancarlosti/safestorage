@@ -70,8 +70,9 @@ export default [
 			parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname }
 		},
 		rules: {
-			// The frontend sorts imports with @ianvs/prettier-plugin-sort-imports,
-			// exactly like the legacy config did.
+			// The frontend does not enforce import order. The legacy config relied
+			// on `@ianvs/prettier-plugin-sort-imports`, which is no longer
+			// installed.
 			'import-x/order': 'off',
 			// `process.env.NEXT_PUBLIC_*` is inlined by the Next.js compiler, so it
 			// must not be replaced by a `node:process` import.

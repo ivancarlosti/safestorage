@@ -1,7 +1,6 @@
 import { URL, fileURLToPath } from 'node:url';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import jetpack from 'fs-jetpack';
-import moment from 'moment';
 import prisma from '@/structures/database.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { createZip } from '@/utils/File.js';
@@ -76,7 +75,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 				uuid: album.uuid
 			},
 			data: {
-				zippedAt: moment.utc().toDate()
+				zippedAt: new Date()
 			}
 		});
 

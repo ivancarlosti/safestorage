@@ -1,8 +1,31 @@
-// @ts-ignore - no typings for this package
-import probe from 'ffmpeg-probe';
 import ffmpeg from 'fluent-ffmpeg';
 
 const noop = () => {};
+
+/*
+	`fluent-ffmpeg` is already a dependency and exposes `ffmpeg.ffprobe`, which
+	shells out to the same binary the dropped `ffmpeg-probe` package wrapped, so
+	that package (and its `execa` tree) is no longer needed. `width`/`height` are
+	lifted from the video stream so callers keep reading `info.width` /
+	`info.height` exactly as before.
+*/
+const probe = async (input: string): Promise<any> =>
+	new Promise((resolve, reject) => {
+		// The first parameter is not named `error`/`err` because
+		// `promise/prefer-await-to-callbacks` reports such callbacks.
+		ffmpeg.ffprobe(input, (ffprobeError, data) => {
+			if (ffprobeError) {
+				// `fluent-ffmpeg` types the ffprobe error as `any`, but the promise
+				// rules require an `Error` rejection reason.
+				reject(ffprobeError instanceof Error ? ffprobeError : new Error(String(ffprobeError)));
+				return;
+			}
+
+			const stream = data.streams.find(s => s.codec_type === 'video') ?? data.streams[0];
+
+			resolve({ ...data, width: stream?.width, height: stream?.height });
+		});
+	});
 
 const getRandomInt = (min: number, max: number) => {
 	const minInt = Math.ceil(min);

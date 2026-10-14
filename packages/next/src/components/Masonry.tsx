@@ -8,7 +8,7 @@ import { isFileVideo } from '@/lib/file';
 import { cn } from '@/lib/utils';
 import { Masonry as Plock } from '@/components/ui/plock';
 import { FileThumbnail } from './FileThumbnail';
-import { useLongPress } from '@uidotdev/usehooks';
+import { useLongPress } from '@/hooks/useLongPress';
 import { selectedFilesAtom, selectionActiveAtom } from '@/lib/atoms/selectedFiles';
 import { CircleCheckIcon, CircleIcon } from 'lucide-react';
 import { Button } from './ui/button';

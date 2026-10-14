@@ -1,5 +1,4 @@
 import type { FastifyReply } from 'fastify';
-import moment from 'moment';
 import randomstring from 'randomstring';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
@@ -30,7 +29,7 @@ export const options = {
 };
 
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
-	const now = moment.utc().toDate();
+	const now = new Date();
 	const apiKey = randomstring.generate(64);
 
 	await prisma.users.update({

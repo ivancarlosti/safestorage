@@ -7,7 +7,6 @@ import slugify from '@sindresorhus/slugify';
 import Zip from 'adm-zip';
 import type { FastifyRequest } from 'fastify';
 import jetpack from 'fs-jetpack';
-import moment from 'moment';
 import randomstring from 'randomstring';
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '@/structures/database.js';
@@ -329,7 +328,7 @@ export const storeFileToDb = async (
 	file: FileInProgress,
 	albumId?: number | null
 ) => {
-	const now = moment.utc().toDate();
+	const now = new Date();
 
 	const data = {
 		userId: user?.id ?? undefined!,
@@ -380,7 +379,7 @@ export const storeFileToDb = async (
 };
 
 export const updateFileOnDb = async (user: RequestUser | User | undefined, file: FileInProgress & { uuid: string }) => {
-	const now = moment.utc().toDate();
+	const now = new Date();
 
 	const data = {
 		userId: user?.id ?? undefined!,
@@ -403,7 +402,7 @@ export const updateFileOnDb = async (user: RequestUser | User | undefined, file:
 };
 
 export const saveFileToAlbum = async (albumId: number, fileId: number) => {
-	const now = moment.utc().toDate();
+	const now = new Date();
 	await prisma.files.update({
 		where: {
 			id: fileId

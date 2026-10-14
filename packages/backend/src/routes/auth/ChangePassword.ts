@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import type { FastifyReply } from 'fastify';
-import moment from 'moment';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
@@ -74,7 +73,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
-	const now = moment.utc().toDate();
+	const now = new Date();
 	await prisma.users.update({
 		where: {
 			id: req.user.id

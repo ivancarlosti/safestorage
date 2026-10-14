@@ -76,8 +76,8 @@ export default [
 			'import-x/no-useless-path-segments': 'error',
 			// Import order is enforced on the backend (`newlines-between: never`,
 			// alphabetical, grouped) and deliberately off in the frontend, which
-			// sorts imports with `@ianvs/prettier-plugin-sort-imports` instead.
-			// Options copied from the resolved legacy config.
+			// does not enforce import order. Options copied from the resolved
+			// legacy config.
 			'import-x/order': [
 				'error',
 				{

@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
@@ -131,7 +130,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			data: {
 				used: true,
 				usedBy: userUuid,
-				editedAt: moment.utc().toDate()
+				editedAt: new Date()
 			}
 		});
 	}
