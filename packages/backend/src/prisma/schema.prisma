@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-	provider = "sqlite"
+	provider = "mysql"
 }
 
 model users {
@@ -34,13 +34,13 @@ model files {
 	id Int @id @default(autoincrement())
 	uuid String @unique
 	userId Int?
-	name String
-	original String
-	type String
+	name String @db.VarChar(255)
+	original String @db.VarChar(1024)
+	type String @db.VarChar(255)
 	size String
 	hash String
 	ip String
-	sourceUrl String?
+	sourceUrl String? @db.VarChar(1024)
 	isS3 Boolean @default(false)
 	isWatched Boolean @default(false)
 	createdAt DateTime @default(now())
@@ -55,8 +55,8 @@ model files {
 model quarantineFiles {
 	fileId String @unique
 	file files @relation(fields: [fileId], references: [uuid])
-	name String
-	reason String?
+	name String @db.VarChar(255)
+	reason String? @db.Text
 }
 
 model snippets {
@@ -64,9 +64,9 @@ model snippets {
 	uuid String @unique
 	userId Int?
 	identifier String @unique
-	name String
-	description String?
-	content String
+	name String @db.VarChar(255)
+	description String? @db.Text
+	content String @db.LongText
 	language String
 	parentUuid String?
 	createdAt DateTime @default(now())
@@ -79,7 +79,7 @@ model shortenedLinks {
 	user users? @relation(fields: [userId], references: [id])
 	userId Int?
 	identifier String @unique
-	destination String
+	destination String @db.VarChar(2048)
 	views Int @default(0)
 	createdAt DateTime @default(now())
 }
@@ -88,8 +88,8 @@ model albums {
 	id Int @id @default(autoincrement())
 	uuid String @unique
 	userId Int
-	name String
-	description String?
+	name String @db.VarChar(255)
+	description String? @db.Text
 	zippedAt DateTime?
 	createdAt DateTime @default(now())
 	editedAt DateTime?
@@ -101,7 +101,7 @@ model albums {
 model bans {
 	id Int @id @default(autoincrement())
 	ip String
-	reason String?
+	reason String? @db.Text
 	createdAt DateTime @default(now())
 }
 
@@ -134,16 +134,16 @@ model settings {
 	generatedAlbumLength Int
 	generatedLinksLength Int @default(8)
 	saveDuplicatesToAlbum Boolean @default(false)
-	blockedExtensions String
+	blockedExtensions String @db.Text
 	blockNoExtension Boolean
 	publicMode Boolean
 	userAccounts Boolean
 	disableStatisticsCron Boolean
 	disableUpdateCheck Boolean @default(false)
-	backgroundImageURL String
-	logoURL String
-	metaDescription String
-	metaKeywords String
+	backgroundImageURL String @db.VarChar(1024)
+	logoURL String @db.VarChar(1024)
+	metaDescription String @db.Text
+	metaKeywords String @db.Text
 	metaTwitterHandle String
 	metaDomain String @default("")
 	serveUploadsFrom String @default("")
@@ -152,16 +152,16 @@ model settings {
 	useNetworkStorage Boolean @default(false)
 	useUrlShortener Boolean @default(false)
 	generateThumbnails Boolean @default(true)
-	privacyPolicyPageContent String @default("")
-	termsOfServicePageContent String @default("")
-	rulesPageContent String @default("")
+	privacyPolicyPageContent String @db.LongText
+	termsOfServicePageContent String @db.LongText
+	rulesPageContent String @db.LongText
 	S3Region String @default("")
 	S3Bucket String @default("")
 	S3AccessKey String @default("")
 	S3SecretKey String @default("")
-	S3Endpoint String @default("")
+	S3Endpoint String @db.VarChar(1024) @default("")
 	S3PathStyle Boolean @default(false)
-	S3PublicUrl String @default("")
+	S3PublicUrl String @db.VarChar(1024) @default("")
 	defaultSortOrder String @default("createdAt:desc")
 }
 
@@ -169,7 +169,7 @@ model statistics {
 	id Int @id @default(autoincrement())
 	batchId Int?
 	type String?
-	data String?
+	data String? @db.LongText
 	createdAt DateTime @default(now())
 }
 

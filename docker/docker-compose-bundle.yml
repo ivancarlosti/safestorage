@@ -1,0 +1,89 @@
+# SafeStorage - bundled deployment (application + database)
+#
+# This compose file is the fastest way to get a working installation: it runs the
+# published SafeStorage image next to the official MariaDB image, so nothing has
+# to be installed or configured on the host besides Docker.
+#
+#   cp .env.example .env        # optional: edit ADMIN_PASSWORD / the passwords
+#   docker compose -f docker-compose-bundle.yml up -d
+#
+# Open http://<host>:<SAFESTORAGE_PORT> (default 24424) and log in as `admin`.
+#
+# Everything persistent lives in the named volumes declared at the bottom:
+# `uploads` (files, thumbnails, zips), `logs` and `mariadb` (the database). They
+# survive `docker compose ... down`; only `down -v` deletes them.
+#
+# Credentials below are defaults, they are not secrets until you publish the
+# instance. Change `MARIADB_PASSWORD`/`MARIADB_ROOT_PASSWORD` (uncomment the
+# matching lines in `.env`) before exposing it to the internet.
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: safestorage-mariadb
+    restart: unless-stopped
+    # utf8mb4 everywhere, with the same case-insensitive collation Prisma uses
+    # when it creates the tables (so `LIKE` behaves like it did on SQLite).
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-safestorage-root}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-safestorage}
+      MARIADB_USER: ${MARIADB_USER:-safestorage}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-safestorage}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - mariadb:/var/lib/mysql
+    healthcheck:
+      # Shipped by the MariaDB image: waits for the server to accept connections
+      # *and* to have finished its InnoDB initialisation.
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  safestorage:
+    image: ghcr.io/ivancarlosti/safestorage:${SAFESTORAGE_TAG:-latest}
+    container_name: safestorage
+    restart: unless-stopped
+    # Give running uploads time to finish writing before the container stops.
+    stop_grace_period: 2m
+    depends_on:
+      mariadb:
+        # The backend applies its migrations on start, so the database has to be
+        # ready before the application is launched.
+        condition: service_healthy
+    ports:
+      # Everything (frontend, /api, /docs, uploads) is served from port 80
+      # inside the container; only this single port is published.
+      - '${SAFESTORAGE_PORT:-24424}:80'
+    environment:
+      # Password of the automatically created admin user (first boot only).
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      # The single connection string the application and the migrations use. It is
+      # assembled here from the MariaDB settings above; `DATABASE_URL` from the
+      # `.env` file is intentionally not used by this stack.
+      DATABASE_URL: mysql://${MARIADB_USER:-safestorage}:${MARIADB_PASSWORD:-safestorage}@mariadb:3306/${MARIADB_DATABASE:-safestorage}
+      # Used for the timestamps in the container logs.
+      TZ: ${TZ:-UTC}
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
+    healthcheck:
+      # /api/health is the backend (through nginx), / is the Next.js frontend.
+      test:
+        [
+          'CMD-SHELL',
+          'wget -qO- http://127.0.0.1/api/health > /dev/null && wget -qO- http://127.0.0.1/ > /dev/null'
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  mariadb:
+  uploads:
+  logs:

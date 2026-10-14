@@ -13,13 +13,9 @@
 
 # Local runtime data must never leak into the image
 uploads/
-database/
 logs/
 docker/uploads/
-docker/database/
 docker/logs/
-**/*.sqlite
-**/*.sqlite-journal
 minio/
 insomnia.json
 

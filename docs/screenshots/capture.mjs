@@ -193,10 +193,20 @@ const seedDemoContent = async () => {
 				"      - '24424:80'",
 				'    environment:',
 				'      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}',
+				'      DATABASE_URL: mysql://safestorage:secret@mariadb:3306/safestorage',
 				'    volumes:',
 				'      - ./uploads:/app/uploads',
-				'      - ./database:/app/database',
-				'      - ./logs:/app/logs'
+				'      - ./logs:/app/logs',
+				'',
+				'  mariadb:',
+				'    image: mariadb:11.4',
+				'    environment:',
+				'      MARIADB_DATABASE: safestorage',
+				'      MARIADB_USER: safestorage',
+				'      MARIADB_PASSWORD: secret',
+				'      MARIADB_ROOT_PASSWORD: secret-root',
+				'    volumes:',
+				'      - mariadb:/var/lib/mysql'
 			].join('\n')
 		}
 	});

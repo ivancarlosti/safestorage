@@ -11,18 +11,21 @@ SafeStorage is configured in two places:
 | ------------------------- | -------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
 | `PORT`                    | backend              | `8000`                  | Port the Fastify API listens on.                                                        |
 | `HOST`                    | backend              | `localhost`             | Interface the API binds to. The container sets `0.0.0.0`.                               |
-| `ADMIN_PASSWORD`          | backend              | `admin`                 | Password of the `admin` user **created on first boot only** (when no database exists).  |
+| `DATABASE_URL`            | backend / container  | _(none — required)_     | MariaDB/MySQL connection string, e.g. `mysql://user:password@host:3306/safestorage`.     |
+| `SHADOW_DATABASE_URL`     | Prisma CLI (dev)     | _(none)_                | Optional throwaway database for `prisma migrate dev`. Never used by `migrate deploy`.    |
+| `ADMIN_PASSWORD`          | backend              | `admin`                 | Password of the `admin` user **created on first boot only** (when the database is empty). |
 | `TZ`                      | backend / container  | `UTC`                   | Timezone used for log timestamps.                                                       |
 | `SKIP_MIGRATIONS`         | container entrypoint | _(unset)_               | If set to any non-empty value, the entrypoint skips `prisma migrate deploy` on start.   |
+| `DB_WAIT_ATTEMPTS`        | container entrypoint | `60`                    | How many times (every 2 s) the entrypoint retries the migrations while the database boots. |
 | `SAFESTORAGE_VERSION`     | backend / frontend   | `dev`                   | Release version stamp, shown in `/api/version`, the admin panel and the startup banner. |
 | `SAFESTORAGE_COMMIT`      | backend              | `unknown`               | Git commit stamp of the running build.                                                  |
 | `BASE_API_URL`            | frontend (dev)       | `http://localhost:8000` | Target of the development `/api` rewrite. Not used in production.                       |
 | `NODE_ENV`                | both                 | —                       | `production` in the Docker image, which also disables the frontend rewrite.             |
 | `NEXT_TELEMETRY_DISABLED` | frontend             | `1` in the image        | Disables Next.js telemetry.                                                             |
 
-> **A note on migrations:** the container runs `prisma migrate deploy` automatically on every start (unless `SKIP_MIGRATIONS` is set). You normally never need to run migrations by hand; set `SKIP_MIGRATIONS` only if you manage the SQLite schema yourself.
+> **A note on migrations:** the container runs `prisma migrate deploy` automatically on every start (unless `SKIP_MIGRATIONS` is set), retrying while the database is still booting. You normally never need to run migrations by hand; set `SKIP_MIGRATIONS` only if you apply the SQL yourself. If the target database does not exist yet, `migrate deploy` creates it as long as the user in `DATABASE_URL` is allowed to.
 
-The Docker Compose stack reads a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ADMIN_PASSWORD` and `TZ`.
+The Docker Compose stacks read a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `DATABASE_URL`, `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ADMIN_PASSWORD` and `TZ`.
 
 ## Admin settings
 

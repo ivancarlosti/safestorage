@@ -17,13 +17,17 @@ export const getUsedQuota = async (userId: number, extraBytes = 0) => {
 
 		const userStorageQuota = Number(user.storageQuota);
 
-		const result = await prisma.$queryRaw`SELECT SUM(size) FROM files WHERE userId = ${userId}`;
-		// @ts-ignore
-		// The `?? 0` fallback is dead code: `+` binds tighter than `??`, so the
-		// expression never evaluates to `null`/`undefined`. Kept as-is because
-		// changing it would change the reported storage usage.
-		// eslint-disable-next-line no-constant-binary-expression
-		const totalSize = Number(result[0]['SUM(size)']) + extraBytes ?? 0;
+		// `size` is stored as a string (Prisma has no native 64-bit integer column
+		// here), so it has to be cast explicitly: MariaDB/MySQL would otherwise sum
+		// it as a DOUBLE, rounding every row and accumulating the error. The cast
+		// sums as an exact 64-bit integer, which the `mariadb` driver returns as a
+		// string; only the final `Number()` can round, and only beyond 2^53 bytes.
+		const result = await prisma.$queryRaw<{ total: number | bigint | string }[]>`
+			SELECT SUM(CAST(size AS UNSIGNED)) AS total FROM files WHERE userId = ${userId}
+		`;
+
+		// `SUM()` returns `NULL` when the user has no files yet.
+		const totalSize = Number(result[0]?.total ?? 0) + extraBytes;
 
 		const data = {
 			used: totalSize,

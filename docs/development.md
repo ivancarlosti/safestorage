@@ -4,6 +4,7 @@
 
 -   **Node.js ≥ 22.12.0** (the Docker image uses Node 22; `jotai` 3 requires 22.12+).
 -   **Yarn 4** — vendored in the repository (`.yarn/releases`) and pinned via `packageManager: yarn@4.1.1`, so just run `yarn` (Enable Corepack if your shell cannot find it: `corepack enable`).
+-   **MariaDB 10.5+ / MySQL 8** — reachable from your machine: installed locally, running in a container, or managed. See [Setup](#setup) for a one-liner that starts a throwaway server.
 -   **ffmpeg** — optional; only needed for video thumbnail generation (`ffmpeg` is bundled in the Docker image).
 
 ## Repository layout
@@ -12,7 +13,7 @@ This is a Yarn 4 **monorepo** with these top-level parts:
 
 | Path                | Workspace              | Purpose                                                     |
 | ------------------- | ---------------------- | ----------------------------------------------------------- |
-| `packages/backend/` | `@safestorage/backend` | Fastify API, Prisma/SQLite, uploads, thumbnails, cron jobs. |
+| `packages/backend/` | `@safestorage/backend` | Fastify API, Prisma + MariaDB/MySQL, uploads, thumbnails, cron jobs. |
 | `packages/next/`    | `@safestorage/next`    | Next.js 14 App Router frontend (standalone output).         |
 | `packages/uploader-module/` | `@safestorage/uploader-module` | Server-side chunked upload handler (busboy).       |
 | `packages/uploader-client/` | `@safestorage/uploader-client` | Browser-side chunked upload client.                |
@@ -30,13 +31,25 @@ cd safestorage
 yarn install
 ```
 
-Then create the SQLite database and generate the Prisma client:
+Then point the backend at a database and create the schema:
 
 ```bash
+export DATABASE_URL="mysql://safestorage:safestorage@127.0.0.1:3306/safestorage"
 yarn migrate        # prisma migrate deploy && prisma generate
 ```
 
-The database file lands at `database/database.sqlite` (relative to the repo root). The connection URL and the schema location are declared in `packages/backend/prisma.config.ts`, and the generated Prisma client is written to `packages/backend/src/generated/prisma` (git-ignored).
+`DATABASE_URL` is a standard MariaDB/MySQL connection string and the single source of truth: `packages/backend/prisma.config.ts` reads it for the CLI (`prisma migrate`, `prisma generate`) and `src/structures/database.ts` hands it to the `@prisma/adapter-mariadb` driver adapter at runtime. The generated Prisma client is written to `packages/backend/src/generated/prisma` (git-ignored).
+
+Don't have a server yet? This starts a throwaway one on port 3306 that matches the URL above:
+
+```bash
+docker run -d --name safestorage-dev-db -p 3306:3306 \
+  -e MARIADB_ROOT_PASSWORD=root -e MARIADB_DATABASE=safestorage \
+  -e MARIADB_USER=safestorage -e MARIADB_PASSWORD=safestorage \
+  mariadb:11.4 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+```
+
+The user has to be allowed to create the database (Prisma does that for you, so does the image's `MARIADB_DATABASE`).
 
 ## Running locally
 
@@ -54,7 +67,7 @@ yarn dev:backend
 yarn dev:frontend
 ```
 
-The first time a user is created, an `admin` account is seeded with the password from `ADMIN_PASSWORD` (or `admin`). The production `start` script loads a root `.env` file via dotenv; during `dev`, set variables such as `PORT` and `ADMIN_PASSWORD` in your shell instead. The frontend reads `BASE_API_URL` from `packages/next/.env.local` (gitignored).
+The first time a user is created, an `admin` account is seeded with the password from `ADMIN_PASSWORD` (or `admin`). The production `start` script loads a root `.env` file via dotenv; during `dev`, set variables such as `DATABASE_URL`, `PORT` and `ADMIN_PASSWORD` in your shell instead. The frontend reads `BASE_API_URL` from `packages/next/.env.local` (gitignored).
 
 ## Root scripts
 
@@ -110,9 +123,14 @@ yarn build
 ## Database changes
 
 1. Edit `packages/backend/src/prisma/schema.prisma`.
-2. `yarn workspace @safestorage/backend migrate:dev` to create the migration and apply it locally.
+2. `yarn workspace @safestorage/backend migrate:dev` to create the migration and apply it locally. `migrate dev` needs a throwaway database to diff the schema against: it creates one automatically with the credentials in `DATABASE_URL`, and only falls back to `SHADOW_DATABASE_URL` when that user is not allowed to create databases.
 3. Commit the generated SQL under `packages/backend/src/prisma/migrations/`.
 4. The container applies pending migrations automatically on start (`prisma migrate deploy`).
+
+Two MySQL-specific things to keep in mind:
+
+-   A plain `String` becomes `VARCHAR(191)`. Add an explicit native type (`@db.VarChar(n)`, `@db.Text`, `@db.LongText`) for anything longer, otherwise the insert fails with `Data too long for column` (or is silently truncated under a non-strict `sql_mode`).
+-   Data that must exist before the application boots — the three rows in `roles`, see `20261014033039_seed_roles` — cannot be expressed in the schema. Add a migration with plain `INSERT` statements instead.
 
 ## Releases
 

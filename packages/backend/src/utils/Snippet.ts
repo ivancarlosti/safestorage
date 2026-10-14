@@ -21,6 +21,8 @@ export const getUniqueSnippetIdentifier = async (): Promise<string | null> => {
 	for (let i = 0; i < fileIdentifierMaxTries; i++) {
 		const identifier = randomstring.generate(options);
 
+		// `LIKE` relies on the case-insensitive `utf8mb4_unicode_ci` collation
+		// Prisma applies to the tables, mirroring SQLite's default `LIKE`.
 		const exists = await prisma.$queryRaw<{ id: number }[]>`
 		SELECT id from snippets
 		WHERE identifier LIKE ${`${identifier}.%`}

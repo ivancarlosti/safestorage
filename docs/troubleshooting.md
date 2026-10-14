@@ -10,11 +10,11 @@ curl http://localhost:24424/api/health
 curl http://localhost:24424/api/admin/service/diagnostic -H "X-API-KEY: <your key>"
 ```
 
-The **diagnostic** endpoint reports environment details (Node version, `ffmpeg` availability, free space, database path, …). Logs are also written to `/app/logs` (daily rotating files).
+The **diagnostic** endpoint reports environment details (Node version, `ffmpeg` availability, free space, …). Logs are also written to `/app/logs` (daily rotating files).
 
 ## Login & accounts
 
-**I can't log in as `admin`.** `ADMIN_PASSWORD` is only honoured the _first_ time the container starts, when no database exists. If a database already exists, change the password through **Admin → Account** (or delete `/app/database/database.sqlite` to start over — this deletes all data).
+**I can't log in as `admin`.** `ADMIN_PASSWORD` is only honoured the _first_ time the container starts, while the database is still empty. If the `admin` user already exists, change the password through **Admin → Account** (or drop the whole database to start over — this deletes all data).
 
 **`401 No authorization header provided` / `Invalid token`.** There is no JWT cookie and no `Authorization` header. Send `Authorization: Bearer <token>` or the `token` cookie. Note that **changing your password invalidates every existing token**.
 
@@ -54,15 +54,33 @@ Note that when network storage is enabled **all** uploads go to the bucket, so a
 
 **Every request from one IP is rejected.** That IP may be banned — check **Admin → IPs** and unban it.
 
+## Database
+
+**The container exits with `DATABASE_URL is not set or is empty`.** The image ships no database of its own: pass a MariaDB/MySQL connection string (for example `mysql://user:password@host:3306/safestorage`), which in Compose is the `DATABASE_URL` key in `.env`.
+
+**`P1001: Can't reach database server`.** The host or port in `DATABASE_URL` is wrong, or the server only listens on its own loopback. `localhost` inside the container is the container itself — to reach a database on the Docker host use `host.docker.internal` (the shipped `docker-compose.yml` maps that name to the host gateway), or, for another Compose project, the database's service name on a shared network. Slow database? The entrypoint retries for `DB_WAIT_ATTEMPTS` × 2 s (2 minutes by default) before giving up.
+
+**`P1010` / `Access denied for user`.** Wrong user or password, or the user may not connect from the container's address (check the `%` vs `localhost` host part of the MariaDB grant). Try the same credentials with `mariadb -h <host> -P <port> -u <user> -p`.
+
+**The database does not exist yet.** Not a problem: `prisma migrate deploy` creates it, as long as the user is allowed to. If it is not, create it once by hand (`CREATE DATABASE safestorage CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`) and restart the container.
+
+**`P2025 ... Expected 2 records to be connected, found only 0` on the first boot.** The built-in `roles` rows are missing, which means the seed migration did not run — typically because `SKIP_MIGRATIONS=1` was set on an empty database. Restart once without it.
+
+**`Data too long for column '...'`.** The column is `VARCHAR(191)`, Prisma's default for `String`. Widen it with an explicit native type and a migration, see [Development](development.md#database-changes).
+
+**`Unknown collation` / emoji break the UI.** The tables are created as `utf8mb4`; if you create databases by hand, use `utf8mb4` there too (the bundled Compose file sets it on the server).
+
+**Migrations report "No pending migrations" but a table is missing.** The `_prisma_migrations` table no longer matches the schema (restored backup, manual SQL). Run `prisma migrate status` with `DATABASE_URL` set, and mark the already-applied migrations with `prisma migrate resolve --applied <migration>`.
+
 ## Container & operations
 
 **"Port is already allocated".** Another process uses the host port. Change `SAFESTORAGE_PORT` in `docker/.env` and `docker compose up -d`.
 
 **The container is `unhealthy`.** The healthcheck requires both `GET /api/health` and `/` to answer through nginx. Check the logs — usually the backend failed to start (bad env, migration error) or the frontend build is missing. Give it up to 60s on first boot.
 
-**`Permission denied` writing uploads / database.** The bind-mounted folders are created by Docker as `root`. Either create `uploads/`, `database/` and `logs/` yourself with the right ownership before `up`, or run the container as a user that can write them.
+**`Permission denied` writing uploads.** The bind-mounted folders are created by Docker as `root`. Either create `uploads/` and `logs/` yourself with the right ownership before `up`, or run the container as a user that can write them.
 
-**The database is busy / migrations fail.** Only one process should hold the SQLite file. If you run migrations yourself, set `SKIP_MIGRATIONS=1` so the entrypoint does not run them too.
+**Migrations fail because another process is running them.** Only one party should own the schema: if you apply migrations yourself, set `SKIP_MIGRATIONS=1` so the entrypoint does not run them too.
 
 **Files uploaded anonymously "disappeared".** Uploads made without being logged in only appear for you if **public mode** ties them to a session; otherwise they are public/unowned. Log in before uploading to keep them in your account.
 
@@ -75,12 +93,17 @@ Note that when network storage is enabled **all** uploads go to the bucket, so a
 To fully reset an instance (⚠️ deletes everything):
 
 ```bash
-docker compose down
-rm -rf uploads database logs
-docker compose up -d
+# bundled database: also removes the `mariadb` volume
+docker compose -f docker-compose-bundle.yml down -v
+
+# external database: drop and recreate the schema by hand
+mariadb -h <host> -u <user> -p -e 'DROP DATABASE safestorage; CREATE DATABASE safestorage CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
+
+rm -rf uploads logs
+docker compose -f docker-compose-bundle.yml up -d     # or `docker compose up -d`
 ```
 
-On the next boot a fresh database is created and the `admin` user is seeded from `ADMIN_PASSWORD`.
+On the next boot the schema, the built-in roles and the `admin` user (from `ADMIN_PASSWORD`) are created from scratch.
 
 ## Still stuck?
 

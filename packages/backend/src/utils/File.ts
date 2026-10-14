@@ -46,6 +46,10 @@ export const getUniqueFileIdentifier = async (): Promise<string | null> => {
 	for (let i = 0; i < fileIdentifierMaxTries; i++) {
 		const identifier = randomstring.generate(options);
 
+		// `LIKE` here relies on the table's case-insensitive collation, which
+		// Prisma sets to `utf8mb4_unicode_ci` when it creates the tables. That
+		// mirrors SQLite's default ASCII case-insensitive `LIKE`, so identifiers
+		// are still compared the way they always were.
 		const exists = await prisma.$queryRaw<{ id: number }[]>`
 		SELECT id from files
 		WHERE name LIKE ${`${identifier}.%`}

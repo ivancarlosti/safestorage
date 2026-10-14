@@ -16,16 +16,11 @@ packages/uploader-client/lib/
 # Env files
 packages/backend/.env
 
-# Database
-database.sqlite
-database.sqlite-journal
-
 # Log files
 npm-debug.log*
 
 # safestorage generated files
 uploads/
-database/
 logs/
 
 .env

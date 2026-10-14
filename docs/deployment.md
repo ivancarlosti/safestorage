@@ -1,46 +1,66 @@
 # Deployment
 
-The recommended way to run SafeStorage is the **single combined Docker image**, published to the GitHub Container Registry as `ghcr.io/ivancarlosti/safestorage`. One container holds nginx (port 80), the Fastify backend and the Next.js frontend, managed by supervisord.
+The recommended way to run SafeStorage is the **single combined Docker image**, published to the GitHub Container Registry as `ghcr.io/ivancarlosti/safestorage`. One container holds nginx (port 80), the Fastify backend and the Next.js frontend, managed by supervisord, and talks to a **MariaDB/MySQL** database you provide (or the one shipped by the bundled Compose file).
 
 ## Requirements
 
 -   Docker with the Compose plugin (`docker compose`).
--   A place to store data (the three bind-mount folders below).
+-   A **MariaDB 10.5+ / MySQL 8** database — either one you already run, or the official `mariadb` container shipped by `docker-compose-bundle.yml`.
+-   A place to store data (the bind-mount folders below).
 -   Optionally, a reverse proxy in front for TLS (see [TLS / reverse proxy](#tls--reverse-proxy)).
 
 ## Quick start (Docker Compose)
 
-The [`docker/`](../docker) folder ships a ready-to-use, **pull-only** stack (it never builds anything):
+The [`docker/`](../docker) folder ships two ready-to-use, **pull-only** stacks (they never build anything):
+
+| File                        | Database                                                   |
+| --------------------------- | ---------------------------------------------------------- |
+| `docker-compose-bundle.yml` | an official `mariadb` container, started next to the app.  |
+| `docker-compose.yml`        | an external MariaDB/MySQL server you point `DATABASE_URL` at. |
+
+**With the bundled database** (fastest):
 
 ```bash
 cd docker
-cp .env.example .env      # edit ADMIN_PASSWORD and SAFESTORAGE_PORT
+cp .env.example .env                            # edit ADMIN_PASSWORD, SAFESTORAGE_PORT
+docker compose -f docker-compose-bundle.yml up -d
+```
+
+**With an existing database:**
+
+```bash
+cd docker
+cp .env.example .env      # edit DATABASE_URL, ADMIN_PASSWORD, SAFESTORAGE_PORT
 docker compose pull
 docker compose up -d
 ```
 
-Open `http://<host>:<port>` (default `24424`) and log in as `admin` with the `ADMIN_PASSWORD` you set. The password is only used the **first** time the container starts, when no database exists yet.
+Open `http://<host>:<port>` (default `24424`) and log in as `admin` with the `ADMIN_PASSWORD` you set. The password is only used the **first** time the container starts, while the database is still empty. Migrations are applied on start: they create the schema, and the database itself when it does not exist yet.
 
 ### `.env` variables
 
-| Variable           | Default  | Meaning                                                          |
-| ------------------ | -------- | ---------------------------------------------------------------- |
-| `SAFESTORAGE_PORT` | `24424`  | Host port published to the container's port 80.                  |
-| `SAFESTORAGE_TAG`  | `latest` | Image tag to run (`latest` or a pinned release such as `1.1.0`). |
-| `ADMIN_PASSWORD`   | `admin`  | Password of the auto-created `admin` user (first boot only).     |
-| `TZ`               | `UTC`    | Timezone for container log timestamps.                           |
+| Variable           | Default  | Meaning                                                                 |
+| ------------------ | -------- | ----------------------------------------------------------------------- |
+| `SAFESTORAGE_PORT` | `24424`  | Host port published to the container's port 80.                         |
+| `SAFESTORAGE_TAG`  | `latest` | Image tag to run (`latest` or a pinned release such as `1.1.0`).        |
+| `DATABASE_URL`     | —        | MariaDB/MySQL connection string. Required by `docker-compose.yml`.      |
+| `ADMIN_PASSWORD`   | `admin`  | Password of the auto-created `admin` user (first boot only).            |
+| `TZ`               | `UTC`    | Timezone for container log timestamps.                                  |
+| `DB_WAIT_ATTEMPTS` | `60`     | Optional: how many times (every 2 s) the entrypoint retries migrations. |
+
+`docker-compose-bundle.yml` defines its own credentials — `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD` and `MARIADB_ROOT_PASSWORD`, all defaulting to `safestorage`/`safestorage-root`. Uncomment the matching lines in `.env` to change them. That file ignores `DATABASE_URL`, because it builds its own connection string pointing at the bundled `mariadb` service.
 
 ## Data & volumes
 
-Everything persistent lives next to `docker-compose.yml`:
+Everything persistent lives next to `docker-compose.yml` — plus the database:
 
-| Host folder | Container path  | Contents                      |
-| ----------- | --------------- | ----------------------------- |
-| `uploads/`  | `/app/uploads`  | files, thumbnails, live, zips |
-| `database/` | `/app/database` | `database.sqlite`             |
-| `logs/`     | `/app/logs`     | daily rotating logs           |
+| Storage                           | Container path   | Contents                      |
+| --------------------------------- | ---------------- | ----------------------------- |
+| `uploads/` (bind mount)           | `/app/uploads`   | files, thumbnails, live, zips |
+| `logs/` (bind mount)              | `/app/logs`      | daily rotating logs           |
+| `mariadb/` (named volume, bundle) | MariaDB datadir  | the whole database            |
 
-**Back up those three folders and you have a full backup.** Restore is the reverse: drop them back and start the container.
+**Back up `uploads/`, `logs/` and a database dump (`mariadb-dump` / `mysqldump`) and you have a full backup.** Restore is the reverse: put the folders back, import the dump and start the container.
 
 > The folders are created automatically on first `up` (Docker creates missing bind-mount sources as `root`). If you need a different ownership, create them yourself first.
 
@@ -95,9 +115,11 @@ Then point a Compose service at `safestorage:local` instead of the GHCR image, o
 docker run -d \
   --name safestorage \
   -p 24424:80 \
-  -e ADMIN_PASSWORD=change-me -e TZ=UTC \
+  --add-host=host.docker.internal:host-gateway \
+  -e ADMIN_PASSWORD=change-me \
+  -e DATABASE_URL="mysql://safestorage:password@host.docker.internal:3306/safestorage" \
+  -e TZ=UTC \
   -v "$PWD/uploads:/app/uploads" \
-  -v "$PWD/database:/app/database" \
   -v "$PWD/logs:/app/logs" \
   safestorage:local
 ```
@@ -120,10 +142,11 @@ Routing (from [`container/nginx.conf`](../container/nginx.conf)):
 -   existing files under `/app/uploads` → served straight off disk (nginx handles Range requests).
 -   everything else → frontend.
 
-The entrypoint ([`container/entrypoint.sh`](../container/entrypoint.sh)) creates the writable folders, applies Prisma migrations and hands over to supervisord. All three processes log to stdout/stderr, so `docker logs` shows everything.
+The entrypoint ([`container/entrypoint.sh`](../container/entrypoint.sh)) creates the writable folders, checks that `DATABASE_URL` is set, waits for the database to accept connections (up to `DB_WAIT_ATTEMPTS` × 2 s), applies the migrations and hands over to supervisord. All three processes log to stdout/stderr, so `docker logs` shows everything.
 
 ## Platform notes
 
 -   **`linux/amd64` and `linux/arm64`** images are both published.
 -   `ffmpeg` is included in the image, so video thumbnails work out of the box.
+-   The database has to be **MariaDB 10.5+ or MySQL 8** (anything speaking the MySQL protocol over TCP works, managed services included). Tables are created as `utf8mb4` with the case-insensitive `utf8mb4_unicode_ci` collation; the bundled Compose file configures the same defaults on the server.
 -   For non-Docker installs, see [Development](development.md) and make sure `ffmpeg` is on `PATH`.

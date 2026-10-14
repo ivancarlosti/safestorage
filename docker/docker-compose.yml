@@ -7,7 +7,10 @@
 #   docker compose pull
 #   docker compose up -d
 #
-# All data lives next to this file in ./uploads, ./database and ./logs.
+# The database is NOT part of this stack: `DATABASE_URL` points at a MariaDB/MySQL
+# server you run yourself (see `.env.example`). Only `./uploads` and `./logs` live
+# next to this file. If you would rather have the database shipped for you, use
+# `docker-compose-bundle.yml` instead.
 
 services:
   safestorage:
@@ -16,6 +19,11 @@ services:
     restart: unless-stopped
     # Give running uploads time to finish writing before the container stops.
     stop_grace_period: 2m
+    extra_hosts:
+      # Makes `host.docker.internal` resolve to the Docker host on Linux too, so
+      # the same DATABASE_URL reaches a database running on the host from any
+      # platform.
+      - 'host.docker.internal:host-gateway'
     ports:
       # Everything (frontend, /api, /docs, uploads) is served from port 80
       # inside the container; only this single port is published.
@@ -23,11 +31,14 @@ services:
     environment:
       # Password of the automatically created admin user (first boot only).
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      # MariaDB/MySQL connection string, shared by the backend and the migrations.
+      # The `:?` makes `docker compose up` fail with a clear message instead of
+      # starting a container that cannot reach its database.
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your .env file}
       # Used for the timestamps in the container logs.
       TZ: ${TZ:-UTC}
     volumes:
       - ./uploads:/app/uploads
-      - ./database:/app/database
       - ./logs:/app/logs
     healthcheck:
       # /api/health is the backend (through nginx), / is the Next.js frontend.

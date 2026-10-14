@@ -27,7 +27,7 @@ Upload files, get short links, organise them into albums, and keep everything on
 
 SafeStorage is a self-hosted file hosting service. You drop files in, it gives you links back — and unlike a dozen SaaS uploaders, the data never leaves a machine you control.
 
-It runs as **one container** (nginx + Fastify backend + Next.js frontend) with an SQLite database, so there is nothing else to install and no external services to pay for. Point an S3-compatible bucket at it if you'd rather not store on disk.
+It runs as **one container** (nginx + Fastify backend + Next.js frontend) and keeps everything in a **MariaDB/MySQL** database, so there is no cloud account to create and no external service to pay for. Point an S3-compatible bucket at it if you'd rather not store files on disk.
 
 ## Features
 
@@ -57,12 +57,20 @@ Every image below comes from a real SafeStorage instance, seeded with synthetic 
 
 ## Quick start (Docker)
 
-The easiest way is the pull-only Compose stack in [`docker/`](docker):
+The easiest way is the **bundled** Compose stack in [`docker/`](docker): it runs SafeStorage next to an official MariaDB container, so one command gives you a working instance.
 
 ```bash
 git clone https://github.com/ivancarlosti/safestorage.git
 cd safestorage/docker
-cp .env.example .env     # set ADMIN_PASSWORD and (optionally) SAFESTORAGE_PORT
+cp .env.example .env                    # set ADMIN_PASSWORD (and optionally SAFESTORAGE_PORT)
+docker compose -f docker-compose-bundle.yml up -d
+```
+
+Already running MariaDB/MySQL somewhere (on the host, in another Compose project or as a managed service)? Use the plain stack and point `DATABASE_URL` at it instead:
+
+```bash
+cd safestorage/docker
+cp .env.example .env     # set DATABASE_URL and ADMIN_PASSWORD
 docker compose pull
 docker compose up -d
 ```
@@ -85,9 +93,9 @@ Prefer building from source, or want TLS/backup guidance? See [docs/deployment.m
 
 ## Tech stack
 
--   **Backend** — [Fastify](https://fastify.dev) · [Prisma](https://www.prisma.io) + SQLite · Zod · `@napi-rs/blake-hash` · ffmpeg
+-   **Backend** — [Fastify](https://fastify.dev) · [Prisma](https://www.prisma.io) + MariaDB/MySQL · Zod · `@napi-rs/blake-hash` · ffmpeg
 -   **Frontend** — [Next.js 14](https://nextjs.org) (App Router) · React 18 · Tailwind CSS · Radix UI · TanStack Query · Jotai
--   **Infra** — Node 20 · nginx · supervisord · Docker (multi-arch images on GHCR)
+-   **Infra** — Node 22 · nginx · supervisord · MariaDB/MySQL · Docker (multi-arch images on GHCR)
 
 ## Contributing
 

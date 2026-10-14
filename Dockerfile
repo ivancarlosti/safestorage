@@ -5,6 +5,11 @@
 #               -> Fastify backend   (127.0.0.1:8000)
 #               -> Next.js frontend  (127.0.0.1:8001)
 #
+# The database is NOT part of this image: it connects to an external
+# MariaDB/MySQL server through the DATABASE_URL environment variable. The
+# Prisma driver adapter uses the pure-JS `mariadb` driver, so no native build
+# toolchain is needed here.
+#
 # The .github/workflows/build.yml workflow builds exactly this file with
 # `context: .` and stamps the release through the VERSION / COMMIT build args.
 
@@ -17,17 +22,25 @@ ARG VERSION=dev
 ARG COMMIT=unknown
 
 # `git` is used by some install scripts, `libc6-compat` is required by the
-# native tooling (sharp/swc), `openssl` by the Prisma engines. `python3`/`make`/
-# `g++` are needed to build the better-sqlite3 addon (the Prisma 7 SQLite driver
-# adapter) when no prebuilt binary matches the musl target.
+# native tooling (sharp/swc), `openssl` by the Prisma engines. Every native
+# dependency of this project (napi-rs blake-hash, sharp, @swc/core, the Prisma
+# engines) ships a prebuilt linux-musl binary, so no compiler is required; add
+# `python3 make g++` back if a future dependency has to be built from source.
 # CI=true keeps `yarn install` fully non-interactive inside the build context
 # (which has no .git directory) and disables telemetry/prompt interruptions.
 ENV CI=true \
     NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache git libc6-compat openssl python3 make g++
+RUN apk add --no-cache git libc6-compat openssl
 
 WORKDIR /app
+
+# `prisma generate` needs `DATABASE_URL` to be *resolvable* (the config fails
+# fast when it is missing), but it never opens a connection: it only uses the
+# URL to pick the target provider. A syntactically valid placeholder therefore
+# covers the codegen steps below; the real connection string is injected into
+# the running container instead.
+ENV DATABASE_URL="mysql://placeholder:placeholder@localhost:3306/placeholder"
 
 # Yarn 4 is vendored in the repository (.yarn/releases) and pinned through
 # package.json#packageManager, so no extra download step is required.
@@ -122,7 +135,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
 	/app/uploads/tmp \
 	/app/uploads/zips \
 	/app/uploads/thumbs/preview \
-	/app/database \
 	/app/logs \
  && nginx -t
 

@@ -25,7 +25,7 @@ SafeStorage is a TypeScript monorepo that ships as a single container. This page
 | `packages/uploader-module` | Server-side chunked/busboy upload handler (vendored, first-party).                    |
 | `packages/uploader-client` | Browser-side chunked upload client (vendored, first-party).                           |
 | `container`         | `nginx.conf`, `supervisord.conf` and `entrypoint.sh` baked into the image.                   |
-| `docker`            | Pull-only `docker-compose.yml` and `.env.example` for operators.                             |
+| `docker`            | `docker-compose.yml` (external database), `docker-compose-bundle.yml` (bundled MariaDB) and `.env.example` for operators. |
 | `docs`              | This documentation.                                                                          |
 | `.github/workflows` | Code review, release, image build, README sync, keepalive.                                   |
 
@@ -60,7 +60,7 @@ Rate limiting is applied globally (`@fastify/rate-limit`) with per-route overrid
 
 ### Data model
 
-Prisma with **SQLite** (`database/database.sqlite`). Models: `users`, `roles`, `files`, `quarantineFiles`, `snippets`, `shortenedLinks`, `albums`, `bans`, `links`, `settings`, `statistics`, `tags`, `invites`. Migrations live in `packages/backend/src/prisma/migrations` and are applied on container start.
+Prisma with **MariaDB/MySQL**. The connection string lives in `DATABASE_URL` and is shared by the runtime and the CLI: `PrismaClient` gets the pure-JS `@prisma/adapter-mariadb` driver adapter (so no native module is compiled), and `packages/backend/prisma.config.ts` gives the same URL to `prisma migrate`. Models: `users`, `roles`, `files`, `quarantineFiles`, `snippets`, `shortenedLinks`, `albums`, `bans`, `links`, `settings`, `statistics`, `tags`, `invites`. Migrations live in `packages/backend/src/prisma/migrations` and are applied on container start. Tables are created as `utf8mb4` with the case-insensitive `utf8mb4_unicode_ci` collation, so `LIKE` keeps behaving the way it did on SQLite.
 
 ### Scheduled jobs
 
@@ -86,7 +86,7 @@ The frontend version is injected at build time (`NEXT_PUBLIC_VERSION`, read from
 
 -   **`container/nginx.conf`** — single server block: `/api/` and `/docs` → backend, existing files under `/app/uploads` → disk, everything else → frontend. Bodies are streamed (`client_max_body_size 0`, no request buffering) to support multi-gigabyte uploads.
 -   **`container/supervisord.conf`** — supervises `backend`, `frontend` and `nginx`, each logging to stdout/stderr.
--   **`container/entrypoint.sh`** — prints the version banner, creates the writable folders, applies Prisma migrations (unless `SKIP_MIGRATIONS` is set) and `exec`s supervisord.
+-   **`container/entrypoint.sh`** — prints the version banner, creates the writable folders, requires `DATABASE_URL`, waits for MariaDB/MySQL to accept connections, applies Prisma migrations (unless `SKIP_MIGRATIONS` is set) and `exec`s supervisord.
 
 See [Deployment](deployment.md) for the full build/run details.
 
@@ -95,6 +95,7 @@ See [Deployment](deployment.md) for the full build/run details.
 | Concern          | Where it lives                                                               |
 | ---------------- | ---------------------------------------------------------------------------- |
 | Environment      | Process env (see [Configuration](configuration.md)).                         |
+| Database         | External MariaDB/MySQL server, reached through `DATABASE_URL`.               |
 | Runtime settings | `settings` table, cached in the `SETTINGS` singleton.                        |
-| Persistent data  | `/app/uploads`, `/app/database`, `/app/logs` (bind mounts/volumes).          |
+| Persistent data  | `/app/uploads` and `/app/logs` (bind mounts/volumes) + the database server.  |
 | Secrets          | JWT signing `secret` (settings) and `ADMIN_PASSWORD` (env, first boot only). |

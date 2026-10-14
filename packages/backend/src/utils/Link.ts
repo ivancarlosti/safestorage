@@ -16,6 +16,8 @@ export const getUniqueShortLinkIdentifier = async (): Promise<string | null> => 
 	for (let i = 0; i < identifierMaxTries; i++) {
 		const identifier = randomstring.generate(options);
 
+		// `LIKE` relies on the case-insensitive `utf8mb4_unicode_ci` collation
+		// Prisma applies to the tables, mirroring SQLite's default `LIKE`.
 		const exists = await prisma.$queryRaw<{ id: number }[]>`
 		SELECT id from shortenedLinks
 		WHERE identifier LIKE ${`${identifier}.%`}
