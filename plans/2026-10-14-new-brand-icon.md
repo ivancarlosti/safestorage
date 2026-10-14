@@ -1,40 +1,71 @@
-# New brand icon (upload arrow in a rounded box)
+# New brand icon (upload arrow over a storage tray)
 
 **Status:** implemented
-**Date:** 2026-10-14
+**Date:** 2026-10-14 (revised the same day)
 
 ## Goal
 
-Replace the inherited chibisafe "bunker" illustration with a minimal, original
+Replace the inherited chibisafe "bunker" illustration with an original
 safestorage mark, and propagate it to **every** place the old icon appeared:
 the inline React logo, the standalone master SVG, the Safari pinned tab and the
 whole raster favicon set.
 
 ## Decision
 
-The new mark is an **upload arrow inside a rounded square**, drawn flat with a
-single accent colour:
+The mark is an **upload arrow over a storage tray on a rounded-square plate**,
+drawn flat, with every corner rounded so it survives 16px:
 
 - square `viewBox="0 0 128 128"` (the old art was a non-square `234x245`, but
   every consumer forces both a width and a height, so a square box scales
   cleanly from `w-6 h-6` up to `h-64 w-64`);
-- rounded-square plate (`rx 26`) filled `#2563eb` (the app's blue accent —
-  `blue-500` links, `#276ae9` dropzone), with a bold white up-arrow;
-- self-contained plate → legible at 16px and readable on the dark UI
-  (`--background: 224 71% 4%`) and on the `#030711` OG canvas.
+- plate: rounded square (`rx 26`) filled with a `blue-500 → blue-700` gradient
+  (`#3b82f6` top-left → `#1d4ed8` bottom-right, the app's `blue-600` `#2563eb`
+  in the middle). The gradient is what keeps the plate from reading as a flat
+  swatch on the dark UI (`--background: 224 71% 4%`) and on the `#030711` OG
+  canvas;
+- white arrow — 66-wide head at `y=52`, 24-wide stem down to `y=76`, corners
+  rounded `2.5` — above a white tray pill (54 x 16, `y=90`) 14 units below it.
+  The tray adds the *storage* half of the name; 14 units ≈ 1.8px at 16px, so the
+  two shapes never fuse.
 
-Geometry (identical in all three source files):
+### Geometry
 
-- plate: `M33 7H95A26 26 0 0 1 121 33V95A26 26 0 0 1 95 121H33A26 26 0 0 1 7 95V33A26 26 0 0 1 33 7Z`
-- arrow: `M59.9 34.38Q64 30 68.1 34.38L89.9 57.62Q94 62 88 62L81 62Q75 62 75 68L75 88Q75 94 69 94L59 94Q53 94 53 88L53 68Q53 62 47 62L40 62Q34 62 38.1 57.62Z`
+Three paths, identical in the master SVG and the React component (all arcs are
+real geometry — no stroke trickery — so the monochrome Safari mask can reuse
+them verbatim):
+
+- plate (unchanged from the first iteration):
+  `M33 7H95A26 26 0 0 1 121 33V95A26 26 0 0 1 95 121H33A26 26 0 0 1 7 95V33A26 26 0 0 1 33 7Z`
+- arrow:
+  `M65.74 21.69L92.57 47.71A2.5 2.5 0 0 1 90.83 52L78.5 52A2.5 2.5 0 0 0 76 54.5L76 73.5A2.5 2.5 0 0 1 73.5 76L54.5 76A2.5 2.5 0 0 1 52 73.5L52 54.5A2.5 2.5 0 0 0 49.5 52L37.17 52A2.5 2.5 0 0 1 35.43 47.71L62.26 21.69A2.5 2.5 0 0 1 65.74 21.69Z`
+- tray:
+  `M45 90L83 90A8 8 0 0 1 91 98A8 8 0 0 1 83 106L45 106A8 8 0 0 1 37 98A8 8 0 0 1 45 90Z`
+
+The arrow's two inside corners (where the stem meets the head) are *reflex*
+vertices: their fillets use the arc sweep flag `0` and the reflex angle, not the
+convex formula — getting that wrong bulges the stem outward.
+
+### Why this shape (versions that were rendered and rejected)
+
+Every candidate was rendered at 16/32/64/128 px on dark and light before
+choosing:
+
+| Candidate | Verdict |
+| --- | --- |
+| arrow only (the first iteration) | too plain — this is the revision's starting point |
+| **arrow + tray pill + gradient** | **shipped**: crisp at 16px, keeps the brand blue |
+| arrow into an open box (12-wide walls) | walls (1.5px at 16px) smear into the arrow |
+| shield with the arrow cut out of it | good at ≥32px, but at 16px the white shield outweighs the blue identity |
+| two-tone plate ("vault" frame) | reads as the framed-button cliché |
+| glossy bevel, two shelves | dated; the shelves merge at 16px |
 
 ## Changes
 
 | File | Change |
 | --- | --- |
 | `packages/next/public/logo.svg` | replaced with the new master |
-| `packages/next/src/components/svg/SafeStorageLogo.tsx` | `SafeStorageDefaultLogo` rewritten (`viewBox 0 0 128 128`); exports + `className`/`width`/`height` props kept |
-| `packages/next/public/safari-pinned-tab.svg` | monochrome silhouette (`fill-rule="evenodd"` → arrow is a hole in the plate) |
+| `packages/next/src/components/svg/SafeStorageLogo.tsx` | `SafeStorageDefaultLogo` rewritten (`viewBox 0 0 128 128`, plate gradient in a `<defs>`); exports + `className`/`width`/`height` props kept |
+| `packages/next/public/safari-pinned-tab.svg` | monochrome silhouette (`fill-rule="evenodd"` → arrow *and* tray are holes in the plate) |
 | `packages/next/public/favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png`, `mstile-150x150.png`, `favicon.ico` | regenerated from the master |
 | `packages/next/scripts/generate-icons.mjs` | new reproducible generator (`sharp` + a hand-rolled PNG-in-ICO writer) |
 | `packages/next/package.json` | added the `icons` script |
@@ -63,8 +94,16 @@ master the raster set is generated from.
   so the OG card is the same size with or without a custom logo.
 - Regenerate the rasters any time with
   `yarn workspace @safestorage/next icons`.
-- Verified: `typecheck` and `lint` pass; rasterised pixels confirm the plate is
-  `#2563eb`, the arrow white and the corners transparent.
+- The component's gradient lives in a `<defs>` with a fixed id. Every instance
+  defines the identical gradient, so a page with several marks (header + footer)
+  resolves the duplicate id to the same paint.
+- `next/og` was checked separately before committing to a gradient: Satori/resvg
+  renders the `<defs><linearGradient>` fill correctly (sampled `#1d4ed8` at the
+  plate's dark end, white tray), so the OG card is unaffected.
+- Verified: `typecheck` and `lint` pass; `prettier --check` passes on the
+  component. Rasterised pixels of the committed files: plate `#377bf2` top-left →
+  `#1d4ed8` bottom-right, arrow and tray white, corners transparent, `.ico` still
+  holds 16/32/48.
 
 ## Follow-up: README screenshots
 
@@ -86,4 +125,19 @@ Scalar page is served by the backend) and was regenerated like the rest.
 The stale build output that still contained the old paths
 (`packages/next/.next`, ~1 GB of regenerable chunks) was deleted; the tree no
 longer holds a single copy of the old art.
+
+## Revision: richer mark
+
+The first mark (a lone arrow) read as too plain, so the artwork documented above
+replaced it. The README set therefore shows a mark that no longer exists, and the
+13 captures that contain it were regenerated once more from a rebuilt image:
+
+```bash
+docker build -t safestorage:local .
+cd docs/screenshots
+SAFESTORAGE_IMAGE=safestorage:local ./generate.sh
+```
+
+`api-docs.png` is the only capture without a mark in it (the Scalar page is served
+by the backend), so it was regenerated along with the rest but changes nothing.
 
