@@ -83,7 +83,6 @@ _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` ar
 | `metaDescription`    | string  | `description for please-change-me.com 🚀` | Meta description.                          |
 | `metaKeywords`       | string  | `comma, separated, keywords, …`           | Meta keywords.                             |
 | `metaTwitterHandle`  | string  | `@your-twitter-handle`                    | Twitter/X handle used in embeds.           |
-| `useMinimalHomepage` | boolean | `false`                                   | Show a minimal homepage (upload box only). |
 
 ### Other
 

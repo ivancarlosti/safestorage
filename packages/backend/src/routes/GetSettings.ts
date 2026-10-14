@@ -22,10 +22,6 @@ export const schema = {
 			userAccounts: z.boolean().describe('Whether or not user accounts are enabled.'),
 			blockedExtensions: z.array(z.string()).describe('The list of blocked extensions.'),
 			useNetworkStorage: z.boolean().describe('Whether or not network storage is enabled.'),
-			useMinimalHomepage: z
-				.boolean()
-				.optional()
-				.describe('Whether or not to use a minimal version of the homepage.'),
 			useUrlShortener: z.boolean().describe('Whether or not to use the URL shortener.'),
 			serveUploadsFrom: z.string().optional().describe('The URL to serve uploads from.'),
 			privacyPolicyPageContent: z
@@ -65,7 +61,6 @@ export const run = (_: RequestWithUser, res: FastifyReply) => {
 		userAccounts: SETTINGS.userAccounts,
 		blockedExtensions: SETTINGS.blockedExtensions,
 		useNetworkStorage: SETTINGS.useNetworkStorage,
-		useMinimalHomepage: SETTINGS.useMinimalHomepage,
 		serveUploadsFrom: SETTINGS.serveUploadsFrom,
 		useUrlShortener: SETTINGS.useUrlShortener,
 		privacyPolicyPageContent: Boolean(SETTINGS.privacyPolicyPageContent),

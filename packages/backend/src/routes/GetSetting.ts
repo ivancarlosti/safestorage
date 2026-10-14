@@ -17,7 +17,6 @@ const publicSettings = [
 	'userAccounts',
 	'blockedExtensions',
 	'useNetworkStorage',
-	'useMinimalHomepage',
 	'serveUploadsFrom',
 	'useUrlShortener',
 	'privacyPolicyPageContent',

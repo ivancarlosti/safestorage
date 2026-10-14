@@ -118,7 +118,6 @@ export interface Settings {
 	serveUploadsFrom: string;
 	serviceName: string;
 	termsOfServicePageContent: boolean;
-	useMinimalHomepage: boolean;
 	useNetworkStorage: boolean;
 	useUrlShortener: boolean;
 	userAccounts: boolean;

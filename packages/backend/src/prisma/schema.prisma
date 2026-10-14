@@ -150,7 +150,6 @@ model settings {
 	enableMixedCaseFilenames Boolean @default(true)
 	usersStorageQuota String @default("0")
 	useNetworkStorage Boolean @default(false)
-	useMinimalHomepage Boolean @default(false)
 	useUrlShortener Boolean @default(false)
 	generateThumbnails Boolean @default(true)
 	privacyPolicyPageContent String @default("")
