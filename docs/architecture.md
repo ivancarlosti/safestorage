@@ -45,9 +45,10 @@ The backend is a plain Fastify server built around a small, explicit structure:
 
 -   **`middlewares/`** — `ban` (rejects banned IPs), `apiKey` (authenticates via `X-API-KEY`, optional), `auth` (JWT via cookie/header, supports `optional`), `admin` and `owner` (role checks).
 -   **`structures/settings.ts`** — the `SETTINGS` singleton plus `SETTINGS_META` metadata; loaded from the database on boot.
+-   **`structures/auth.ts`** — parses the authentication environment once (`AUTH_METHOD`, `ACCOUNT_*`, `KEYCLOAK_*`, `RECAPTCHA_*`), so the rest of the backend only needs the booleans/values it exports. `validateAuthConfiguration()` returns the errors and warnings `Requirements` prints before the boot is stopped, which is how a misconfigured Keycloak setup fails fast.
 -   **`structures/schemas`** — reusable Zod schemas extended by route schemas.
--   **`utils/`** — file handling, thumbnails, S3/multipart helpers, snippet rendering, logging, docs/OpenAPI definition, update check.
--   **`routes/`** — one module per endpoint, grouped by domain (`auth`, `user`, `album`, `files`, `tag`, `links`, `snippet`, `admin/*`, `health`).
+-   **`utils/`** — file handling, thumbnails, S3/multipart helpers, snippet rendering, logging, docs/OpenAPI definition, update check, JWT signing/verification and the reCAPTCHA check (`utils/Auth.ts`), and the OIDC client (`utils/Keycloak.ts`: discovery-free endpoint assembly, PKCE + state, code exchange, JWKS cache and `id_token` verification).
+-   **`routes/`** — one module per endpoint, grouped by domain (`auth`, `auth/keycloak`, `user`, `album`, `files`, `tag`, `links`, `snippet`, `admin/*`, `health`).
 
 ### Request lifecycle
 

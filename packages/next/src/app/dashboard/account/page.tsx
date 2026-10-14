@@ -41,6 +41,22 @@ export default async function DashboardPage() {
 		redirect('/login');
 	}
 
+	/*
+		A keycloak deployment never stores a password for its users, so the local
+		form would only ever be rejected by the API: the settings say which method
+		is active and therefore whether the section belongs on the page.
+	*/
+	const { data: settings } = await request.get({
+		url: 'settings',
+		options: {
+			next: {
+				tags: ['settings']
+			}
+		}
+	});
+
+	const passwordChangeEnabled = settings?.authMethod !== 'keycloak';
+
 	const user = response?.user as LocalStorageUser;
 	const quota = response?.storageQuota as StorageQuota;
 
@@ -62,9 +78,13 @@ export default async function DashboardPage() {
 							</p>
 						</div>
 
-						<Separator className="my-4" />
+						{passwordChangeEnabled ? (
+							<>
+								<Separator className="my-4" />
 
-						<ChangePassword />
+								<ChangePassword />
+							</>
+						) : null}
 					</div>
 					<div className="flex flex-col w-full">
 						<RegenerateApiKey apiKey={user?.apiKey} />

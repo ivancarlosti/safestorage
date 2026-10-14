@@ -38,6 +38,7 @@ It runs as **one container** (nginx + Fastify backend + Next.js frontend) and ke
 -   🖱️ **Thumbnails** — automatic image thumbnails and video previews (bundled `ffmpeg`).
 -   🌐 **S3-compatible storage** — AWS S3, Backblaze B2, Cloudflare R2, Wasabi, MinIO, …
 -   👥 **Users, roles & invites** — owner/admin/user accounts, per-user quotas, public (anonymous) mode.
+-   🔐 **Pluggable authentication** — email + password accounts owned by the instance, or OIDC single sign-on (Keycloak), with optional reCAPTCHA on the login form.
 -   🛡️ **Moderation** — file quarantine, extension blocking, IP banning, invite-only registration.
 -   📊 **Admin panel** — statistics, diagnostics, update checks and full branding control.
 -   🧩 **REST API + live docs** — a documented JSON API and a Scalar/OpenAPI reference at `/docs`.

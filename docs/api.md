@@ -36,7 +36,9 @@ Every route declares which middlewares it runs. The three relevant ones are:
 }
 ```
 
-The JWT is signed with the instance secret, is valid for **30 days**, and is invalidated automatically when the account's password changes. For programmatic use, send it either way:
+The JWT is signed with the instance secret, is valid for **30 days**, and is invalidated automatically when the account's password changes. The credentials are the user's **email** — the `username` column stores it — and password; the older `username` body field is still accepted as an alias. When the instance runs with `AUTH_METHOD=keycloak` this endpoint is disabled: it answers `403` and the browser is expected to use the single sign-on routes below instead.
+
+For programmatic use, send it either way:
 
 ```bash
 # Cookie
@@ -73,7 +75,9 @@ Errors use the standard HTTP status codes with a JSON body:
 { "message": "Wrong Username or Password", "statusCode": 401 }
 ```
 
-`401` = missing/invalid credentials, `403` = authenticated but forbidden (e.g. disabled account, non-admin), `404` = not found, `429` = rate limited.
+`401` = missing/invalid credentials, `403` = authenticated but forbidden (e.g. disabled account, non-admin), `404` = not found, `429` = rate limited. `POST /auth/login` additionally answers `400` when the reCAPTCHA token is missing or rejected.
+
+The **Keycloak callback is the exception**: it is reached by the browser, so it never returns JSON. Every failure redirects to `/login?error=<code>`, where the code is one of `access_denied`, `email_not_verified`, `invalid_request`, `invalid_state`, `invalid_token`, `not_allowed`, `server_error` or `user_disabled` (or whatever the provider itself appended, which the page shows as a generic message).
 
 ---
 
@@ -90,14 +94,18 @@ Paths below are relative to `/api`.
 | GET    | `/settings`      | Public | Public instance settings (branding, feature flags, …).              |
 | GET    | `/settings/:key` | Public | A single setting. Authenticated users also see non-public settings. |
 
+`/settings` is also where a client discovers the authentication setup: `authMethod` is `account` or `keycloak`, and `recaptchaSiteKey` is present only when reCAPTCHA is enabled, in which case a login must include the token it produces.
+
 ### Auth
 
-| Method | Path                    | Access          | Description                                          |
-| ------ | ----------------------- | --------------- | ---------------------------------------------------- |
-| POST   | `/auth/register`        | Public (10/min) | Register a new account (may require an invite code). |
-| POST   | `/auth/login`           | Public (10/min) | Log in; returns a JWT and sets the `token` cookie.   |
-| POST   | `/auth/password/change` | Auth            | Change the authenticated user's password.            |
-| POST   | `/auth/apikey/change`   | Auth            | Generate / replace the authenticated user's API key. |
+| Method | Path                       | Access          | Description                                          |
+| ------ | -------------------------- | --------------- | ---------------------------------------------------- |
+| POST   | `/auth/register`           | Public (10/min) | Register a new account (may require an invite code). Only with `AUTH_METHOD=account`: with `keycloak` it answers `403` before the invite is even looked at. |
+| POST   | `/auth/login`              | Public (10/min) | Log in with email + password; returns a JWT and sets the `token` cookie. Only with `AUTH_METHOD=account`. |
+| GET    | `/auth/keycloak/login`     | Public          | Start the single sign-on flow: redirects the browser to the configured provider. |
+| GET    | `/auth/keycloak/callback`  | Public          | The provider's redirect target: verifies the response, provisions the account if needed, sets the `token` cookie and redirects to the dashboard. Failures redirect to `/login?error=<code>`. |
+| POST   | `/auth/password/change`    | Auth            | Change the authenticated user's password. Only with `AUTH_METHOD=account`; with `keycloak` it answers `403`, as the password belongs to the provider. |
+| POST   | `/auth/apikey/change`      | Auth            | Generate / replace the authenticated user's API key. Available with both methods. |
 
 ### User
 

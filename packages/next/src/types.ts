@@ -103,6 +103,7 @@ export interface FileWithIndex extends FileWithAdditionalData {
 }
 
 export interface Settings {
+	authMethod: 'account' | 'keycloak';
 	backgroundImageURL: string;
 	blockedExtensions: string[];
 	chunkSize: number;
@@ -114,6 +115,7 @@ export interface Settings {
 	metaTwitterHandle: string;
 	privacyPolicyPageContent: boolean;
 	publicMode: boolean;
+	recaptchaSiteKey?: string | undefined;
 	rulesPageContent: boolean;
 	serveUploadsFrom: string;
 	serviceName: string;

@@ -14,7 +14,28 @@ The **diagnostic** endpoint reports environment details (Node version, `ffmpeg` 
 
 ## Login & accounts
 
-**I can't log in as `admin`.** `ADMIN_PASSWORD` is only honoured the _first_ time the container starts, while the database is still empty. If the `admin` user already exists, change the password through **Admin → Account** (or drop the whole database to start over — this deletes all data).
+**I can't log in as `admin`.** `ADMIN_PASSWORD` is only honoured the _first_ time the container starts, while the database is still empty, and only when `ACCOUNT_LOGIN` is unset. If the `admin` user already exists, change the password through **Admin → Account** (or drop the whole database to start over — this deletes all data).
+
+**There is no password form, only a single sign-on button.** The instance runs with `AUTH_METHOD=keycloak`, where the password form is removed on purpose — create the user in the identity provider instead. If you did not mean to, set `AUTH_METHOD=account` (or remove it) and recreate the container: the value is read at boot, so editing `.env` alone is not enough.
+
+**The login page shows an error box right after a single sign-on attempt.** The `?error=` code in the URL says what happened:
+
+| Code                 | Meaning                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `invalid_state`      | The login was stale, replayed or started on another instance — try again from the login page. |
+| `invalid_token`      | The provider's response could not be verified (clock skew, wrong realm or client).          |
+| `not_allowed`        | The email is not in `KEYCLOAK_RESTRICT`.                                                     |
+| `email_not_verified` | The realm does not mark the address as verified.                                             |
+| `user_disabled`      | The SafeStorage account is disabled — re-enable it in **Admin → Users**.                     |
+| `invalid_request`    | The redirect came back without the expected `code`/`state` parameters.                        |
+
+A page from the provider itself ("Invalid redirect URI") means `KEYCLOAK_REDIRECT_URI` and the client's _Valid redirect URI_ do not match exactly, scheme and trailing path included.
+
+**The container refuses to start with `AUTH_METHOD=keycloak needs KEYCLOAK_RESTRICT ...`.** That check exists so the first visitor cannot quietly claim the `owner` role. Set `KEYCLOAK_RESTRICT` (whole emails or bare domains), or declare the accounts you trust in `ACCOUNT_LOGIN`.
+
+**The password form rejects a password I never set.** An `ACCOUNT_LOGIN` entry without a matching `ACCOUNT_PASSWORD` gets a random one. Log in with the password an admin sets in **Admin → Users** (or from the Credentials page) — after that, the `ACCOUNT_PASSWORD` value keeps working as a recovery credential.
+
+**`400 The reCAPTCHA validation failed`.** The site key/secret pair is configured but the browser produced no valid token: the Google script may be blocked by an extension or an upstream proxy, the page may have been submitted twice (tokens are single-use), or the keys are not a **v2** pair — a v3 key will not work, because the login form renders the v2 checkbox.
 
 **`401 No authorization header provided` / `Invalid token`.** There is no JWT cookie and no `Authorization` header. Send `Authorization: Bearer <token>` or the `token` cookie. Note that **changing your password invalidates every existing token**.
 

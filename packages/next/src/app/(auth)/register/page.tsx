@@ -27,6 +27,11 @@ export default async function LoginPage() {
 		console.error(error);
 	}
 
+	// Delegating the login to keycloak takes over account creation as well: every
+	// account is provisioned on first sign-in, so a locally created password would
+	// never be used and the form stays hidden whatever the account setting says.
+	const registrationEnabled = Boolean(settings?.userAccounts) && settings?.authMethod !== 'keycloak';
+
 	return (
 		<div className="container flex h-screen w-screen flex-col items-center justify-center">
 			<Link
@@ -47,12 +52,12 @@ export default async function LoginPage() {
 				<div className="flex flex-col space-y-2 text-center">
 					<SafeStorageLogo className="mx-auto mb-4 h-64 w-64" />
 					<h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
-					{settings?.userAccounts ? (
+					{registrationEnabled ? (
 						<p className="text-sm text-muted-foreground">Enter your email below to create an account</p>
 					) : null}
 				</div>
 
-				{settings?.userAccounts ? (
+				{registrationEnabled ? (
 					<RegisterForm />
 				) : (
 					<div className="flex flex-col gap-2 text-center">

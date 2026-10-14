@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
 import { Loader2 } from 'lucide-react';
@@ -11,29 +11,33 @@ import { Label } from '@/components/ui/label';
 import { buttonVariants } from '@/styles/button';
 import request from '@/lib/request';
 import { toast } from 'sonner';
+import { ReCaptcha, type ReCaptchaHandle } from './ReCaptcha';
 
-export const LoginForm = () => {
+export const LoginForm = ({ recaptchaSiteKey }: { readonly recaptchaSiteKey?: string | undefined }) => {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [recaptchaToken, setRecaptchaToken] = useState<string>('');
+	const recaptchaRef = useRef<ReCaptchaHandle>(null);
 	const setCurrentUser = useSetAtom(currentUserAtom);
+
+	// The API only exposes a site key when the instance configured both halves of
+	// the captcha, so its presence is what turns the widget on.
+	const recaptchaEnabled = Boolean(recaptchaSiteKey);
 
 	async function onSubmit(data: FormData) {
 		setIsLoading(true);
 
 		try {
-			const {
-				data: response,
-				error,
-				status
-			} = await request.post({
+			const { data: response, error } = await request.post({
 				url: 'auth/login',
 				body: {
-					username: data.get('username') as string,
-					password: data.get('password') as string
+					email: data.get('email') as string,
+					password: data.get('password') as string,
+					recaptchaToken
 				}
 			});
 
-			if (error && status === 401) {
+			if (error) {
 				toast.error(error);
 				return;
 			}
@@ -48,6 +52,9 @@ export const LoginForm = () => {
 			debug('Login failed', error instanceof Error ? error.message : error);
 		} finally {
 			setIsLoading(false);
+			// The token that was just sent is spent, whether the login succeeded or
+			// not, so the checkbox goes back to its initial state.
+			recaptchaRef.current?.reset();
 		}
 	}
 
@@ -56,16 +63,16 @@ export const LoginForm = () => {
 			<form action={onSubmit}>
 				<div className="grid gap-2">
 					<div className="grid gap-1">
-						<Label className="sr-only" htmlFor="username">
-							Username
+						<Label className="sr-only" htmlFor="email">
+							Email
 						</Label>
 						<Input
-							id="username"
-							name="username"
-							placeholder="Username"
-							type="text"
+							id="email"
+							name="email"
+							placeholder="Email"
+							type="email"
 							autoCapitalize="none"
-							autoComplete="username"
+							autoComplete="email"
 							autoCorrect="off"
 							readOnly={isLoading}
 							required
@@ -87,7 +94,14 @@ export const LoginForm = () => {
 							required
 						/>
 					</div>
-					<button type="submit" className={cn(buttonVariants())} disabled={isLoading}>
+					{recaptchaSiteKey ? (
+						<ReCaptcha ref={recaptchaRef} siteKey={recaptchaSiteKey} onVerify={setRecaptchaToken} />
+					) : null}
+					<button
+						type="submit"
+						className={cn(buttonVariants())}
+						disabled={isLoading || (recaptchaEnabled && !recaptchaToken)}
+					>
 						{isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 						Sign In
 					</button>

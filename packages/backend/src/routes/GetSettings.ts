@@ -1,5 +1,6 @@
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { AUTH_METHOD, RECAPTCHA_SITE_KEY } from '@/structures/auth.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
 import { SETTINGS } from '@/structures/settings.js';
 
@@ -36,7 +37,14 @@ export const schema = {
 			saveDuplicatesToAlbum: z
 				.boolean()
 				.optional()
-				.describe('Whether or not to attach an already existing file to an album when uploaded again.')
+				.describe('Whether or not to attach an already existing file to an album when uploaded again.'),
+			authMethod: z
+				.enum(['account', 'keycloak'])
+				.describe('How users sign in: with a local account or through the configured OIDC provider.'),
+			recaptchaSiteKey: z
+				.string()
+				.optional()
+				.describe('The reCAPTCHA site key the login form has to embed, when reCAPTCHA is enabled.')
 		})
 	}
 };
@@ -66,6 +74,8 @@ export const run = (_: RequestWithUser, res: FastifyReply) => {
 		privacyPolicyPageContent: Boolean(SETTINGS.privacyPolicyPageContent),
 		termsOfServicePageContent: Boolean(SETTINGS.termsOfServicePageContent),
 		rulesPageContent: Boolean(SETTINGS.rulesPageContent),
-		saveDuplicatesToAlbum: Boolean(SETTINGS.saveDuplicatesToAlbum)
+		saveDuplicatesToAlbum: Boolean(SETTINGS.saveDuplicatesToAlbum),
+		authMethod: AUTH_METHOD,
+		recaptchaSiteKey: RECAPTCHA_SITE_KEY || undefined
 	});
 };

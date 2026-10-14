@@ -31,6 +31,21 @@ services:
     environment:
       # Password of the automatically created admin user (first boot only).
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      # --- Authentication (see docs/configuration.md) -------------------------
+      # These are only the switches; an empty value means "not configured" to
+      # the backend, so the ones you leave commented out in `.env` are simply
+      # ignored. `AUTH_METHOD` selects between the password form and Keycloak.
+      AUTH_METHOD: ${AUTH_METHOD:-account}
+      ACCOUNT_LOGIN: ${ACCOUNT_LOGIN:-}
+      ACCOUNT_PASSWORD: ${ACCOUNT_PASSWORD:-}
+      KEYCLOAK_BASE_URL: ${KEYCLOAK_BASE_URL:-}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-}
+      KEYCLOAK_RESTRICT: ${KEYCLOAK_RESTRICT:-}
+      RECAPTCHA_CLIENTID: ${RECAPTCHA_CLIENTID:-}
+      RECAPTCHA_CLIENTSECRET: ${RECAPTCHA_CLIENTSECRET:-}
       # MariaDB/MySQL connection string, shared by the backend and the migrations.
       # The `:?` makes `docker compose up` fail with a clear message instead of
       # starting a container that cannot reach its database.

@@ -2,7 +2,7 @@
 
 SafeStorage is configured in two places:
 
-1. **Environment variables** — read at process start; good for deployment-level values (port, admin password, timezone).
+1. **Environment variables** — read at process start; good for deployment-level values (port, admin password, authentication method, timezone).
 2. **Admin settings** — stored in the database and edited from **Admin → Settings** in the web UI (`GET`/`POST /api/admin/service/settings`). These survive restarts and upgrades.
 
 ## Environment variables
@@ -13,7 +13,7 @@ SafeStorage is configured in two places:
 | `HOST`                    | backend              | `localhost`             | Interface the API binds to. The container sets `0.0.0.0`.                               |
 | `DATABASE_URL`            | backend / container  | _(none — required)_     | MariaDB/MySQL connection string, e.g. `mysql://user:password@host:3306/safestorage`.     |
 | `SHADOW_DATABASE_URL`     | Prisma CLI (dev)     | _(none)_                | Optional throwaway database for `prisma migrate dev`. Never used by `migrate deploy`.    |
-| `ADMIN_PASSWORD`          | backend              | `admin`                 | Password of the `admin` user **created on first boot only** (when the database is empty). |
+| `ADMIN_PASSWORD`          | backend              | `admin`                 | Password of the legacy `admin` user **created on first boot only**, and only when `ACCOUNT_LOGIN` is unset — see [Authentication](#authentication). |
 | `TZ`                      | backend / container  | `UTC`                   | Timezone used for log timestamps.                                                       |
 | `SKIP_MIGRATIONS`         | container entrypoint | _(unset)_               | If set to any non-empty value, the entrypoint skips `prisma migrate deploy` on start.   |
 | `DB_WAIT_ATTEMPTS`        | container entrypoint | `60`                    | How many times (every 2 s) the entrypoint retries the migrations while the database boots. |
@@ -22,10 +22,65 @@ SafeStorage is configured in two places:
 | `BASE_API_URL`            | frontend (dev)       | `http://localhost:8000` | Target of the development `/api` rewrite. Not used in production.                       |
 | `NODE_ENV`                | both                 | —                       | `production` in the Docker image, which also disables the frontend rewrite.             |
 | `NEXT_TELEMETRY_DISABLED` | frontend             | `1` in the image        | Disables Next.js telemetry.                                                             |
+| `AUTH_METHOD`             | backend              | `account`               | How users sign in: `account` (email + password form) or `keycloak` (OIDC single sign-on). |
+| `ACCOUNT_LOGIN`           | backend              | _(none)_                | Comma-separated emails that may use the password form; the **first** one becomes the `owner`. |
+| `ACCOUNT_PASSWORD`        | backend              | _(none)_                | Comma-separated passwords matched to `ACCOUNT_LOGIN` (a bcrypt hash is accepted).       |
+| `KEYCLOAK_BASE_URL` … `KEYCLOAK_RESTRICT` | backend  | _(none)_                | OIDC provider settings, required by `AUTH_METHOD=keycloak` — see [Authentication](#authentication). |
+| `RECAPTCHA_CLIENTID`      | backend / frontend   | _(none)_                | reCAPTCHA v2 site key; with the secret below, the login form shows the checkbox.        |
+| `RECAPTCHA_CLIENTSECRET`  | backend              | _(none)_                | reCAPTCHA v2 secret, verified by the backend against `siteverify`.                      |
 
 > **A note on migrations:** the container runs `prisma migrate deploy` automatically on every start (unless `SKIP_MIGRATIONS` is set), retrying while the database is still booting. You normally never need to run migrations by hand; set `SKIP_MIGRATIONS` only if you apply the SQL yourself. If the target database does not exist yet, `migrate deploy` creates it as long as the user in `DATABASE_URL` is allowed to.
 
-The Docker Compose stacks read a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `DATABASE_URL`, `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ADMIN_PASSWORD` and `TZ`.
+The Docker Compose stacks read a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `DATABASE_URL`, `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ADMIN_PASSWORD`, `TZ` and the authentication variables below.
+
+## Authentication
+
+SafeStorage signs users in with **one** method at a time, chosen by `AUTH_METHOD`. Both methods use the **email address** as the identity: it is what the unique `username` column holds and what every login is matched on.
+
+| `AUTH_METHOD`       | Login screen                         | Registration                                | Change password |
+| ------------------- | ------------------------------------ | ------------------------------------------- | --------------- |
+| `account` (default) | email + password form                | allowed (still subject to the invite rules) | allowed         |
+| `keycloak`          | "Sign in with single sign-on" button  | refused (`403`)                             | refused (`403`) |
+
+Any other value falls back to `account`, with a warning in the logs. The method is read from the environment only — it decides which routes exist, so it cannot be flipped from the admin UI (the UI reads it back through `GET /api/settings` as `authMethod`).
+
+On a `keycloak` instance the registration and change-password endpoints refuse the call **before** any other check, so a valid invite code does not get around it either: the account is created just in time on the first sign-in, and the password never lives here. The API-key endpoint stays available, so single sign-on users can still generate keys for the API.
+
+### Local accounts (`AUTH_METHOD=account`)
+
+| Variable           | Default  | Description                                                                                                                                |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ACCOUNT_LOGIN`    | _(none)_ | Comma-separated emails. Each one gets an account on the first boot; the **first** receives the `owner` role, the others `user`.             |
+| `ACCOUNT_PASSWORD` | _(none)_ | Comma-separated passwords, matched to `ACCOUNT_LOGIN` positionally. A **bcrypt hash** (`$2a$…`) is accepted as-is, so no plaintext is needed. |
+| `ADMIN_PASSWORD`   | `admin`  | **Deprecated**: only used when `ACCOUNT_LOGIN` is unset, to create the legacy `admin` user on the first boot.                               |
+
+An entry without a matching password gets a random one and cannot use the login form; the password can then be set by an admin from **Admin → Users** or by the owner from the **Credentials** page (`/dashboard/account`). After that, the `ACCOUNT_PASSWORD` value keeps working as a recovery credential.
+
+### Keycloak / OIDC (`AUTH_METHOD=keycloak`)
+
+| Variable                  | Default  | Description                                                                                          |
+| ------------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `KEYCLOAK_BASE_URL`       | _(none)_ | Realm root, e.g. `https://sso.example.com` — **without** `/realms/…`.                                |
+| `KEYCLOAK_REALM`          | _(none)_ | Realm name.                                                                                          |
+| `KEYCLOAK_CLIENT_ID`      | _(none)_ | Client id, used for the code exchange and the `aud`/`azp` check.                                     |
+| `KEYCLOAK_CLIENT_SECRET`  | _(none)_ | Client secret. Omit it for a public client that relies on PKCE alone.                                |
+| `KEYCLOAK_REDIRECT_URI`   | _(none)_ | Public URL of the callback: `https://<your-domain>/api/auth/keycloak/callback`. Register the same value as a _Valid redirect URI_ in the client. |
+| `KEYCLOAK_RESTRICT`       | _(none)_ | Email allow-list: whole emails (`someone@example.com`) or bare domains (`example.com`).              |
+
+The flow runs entirely on the backend (`GET /api/auth/keycloak/login` → the provider → `GET /api/auth/keycloak/callback`), so nginx's existing `/api/` proxy carries it and no CORS or cookie setting has to change. The callback verifies the `id_token` signature against the realm JWKS, checks `iss`, `aud`, `exp` and the `nonce`, refuses unverified email addresses, and then signs the matching account in — or creates it just in time, with the first one becoming the `owner`. Every failure redirects the browser to `/login?error=<code>`, which the login page turns into a message.
+
+> **Single instance only:** the `state`/PKCE material of a pending login lives in the process memory, so several replicas would need sticky sessions or shared storage. The shipped container is a single instance.
+
+Signing out only deletes SafeStorage's own `token` cookie; it does **not** end the session at the provider, so the next sign-in may complete without asking for credentials again. Configure the realm's SSO session idle timeout if that matters.
+
+### reCAPTCHA on the login form
+
+| Variable                 | Default  | Description                                                                       |
+| ------------------------ | -------- | --------------------------------------------------------------------------------- |
+| `RECAPTCHA_CLIENTID`     | _(none)_ | reCAPTCHA **v2** site key, rendered by the login form.                             |
+| `RECAPTCHA_CLIENTSECRET` | _(none)_ | reCAPTCHA **v2** secret, sent by the backend to `siteverify`.                      |
+
+Both are required for the widget to appear: the site key is exposed as `recaptchaSiteKey` in `GET /api/settings`, and the form only renders the checkbox and demands a token when it is present — the backend rejects a login whose token is missing or invalid. Only the login form is protected, not the registration form.
 
 ## Admin settings
 

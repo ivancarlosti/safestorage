@@ -22,7 +22,7 @@ The [`docker/`](../docker) folder ships two ready-to-use, **pull-only** stacks (
 
 ```bash
 cd docker
-cp .env.example .env                            # edit ADMIN_PASSWORD, SAFESTORAGE_PORT
+cp .env.example .env                            # edit ADMIN_PASSWORD, SAFESTORAGE_PORT, AUTH_METHOD
 docker compose -f docker-compose-bundle.yml up -d
 ```
 
@@ -30,7 +30,7 @@ docker compose -f docker-compose-bundle.yml up -d
 
 ```bash
 cd docker
-cp .env.example .env      # edit DATABASE_URL, ADMIN_PASSWORD, SAFESTORAGE_PORT
+cp .env.example .env      # edit DATABASE_URL, ADMIN_PASSWORD, SAFESTORAGE_PORT, AUTH_METHOD
 docker compose pull
 docker compose up -d
 ```
@@ -44,11 +44,28 @@ Open `http://<host>:<port>` (default `24424`) and log in as `admin` with the `AD
 | `SAFESTORAGE_PORT` | `24424`  | Host port published to the container's port 80.                         |
 | `SAFESTORAGE_TAG`  | `latest` | Image tag to run (`latest` or a pinned release such as `1.1.0`).        |
 | `DATABASE_URL`     | —        | MariaDB/MySQL connection string. Required by `docker-compose.yml`.      |
-| `ADMIN_PASSWORD`   | `admin`  | Password of the auto-created `admin` user (first boot only).            |
+| `ADMIN_PASSWORD`   | `admin`  | Password of the auto-created `admin` user (first boot only, legacy single-user setup). |
+| `AUTH_METHOD`      | `account` | `account` (email + password form) or `keycloak` (OIDC single sign-on). |
+| `ACCOUNT_LOGIN`    | —        | Comma-separated emails allowed to sign in; the first one becomes the `owner`. |
+| `ACCOUNT_PASSWORD` | —        | Comma-separated passwords matched to `ACCOUNT_LOGIN` (a bcrypt hash works too). |
+| `KEYCLOAK_*`       | —        | The six variables the `keycloak` method needs: base URL, realm, client id/secret, redirect URI and the email allow-list. |
+| `RECAPTCHA_*`      | —        | `RECAPTCHA_CLIENTID` + `RECAPTCHA_CLIENTSECRET` add a reCAPTCHA v2 checkbox to the login form. |
 | `TZ`               | `UTC`    | Timezone for container log timestamps.                                  |
 | `DB_WAIT_ATTEMPTS` | `60`     | Optional: how many times (every 2 s) the entrypoint retries migrations. |
 
 `docker-compose-bundle.yml` defines its own credentials — `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD` and `MARIADB_ROOT_PASSWORD`, all defaulting to `safestorage`/`safestorage-root`. Uncomment the matching lines in `.env` to change them. That file ignores `DATABASE_URL`, because it builds its own connection string pointing at the bundled `mariadb` service.
+
+## Authentication
+
+By default users sign in with the **email + password form**, and the email address is the identity of every account. Two things change that:
+
+-   **Declare your accounts** in `ACCOUNT_LOGIN` / `ACCOUNT_PASSWORD` so the container creates them itself on the first boot. Handy on a fresh install: the first email becomes the `owner`, the rest are regular users, and no manual password reset is needed. Both are comma-separated lists matched by position, and a bcrypt hash is accepted in place of a plaintext password.
+-   **Delegate to Keycloak** with `AUTH_METHOD=keycloak`. The whole OIDC flow (PKCE, code exchange, `id_token` verification against the realm JWKS) runs on the backend, so the existing `/api/` proxy and cookie setup keep working and no CORS rule has to be added. Failures bounce the browser back to `/login?error=<code>` with an explanation, and accounts are created just in time on the first successful sign-in. While Keycloak is active, registration and password changes are disabled in the UI and rejected by the API.
+
+All the details — every `KEYCLOAK_*` variable, the `KEYCLOAK_RESTRICT` allow-list that the boot requires, the reCAPTCHA pair, and the exact semantics of `AUTH_METHOD` — are in [Configuration → Authentication](configuration.md#authentication). Two caveats worth planning for:
+
+-   `AUTH_METHOD` is read at boot and decides which routes exist, so it is **environment-only**: it cannot be flipped from the admin UI, and a restart is needed after changing it (or any `ACCOUNT_*`, `KEYCLOAK_*`, `RECAPTCHA_*` value).
+-   A sign-in that is still in flight through Keycloak is tracked in the process memory, so run a **single replica**; behind several, the callback could land on an instance that never saw the login start.
 
 ## Data & volumes
 

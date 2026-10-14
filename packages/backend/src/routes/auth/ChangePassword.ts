@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { isKeycloakMethod } from '@/structures/auth.js';
 import prisma from '@/structures/database.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
@@ -32,6 +33,11 @@ export const options = {
 };
 
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
+	if (isKeycloakMethod) {
+		void res.forbidden('The password is managed by the configured single sign-on provider');
+		return;
+	}
+
 	const { password, newPassword } = req.body as { newPassword?: string; password?: string };
 
 	if (!password || !newPassword) {

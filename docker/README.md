@@ -16,14 +16,14 @@ This folder ships two stacks; pick the one that matches your setup:
 **Bundled database** (nothing else to install):
 
 ```bash
-cp .env.example .env   # edit ADMIN_PASSWORD and SAFESTORAGE_PORT
+cp .env.example .env   # edit ADMIN_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
 docker compose -f docker-compose-bundle.yml up -d
 ```
 
 **Existing database:**
 
 ```bash
-cp .env.example .env   # edit DATABASE_URL, ADMIN_PASSWORD and SAFESTORAGE_PORT
+cp .env.example .env   # edit DATABASE_URL, ADMIN_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
 docker compose pull
 docker compose up -d
 ```
@@ -31,6 +31,33 @@ docker compose up -d
 Open `http://<host>:<SAFESTORAGE_PORT>` (default `24424`) and log in as `admin`
 with the `ADMIN_PASSWORD` you configured. The schema is created on the first
 boot, and the database itself too when it does not exist yet.
+
+## Users & authentication
+
+SafeStorage ships two ways to sign in and uses **one** at a time, chosen by
+`AUTH_METHOD` in the same `.env` file (both stacks pass it through to the
+container).
+
+| `AUTH_METHOD`       | Login screen                         | Configure it with                    |
+| ------------------- | ------------------------------------ | ------------------------------------ |
+| `account` (default) | the email + password form in the UI  | `ACCOUNT_LOGIN` / `ACCOUNT_PASSWORD` |
+| `keycloak`          | "Sign in with single sign-on" button | the `KEYCLOAK_*` variables           |
+
+The accounts declared in `ACCOUNT_LOGIN` (comma-separated emails; the first one
+becomes the `owner`) are created on the first boot. `ADMIN_PASSWORD` still works
+for the legacy single `admin` user when nothing else is configured. Setting
+`RECAPTCHA_CLIENTID` and `RECAPTCHA_CLIENTSECRET` adds a reCAPTCHA v2 checkbox to
+the login form.
+
+For Keycloak, point `KEYCLOAK_BASE_URL` / `KEYCLOAK_REALM` at your realm,
+register `https://<your-domain>/api/auth/keycloak/callback` as the client's
+_Valid redirect URI_, and list the people who may sign in in `KEYCLOAK_RESTRICT`
+(whole emails or bare domains). The backend refuses to start with
+`AUTH_METHOD=keycloak` while that allow-list is empty, so the first visitor
+cannot quietly claim the instance.
+
+Every variable is documented in
+[`../docs/configuration.md#authentication`](../docs/configuration.md#authentication).
 
 ## Data
 
@@ -85,3 +112,8 @@ docker compose down             # stop (data stays on disk)
     `MARIADB_*` variables instead.
 -   The container is healthy when `GET /api/health` (backend) and `/` (frontend)
     both answer through nginx; `docker compose ps` shows the status.
+-   Authentication is chosen by `AUTH_METHOD` in `.env` and applied at boot, so
+    changing it — or any of the `ACCOUNT_*`, `KEYCLOAK_*` and `RECAPTCHA_*`
+    variables — needs a restart (`docker compose up -d --force-recreate`). A
+    sign-in that is still in flight through Keycloak is tracked in the process
+    memory, so run a single replica.

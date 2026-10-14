@@ -18,7 +18,7 @@ export const RegisterForm = ({ code }: { readonly code?: string }) => {
 	async function onSubmit(data: FormData) {
 		setIsLoading(true);
 
-		const username = data.get('username');
+		const email = data.get('email');
 		const password = data.get('password');
 		const repassword = data.get('repassword');
 
@@ -32,7 +32,7 @@ export const RegisterForm = ({ code }: { readonly code?: string }) => {
 			const obj = {
 				url: 'auth/register',
 				body: {
-					username,
+					email,
 					password
 				}
 			};
@@ -65,16 +65,16 @@ export const RegisterForm = ({ code }: { readonly code?: string }) => {
 				{code ? <input type="hidden" name="code" value={code} /> : null}
 				<div className="grid gap-2">
 					<div className="grid gap-1">
-						<Label className="sr-only" htmlFor="username">
-							Username
+						<Label className="sr-only" htmlFor="email">
+							Email
 						</Label>
 						<Input
-							id="username"
-							name="username"
-							placeholder="Username"
-							type="text"
+							id="email"
+							name="email"
+							placeholder="Email"
+							type="email"
 							autoCapitalize="none"
-							autoComplete="username"
+							autoComplete="email"
 							autoCorrect="off"
 							readOnly={isLoading}
 							required

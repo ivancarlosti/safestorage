@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { isKeycloakMethod, isValidEmail, normalizeEmail } from '@/structures/auth.js';
 import prisma from '@/structures/database.js';
 import type { RouteOptions } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
@@ -17,12 +18,11 @@ export const schema = {
 	headers: z.object({
 		invite: z.string().optional().describe('The invite code to use.')
 	}),
-	body: z
-		.object({
-			username: z.string().describe('The username of the user.'),
-			password: z.string().describe('The password of the user.')
-		})
-		.required(),
+	body: z.object({
+		email: z.string().describe('The email of the user, which is also the login.'),
+		username: z.string().optional().describe('Deprecated alias of `email`.'),
+		password: z.string().describe('The password of the user.')
+	}),
 	response: {
 		200: z.object({
 			message: responseMessageSchema
@@ -44,6 +44,13 @@ export const options = {
 } as RouteOptions;
 
 export const run = async (req: FastifyRequest, res: FastifyReply) => {
+	if (isKeycloakMethod) {
+		void res.forbidden(
+			'The account registration is disabled on this instance, use the configured single sign-on provider'
+		);
+		return;
+	}
+
 	let foundInvite = null;
 
 	const invite = req.headers.invite as string;
@@ -70,14 +77,18 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		}
 	}
 
-	const { username, password } = req.body as { password?: string; username?: string };
-	if (!username || !password) {
+	const body = req.body as { email?: string; password?: string; username?: string };
+	// `username` is kept as an alias for older clients; both are the user's email.
+	const email = normalizeEmail(body.email ?? body.username ?? '');
+	const { password } = body;
+
+	if (!email || !password) {
 		void res.badRequest('No username or password provided');
 		return;
 	}
 
-	if (username.length < 4 || username.length > 32) {
-		void res.badRequest('Username must have 4-32 characters');
+	if (!isValidEmail(email)) {
+		void res.badRequest('A valid email address is required');
 		return;
 	}
 
@@ -88,12 +99,12 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 
 	const exists = await prisma.users.findFirst({
 		where: {
-			username
+			username: email
 		}
 	});
 
 	if (exists) {
-		void res.badRequest('Username already exists');
+		void res.badRequest('An account with that email already exists');
 		return;
 	}
 
@@ -111,7 +122,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 	await prisma.users.create({
 		data: {
 			uuid: userUuid,
-			username,
+			username: email,
 			password: hash,
 			roles: {
 				connect: {

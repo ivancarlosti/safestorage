@@ -67,7 +67,7 @@ yarn dev:backend
 yarn dev:frontend
 ```
 
-The first time a user is created, an `admin` account is seeded with the password from `ADMIN_PASSWORD` (or `admin`). The production `start` script loads a root `.env` file via dotenv; during `dev`, set variables such as `DATABASE_URL`, `PORT` and `ADMIN_PASSWORD` in your shell instead. The frontend reads `BASE_API_URL` from `packages/next/.env.local` (gitignored).
+The first time a user is created, an `admin` account is seeded with the password from `ADMIN_PASSWORD` (or `admin`) — unless `ACCOUNT_LOGIN` declares accounts, in which case those are created instead. The production `start` script loads a root `.env` file via dotenv; during `dev`, set variables such as `DATABASE_URL`, `PORT`, `ADMIN_PASSWORD` (or `ACCOUNT_LOGIN`/`ACCOUNT_PASSWORD`, `AUTH_METHOD=keycloak` with its `KEYCLOAK_*`, and the `RECAPTCHA_*` pair — see [Configuration → Authentication](configuration.md#authentication)) in your shell instead. The frontend reads `BASE_API_URL` from `packages/next/.env.local` (gitignored).
 
 ## Root scripts
 
