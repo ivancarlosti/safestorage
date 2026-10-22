@@ -11,9 +11,10 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { consumeAnonymousUploadSlot, getAnonymousUploadMaxSize } from '@/utils/AnonymousUploadLimiter.js';
 import { getUniqueFileIdentifier, constructFilePublicLink, deleteTmpFile, handleUploadFile } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
-import { validateAlbum } from '@/utils/UploadHelpers.js';
+import { type UploadTarget, validateUploadTarget } from '@/utils/UploadHelpers.js';
 import { getUsedQuota } from '@/utils/User.js';
 
 /*
@@ -33,6 +34,7 @@ export const schema = {
 	tags: ['Files'],
 	headers: z.object({
 		albumuuid: z.string().optional().describe('The uuid of the album.'),
+		albumlink: z.string().optional().describe('The identifier of the album link the file is uploaded through.'),
 		'safestorage-chunk-number': z.coerce.number().optional().describe('The chunk number.'),
 		'safestorage-chunks-total': z.coerce.number().optional().describe('The total number of chunks.'),
 		'safestorage-uuid': z.string().optional().describe('The uuid of the file.'),
@@ -92,7 +94,7 @@ export const options = {
 	]
 };
 
-export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyReply) => {
+export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyReply, target: UploadTarget) => {
 	/*
 		With the network storage enabled every upload is a JSON request describing
 		the file, because the bytes go straight from the browser to the bucket.
@@ -109,21 +111,41 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 		return;
 	}
 
-	const quota = await getUsedQuota(req.user?.id as number);
-	if (quota?.overQuota) {
-		void res.forbidden('You are over your storage quota');
-		return;
-	}
+	const anonymous = !req.user || target.type === 'link';
+	const maxSize = anonymous ? getAnonymousUploadMaxSize() : SETTINGS.maxSize;
 
-	if (!SETTINGS.publicMode && !req.user) {
-		void res.unauthorized('Only registered users are allowed to upload files.');
-		return;
+	if (target.type !== 'link') {
+		const quota = await getUsedQuota(req.user?.id as number);
+		if (quota?.overQuota) {
+			void res.forbidden('You are over your storage quota');
+			return;
+		}
 	}
 
 	const fileExtension = `.${name.split('.').pop()!}`.toLowerCase();
 	if (SETTINGS.blockedExtensions.includes(fileExtension)) {
 		void res.badRequest('File type is not allowed.');
 		return;
+	}
+
+	if (size > maxSize) {
+		void res.payloadTooLarge('File is too big');
+		return;
+	}
+
+	/*
+		The upload slot is taken once the file passed every other check, so that a
+		rejected upload does not use up the visitor's allowance.
+	*/
+	if (anonymous) {
+		const limiter = consumeAnonymousUploadSlot(req.ip);
+		if (!limiter.allowed) {
+			void res
+				.code(429)
+				.header('Retry-After', String(limiter.retryAfter))
+				.send({ message: 'Too many anonymous uploads, please try again later' });
+			return;
+		}
 	}
 
 	// Assign a unique identifier to the file
@@ -136,11 +158,6 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 		const isLowerCase = !SETTINGS.enableMixedCaseFilenames || process.platform === 'win32';
 		const originalNameWithoutExt = basename(name, ext);
 		newFilename = `${slugify(originalNameWithoutExt, { separator: '_', lowercase: isLowerCase })}-${uniqueIdentifier}${ext}`;
-	}
-
-	if (size > SETTINGS.maxSize) {
-		void res.payloadTooLarge('File is too big');
-		return;
 	}
 
 	const publicUrl = `${SETTINGS.S3PublicUrl || SETTINGS.S3Endpoint}/${newFilename}`;
@@ -230,10 +247,25 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 };
 
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
-	if (SETTINGS.useNetworkStorage) return uploadToNetworkStorage(req, res);
+	const validation = await validateUploadTarget({
+		albumUuid: req.headers.albumuuid as string,
+		linkIdentifier: req.headers.albumlink as string,
+		user: req.user
+	});
+
+	if ('error' in validation) {
+		void res.code(validation.status).send({ message: validation.error });
+		return;
+	}
+
+	const { target } = validation;
+	const anonymous = !req.user || target.type === 'link';
+
+	if (SETTINGS.useNetworkStorage) return uploadToNetworkStorage(req, res, target);
 
 	const tmpDir = fileURLToPath(new URL('../../../../../uploads/tmp', import.meta.url));
 	const maxChunkSize = SETTINGS.chunkSize;
+	const allowedSize = anonymous ? getAnonymousUploadMaxSize() : SETTINGS.maxSize;
 	/*
 		`@safestorage/uploader-module` rejects a chunked upload when
 		`maxChunkSize * totalChunks` is bigger than the file size it is given, and
@@ -242,20 +274,17 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		real limit against the size the browser declared further down), otherwise
 		every file that is close to `maxSize` is rejected with a 413.
 	*/
-	const maxFileSize = SETTINGS.maxSize + SETTINGS.chunkSize;
+	const maxFileSize = allowedSize + SETTINGS.chunkSize;
 
-	const quota = await getUsedQuota(req.user?.id as number);
-	if (quota?.overQuota) {
-		void res.forbidden('You are over your storage quota');
-		return;
+	if (target.type !== 'link') {
+		const quota = await getUsedQuota(req.user?.id as number);
+		if (quota?.overQuota) {
+			void res.forbidden('You are over your storage quota');
+			return;
+		}
 	}
 
 	try {
-		if (!SETTINGS.publicMode && !req.user) {
-			void res.unauthorized('Only registered users are allowed to upload files.');
-			return;
-		}
-
 		const upload = await processFile(req.raw, {
 			destination: tmpDir,
 			maxFileSize,
@@ -273,7 +302,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			browser sends along with the last chunk.
 		*/
 		const declaredSize = Number(upload.metadata.size);
-		if (Number.isFinite(declaredSize) && declaredSize > SETTINGS.maxSize) {
+		if (Number.isFinite(declaredSize) && declaredSize > allowedSize) {
 			await deleteTmpFile(upload.path as string);
 			void res.payloadTooLarge('File is too big');
 			return;
@@ -293,17 +322,34 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		}
 
 		// Check if the new uploaded file sends the user over the quota
-		const quotaAfterUpload = await getUsedQuota(req.user?.id as number, Number(upload.metadata.size));
-		if (quotaAfterUpload?.overQuota) {
-			await deleteTmpFile(upload.path as string);
-			void res.forbidden('You are over your storage quota');
-			return;
+		if (target.type !== 'link') {
+			const quotaAfterUpload = await getUsedQuota(req.user?.id as number, Number(upload.metadata.size));
+			if (quotaAfterUpload?.overQuota) {
+				await deleteTmpFile(upload.path as string);
+				void res.forbidden('You are over your storage quota');
+				return;
+			}
 		}
 
-		const album = await validateAlbum(req.headers.albumuuid as string, req.user ? req.user : undefined);
+		/*
+			The slot is taken once the complete file passed every check. A chunked
+			upload only reaches this point on its last chunk, so it is counted once.
+		*/
+		const shouldConsumeSlot = anonymous;
+		if (shouldConsumeSlot) {
+			const limiter = consumeAnonymousUploadSlot(req.ip);
+			if (!limiter.allowed) {
+				await deleteTmpFile(upload.path as string);
+				void res
+					.code(429)
+					.header('Retry-After', String(limiter.retryAfter))
+					.send({ message: 'Too many anonymous uploads, please try again later' });
+				return;
+			}
+		}
 
 		const uploadedFile = await handleUploadFile({
-			user: req.user,
+			user: target.type === 'link' ? undefined : req.user,
 			ip: req.ip,
 			upload: {
 				name: upload.metadata.name,
@@ -312,7 +358,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 				size: upload.metadata.size ?? '0',
 				sourceUrl: (req.headers['x-source-url'] as string) ?? undefined
 			},
-			album
+			album: target.albumId
 		});
 
 		const linkData = constructFilePublicLink({ req, fileName: uploadedFile.name });

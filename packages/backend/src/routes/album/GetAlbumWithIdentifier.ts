@@ -9,6 +9,7 @@ import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 import { parseSortOrder, resolveSortOrder } from '@/utils/SortOrder.js';
+import { resolveViewMode } from '@/utils/ViewMode.js';
 
 export const schema = {
 	summary: 'Get public album',
@@ -30,6 +31,11 @@ export const schema = {
 				name: z.string().describe('The name of the album.'),
 				description: z.string().nullable().describe('The description of the album.'),
 				isNsfw: z.boolean().describe('Whether or not the album is NSFW.'),
+				viewMode: z.enum(['list', 'thumbs']).describe('The view mode of the link.'),
+				allowUploads: z.boolean().describe('Whether visitors can upload files through this link.'),
+				hideFiles: z
+					.boolean()
+					.describe('Whether the album contents are hidden and only the visitor uploads are shown.'),
 				count: z.number().describe('The amount of files in the album.'),
 				files: z.array(
 					z.object({
@@ -72,6 +78,9 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		},
 		select: {
 			albumId: true,
+			allowUploads: true,
+			hideFiles: true,
+			viewMode: true,
 			expiresAt: true
 		}
 	});
@@ -92,13 +101,25 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			id: link.albumId
 		},
 		select: {
-			sortOrder: true
+			sortOrder: true,
+			viewMode: true
 		}
 	});
 
 	// Determine sort order: album-specific > global default > legacy fallback
 	const effectiveSortOrder = resolveSortOrder(albumMeta?.sortOrder, SETTINGS.defaultSortOrder);
 	const orderBy = parseSortOrder(effectiveSortOrder);
+	const viewMode = resolveViewMode(link.viewMode, albumMeta?.viewMode);
+
+	/*
+		Drop-only links keep the album contents private. Files are matched by IP
+		and the absence of an owner, so a visitor only sees the files they uploaded
+		themselves through this link. Server-side renders do not send the hint
+		header and therefore always get an empty list: the server's IP says nothing
+		about the visitor.
+	*/
+	const wantsOwnFiles = link.hideFiles && req.headers['x-album-visitor'] === '1';
+	const fileWhere = link.hideFiles ? (wantsOwnFiles ? { userId: null, ip: req.ip } : { id: -1 }) : {};
 
 	// Make sure the uuid exists and it belongs to the user
 	const album = await prisma.albums.findFirst({
@@ -110,6 +131,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			description: true,
 			nsfw: true,
 			files: {
+				where: fileWhere,
 				select: {
 					name: true,
 					original: true,
@@ -121,7 +143,13 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 				orderBy,
 				...options
 			},
-			_count: true
+			_count: {
+				select: {
+					files: {
+						where: fileWhere
+					}
+				}
+			}
 		}
 	});
 
@@ -136,6 +164,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		},
 		select: {
 			files: {
+				where: fileWhere,
 				select: {
 					name: true
 				},
@@ -171,6 +200,9 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			// Only send cover if the first file is an image
 			cover: coverPublicLink?.thumb ? coverPublicLink.url : null,
 			isNsfw: album.nsfw,
+			viewMode,
+			allowUploads: Boolean(link.allowUploads && SETTINGS.anonymousUploadsEnabled),
+			hideFiles: link.hideFiles,
 			count: album._count.files
 		}
 	});

@@ -33,7 +33,7 @@ SafeStorage is a TypeScript monorepo that ships as a single container. This page
 
 The backend is a plain Fastify server built around a small, explicit structure:
 
--   **`main.ts`** — bootstraps Fastify (helmet, cors, cookies, static, Swagger + Scalar), creates the default admin user if missing, loads settings, registers routes and starts the scheduler.
+-   **`main.ts`** — bootstraps Fastify (helmet, cors, cookies, static, Swagger + Scalar), creates the accounts declared in `ACCOUNT_LOGIN`, loads settings, registers routes and starts the scheduler.
 -   **`structures/routes.ts`** — the route loader. It walks `src/routes`, and for every module exports `options.url` + `options.method`, it:
 
     1. prefixes the URL with `/api` (unless the route opts out via `ignoreRoutePrefix`),
@@ -99,4 +99,4 @@ See [Deployment](deployment.md) for the full build/run details.
 | Database         | External MariaDB/MySQL server, reached through `DATABASE_URL`.               |
 | Runtime settings | `settings` table, cached in the `SETTINGS` singleton.                        |
 | Persistent data  | `/app/uploads` and `/app/logs` (bind mounts/volumes) + the database server.  |
-| Secrets          | JWT signing `secret` (settings) and `ADMIN_PASSWORD` (env, first boot only). |
+| Secrets          | JWT signing `secret` (settings) and the account passwords (`ACCOUNT_PASSWORD`, env, first boot only). |

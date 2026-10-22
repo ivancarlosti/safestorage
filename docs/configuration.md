@@ -2,7 +2,7 @@
 
 SafeStorage is configured in two places:
 
-1. **Environment variables** — read at process start; good for deployment-level values (port, admin password, authentication method, timezone).
+1. **Environment variables** — read at process start; good for deployment-level values (port, accounts, authentication method, timezone).
 2. **Admin settings** — stored in the database and edited from **Admin → Settings** in the web UI (`GET`/`POST /api/admin/service/settings`). These survive restarts and upgrades.
 
 ## Environment variables
@@ -13,7 +13,6 @@ SafeStorage is configured in two places:
 | `HOST`                    | backend              | `localhost`             | Interface the API binds to. The container sets `0.0.0.0`.                               |
 | `DATABASE_URL`            | backend / container  | _(none — required)_     | MariaDB/MySQL connection string, e.g. `mysql://user:password@host:3306/safestorage`.     |
 | `SHADOW_DATABASE_URL`     | Prisma CLI (dev)     | _(none)_                | Optional throwaway database for `prisma migrate dev`. Never used by `migrate deploy`.    |
-| `ADMIN_PASSWORD`          | backend              | `admin`                 | Password of the legacy `admin` user **created on first boot only**, and only when `ACCOUNT_LOGIN` is unset — see [Authentication](#authentication). |
 | `TZ`                      | backend / container  | `UTC`                   | Timezone used for log timestamps.                                                       |
 | `SKIP_MIGRATIONS`         | container entrypoint | _(unset)_               | If set to any non-empty value, the entrypoint skips `prisma migrate deploy` on start.   |
 | `DB_WAIT_ATTEMPTS`        | container entrypoint | `60`                    | How many times (every 2 s) the entrypoint retries the migrations while the database boots. |
@@ -31,7 +30,7 @@ SafeStorage is configured in two places:
 
 > **A note on migrations:** the container runs `prisma migrate deploy` automatically on every start (unless `SKIP_MIGRATIONS` is set), retrying while the database is still booting. You normally never need to run migrations by hand; set `SKIP_MIGRATIONS` only if you apply the SQL yourself. If the target database does not exist yet, `migrate deploy` creates it as long as the user in `DATABASE_URL` is allowed to.
 
-The Docker Compose stacks read a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `DATABASE_URL`, `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ADMIN_PASSWORD`, `TZ` and the authentication variables below.
+The Docker Compose stacks read a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `DATABASE_URL`, `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ACCOUNT_LOGIN`, `ACCOUNT_PASSWORD`, `TZ` and the authentication variables below.
 
 ## Authentication
 
@@ -52,7 +51,8 @@ On a `keycloak` instance the registration and change-password endpoints refuse t
 | ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ACCOUNT_LOGIN`    | _(none)_ | Comma-separated emails. Each one gets an account on the first boot; the **first** receives the `owner` role, the others `user`.             |
 | `ACCOUNT_PASSWORD` | _(none)_ | Comma-separated passwords, matched to `ACCOUNT_LOGIN` positionally. A **bcrypt hash** (`$2a$…`) is accepted as-is, so no plaintext is needed. |
-| `ADMIN_PASSWORD`   | `admin`  | **Deprecated**: only used when `ACCOUNT_LOGIN` is unset, to create the legacy `admin` user on the first boot.                               |
+
+There is **no default account**: an instance that declares no `ACCOUNT_LOGIN` starts with no users at all (the logs warn about it) and cannot be signed into until one is declared and the container restarted. An existing database is never modified — deployments created with the removed `ADMIN_PASSWORD` variable keep their `admin` row, which can then be deleted or renamed from **Admin → Users**.
 
 An entry without a matching password gets a random one and cannot use the login form; the password can then be set by an admin from **Admin → Users** or by the owner from the **Credentials** page (`/dashboard/account`). After that, the `ACCOUNT_PASSWORD` value keeps working as a recovery credential.
 

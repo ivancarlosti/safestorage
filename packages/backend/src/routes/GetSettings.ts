@@ -38,6 +38,12 @@ export const schema = {
 				.boolean()
 				.optional()
 				.describe('Whether or not to attach an already existing file to an album when uploaded again.'),
+			anonymousUploadsEnabled: z
+				.boolean()
+				.describe('Whether visitors can upload files without an account, through public links or public mode.'),
+			anonymousUploadsMaxSize: z
+				.number()
+				.describe('The maximum size of an anonymous upload in bytes. 0 means the instance max size applies.'),
 			authMethod: z
 				.enum(['account', 'keycloak'])
 				.describe('How users sign in: with a local account or through the configured OIDC provider.'),
@@ -75,6 +81,8 @@ export const run = (_: RequestWithUser, res: FastifyReply) => {
 		termsOfServicePageContent: Boolean(SETTINGS.termsOfServicePageContent),
 		rulesPageContent: Boolean(SETTINGS.rulesPageContent),
 		saveDuplicatesToAlbum: Boolean(SETTINGS.saveDuplicatesToAlbum),
+		anonymousUploadsEnabled: Boolean(SETTINGS.anonymousUploadsEnabled),
+		anonymousUploadsMaxSize: SETTINGS.anonymousUploadsMaxSize,
 		authMethod: AUTH_METHOD,
 		recaptchaSiteKey: RECAPTCHA_SITE_KEY || undefined
 	});

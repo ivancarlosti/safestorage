@@ -7,12 +7,17 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { logError } from '@/utils/Logger.js';
+import { validateUploadTarget } from '@/utils/UploadHelpers.js';
 
 export const schema = {
 	summary: 'Complete multipart upload',
 	description:
 		'Completes a S3 multipart upload after every part has been uploaded. The uploaded parts are collected server-side, so the bucket does not need to expose the ETag header through CORS.',
 	tags: ['Files'],
+	headers: z.object({
+		albumuuid: z.string().optional().describe('The uuid of the album.'),
+		albumlink: z.string().optional().describe('The identifier of the album link the file is uploaded through.')
+	}),
 	/*
 		No `.required()` on this object: it would also turn the optional `size`
 		into a required field. `uploadId` and `key` are required because they are
@@ -52,8 +57,14 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { uploadId, key, size } = req.body as { key: string; size?: number; uploadId: string };
 	if (!uploadId || !key) return res.badRequest('Missing multipart upload information');
 
-	if (!SETTINGS.publicMode && !req.user) {
-		void res.unauthorized('Only registered users are allowed to upload files.');
+	const validation = await validateUploadTarget({
+		albumUuid: req.headers.albumuuid as string,
+		linkIdentifier: req.headers.albumlink as string,
+		user: req.user
+	});
+
+	if ('error' in validation) {
+		void res.code(validation.status).send({ message: validation.error });
 		return;
 	}
 

@@ -8,13 +8,13 @@ import { DropZone } from '@/components/ui/dropzone';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { settingsAtom } from '@/lib/atoms/settings';
-import { toast } from 'sonner';
 import { getSignedUrl, processDropItem } from '@/lib/dropzone';
 import { useUploadFile } from '@/hooks/useUploadFile';
 import { albumDisablePointerEventAtom } from '@/lib/atoms/dropzone';
 import { uploadQueue } from '@/lib/uploadQueue';
 
 interface DropZonePropsWithAlbumUuid extends DropZoneProps {
+	readonly albumLink?: string;
 	readonly albumUuid?: string;
 }
 
@@ -27,7 +27,10 @@ export const AlbumDropZone = (props: DropZonePropsWithAlbumUuid) => {
 
 	const settings = useAtomValue(settingsAtom);
 
-	const { uploadFile } = useUploadFile({ albumUuid: props.albumUuid });
+	const { failUpload, uploadFile } = useUploadFile({
+		albumUuid: props.albumUuid,
+		albumLink: props.albumLink
+	});
 
 	const onDrop = useCallback(
 		async (ev: DropEvent) => {
@@ -55,9 +58,9 @@ export const AlbumDropZone = (props: DropZonePropsWithAlbumUuid) => {
 				void files.map(async file => {
 					void uploadQueue.add(async () => {
 						const actualFile = file instanceof File ? file : await file.getFile();
-						const target = await getSignedUrl(actualFile);
+						const target = await getSignedUrl(actualFile, props.albumLink, props.albumUuid);
 						if ('error' in target) {
-							toast.error(target.error);
+							failUpload(actualFile, target.error);
 							return;
 						}
 
@@ -71,7 +74,7 @@ export const AlbumDropZone = (props: DropZonePropsWithAlbumUuid) => {
 				});
 			}
 		},
-		[setAlbumDisablePointerEvent, settings, uploadFile]
+		[failUpload, props.albumLink, props.albumUuid, setAlbumDisablePointerEvent, settings, uploadFile]
 	);
 
 	return (

@@ -5,6 +5,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { isValidViewMode } from '@/utils/ViewMode.js';
 
 export const schema = {
 	summary: 'Edit link',
@@ -16,6 +17,17 @@ export const schema = {
 			linkUuid: z.string().describe('The uuid of the link.')
 		})
 		.required(),
+	body: z.object({
+		enabled: z.boolean().optional().describe('Whether the link is enabled.'),
+		enableDownload: z.boolean().optional().describe('Whether the link allows downloads.'),
+		allowUploads: z.boolean().optional().describe('Whether visitors can upload files through the link.'),
+		hideFiles: z
+			.boolean()
+			.optional()
+			.describe('Whether the album contents are hidden and only the visitor uploads are shown.'),
+		viewMode: z.enum(['list', 'thumbs']).nullable().optional().describe('The view mode of the link.'),
+		expiresAt: z.coerce.date().nullable().optional().describe('The expiration date of the link.')
+	}),
 	response: {
 		200: z.object({
 			message: responseMessageSchema
@@ -34,11 +46,19 @@ export const options = {
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { uuid, linkUuid } = req.params as { linkUuid: string; uuid: string };
 
-	const { enabled, enableDownload, expiresAt } = req.body as {
+	const { enabled, enableDownload, expiresAt, allowUploads, hideFiles, viewMode } = req.body as {
+		allowUploads?: boolean;
 		enableDownload?: boolean;
 		enabled?: boolean;
-		expiresAt?: Date;
+		expiresAt?: Date | null;
+		hideFiles?: boolean;
+		viewMode?: string | null;
 	};
+
+	if (viewMode !== undefined && viewMode !== null && !isValidViewMode(viewMode)) {
+		void res.badRequest('Invalid view mode. Valid options: list, thumbs');
+		return;
+	}
 
 	const album = await prisma.albums.findFirst({
 		where: {
@@ -68,7 +88,10 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const updateObj = {
 		enabled: enabled === true ? true : enabled === false ? false : link.enabled,
 		enableDownload: enableDownload === true ? true : enableDownload === false ? false : link.enableDownload,
-		expiresAt: expiresAt!
+		allowUploads: allowUploads === true ? true : allowUploads === false ? false : link.allowUploads,
+		hideFiles: hideFiles === true ? true : hideFiles === false ? false : link.hideFiles,
+		viewMode: viewMode === undefined ? link.viewMode : viewMode,
+		expiresAt: expiresAt === undefined ? link.expiresAt : expiresAt
 	};
 
 	await prisma.links.update({

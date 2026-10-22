@@ -104,6 +104,8 @@ export interface FileWithIndex extends FileWithAdditionalData {
 
 export interface Settings {
 	authMethod: 'account' | 'keycloak';
+	anonymousUploadsEnabled: boolean;
+	anonymousUploadsMaxSize: number;
 	backgroundImageURL: string;
 	blockedExtensions: string[];
 	chunkSize: number;
@@ -135,9 +137,12 @@ export interface Album {
 	name: string;
 	nsfw: boolean;
 	sortOrder?: string | null;
+	viewMode?: ViewMode;
 	uuid: string;
 	zippedAt: string;
 }
+
+export type ViewMode = 'list' | 'thumbs';
 
 export const enum MessageType {
 	Uninitialized = -1,
@@ -238,13 +243,16 @@ export interface UserWithCountAndQuota extends UserWithCount {
 
 export interface AlbumLink {
 	albumUuid: string;
+	allowUploads: boolean;
 	createdAt: string;
 	editedAt: string | null;
 	enableDownload: boolean;
 	enabled: boolean;
 	expiresAt: string | null;
+	hideFiles: boolean;
 	identifier: string;
 	uuid: string;
+	viewMode: ViewMode | null;
 	views: number;
 }
 

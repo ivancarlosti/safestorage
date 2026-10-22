@@ -14,7 +14,7 @@ The **diagnostic** endpoint reports environment details (Node version, `ffmpeg` 
 
 ## Login & accounts
 
-**I can't log in as `admin`.** `ADMIN_PASSWORD` is only honoured the _first_ time the container starts, while the database is still empty, and only when `ACCOUNT_LOGIN` is unset. If the `admin` user already exists, change the password through **Admin → Account** (or drop the whole database to start over — this deletes all data).
+**I can't log in at all after a fresh install.** There is no default account any more: the users are the ones declared in `ACCOUNT_LOGIN` on the first boot, and an instance that declares none has no users. Declare `ACCOUNT_LOGIN`/`ACCOUNT_PASSWORD`, recreate the container and sign in with that email. Deployments that already existed keep their users (including the old `admin` row) — change that password from **Admin → Users** if needed.
 
 **There is no password form, only a single sign-on button.** The instance runs with `AUTH_METHOD=keycloak`, where the password form is removed on purpose — create the user in the identity provider instead. If you did not mean to, set `AUTH_METHOD=account` (or remove it) and recreate the container: the value is read at boot, so editing `.env` alone is not enough.
 
@@ -44,6 +44,8 @@ A page from the provider itself ("Invalid redirect URI") means `KEYCLOAK_REDIREC
 **`403` on an admin call.** Your account does not hold the `admin` role. Promote/demote requires the `owner` role.
 
 ## Uploads
+
+**The upload panel reports failed uploads but the network tab is empty.** Files refused before they are sent (bigger than **Max Size**, blocked extension, instance settings still loading, network storage refusing to sign the request) never reach the backend, so nothing appears in the devtools and nothing shows up in `docker logs`. The reason is printed under the file name in the panel and as a toast — raise **Max Size** in `Admin → Settings` or fix the reported cause.
 
 **Uploads fail behind a proxy.** The bundled nginx streams bodies without buffering, but an _external_ proxy (Cloudflare, Traefik, another nginx) may impose its own body limit. Raise or disable it there. Also raise **Max Size** in `Admin → Settings`.
 
@@ -124,7 +126,7 @@ rm -rf uploads logs
 docker compose -f docker-compose-bundle.yml up -d     # or `docker compose up -d`
 ```
 
-On the next boot the schema, the built-in roles and the `admin` user (from `ADMIN_PASSWORD`) are created from scratch.
+On the next boot the schema and the built-in roles are created from scratch, together with the accounts declared in `ACCOUNT_LOGIN` (there is no default account).
 
 ## Still stuck?
 

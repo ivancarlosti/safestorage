@@ -52,12 +52,18 @@ export type SignedUploadTarget =
 	small files get a single pre-signed URL, while files that are too big for a
 	single request get a pre-signed URL for every part of a multipart upload.
 */
-export const getSignedUrl = async (file: File): Promise<SignedUploadTarget | { error: string }> => {
+export const getSignedUrl = async (
+	file: File,
+	albumLink?: string,
+	albumUuid?: string
+): Promise<SignedUploadTarget | { error: string }> => {
 	const response = await fetch('/api/upload', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			credentials: 'include'
+			credentials: 'include',
+			albumlink: albumLink ?? '',
+			albumuuid: albumUuid ?? ''
 		},
 		body: JSON.stringify({
 			contentType: file.type,

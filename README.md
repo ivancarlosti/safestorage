@@ -64,7 +64,7 @@ The easiest way is the **bundled** Compose stack in [`docker/`](docker): it runs
 ```bash
 git clone https://github.com/ivancarlosti/safestorage.git
 cd safestorage/docker
-cp .env.example .env                    # set ADMIN_PASSWORD (and optionally SAFESTORAGE_PORT)
+cp .env.example .env                    # set ACCOUNT_LOGIN/ACCOUNT_PASSWORD (and optionally SAFESTORAGE_PORT)
 docker compose -f docker-compose-bundle.yml up -d
 ```
 
@@ -72,12 +72,12 @@ Already running MariaDB/MySQL somewhere (on the host, in another Compose project
 
 ```bash
 cd safestorage/docker
-cp .env.example .env     # set DATABASE_URL and ADMIN_PASSWORD
+cp .env.example .env     # set DATABASE_URL and ACCOUNT_LOGIN/ACCOUNT_PASSWORD
 docker compose pull
 docker compose up -d
 ```
 
-Open `http://<your-host>:24424` and log in as `admin` with the password you configured. That's it — migrations run automatically on first boot.
+Open `http://<your-host>:24424` and log in with the `ACCOUNT_LOGIN` email and password you configured. That's it — migrations run automatically on first boot.
 
 Prefer building from source, or want TLS/backup guidance? See [docs/deployment.md](docs/deployment.md).
 

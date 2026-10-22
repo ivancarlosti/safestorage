@@ -28,6 +28,7 @@ export const schema = {
 			description: z.string().nullable().describe('The description of the album.'),
 			isNsfw: z.boolean().describe('Whether or not the album is nsfw.'),
 			sortOrder: z.string().nullable().describe('The sort order for files in this album.'),
+			viewMode: z.enum(['list', 'thumbs']).describe('The default view mode for this album.'),
 			count: z.number().describe('The number of files in the album.'),
 			files: z.array(fileAsUserSchema)
 		}),
@@ -109,6 +110,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			description: true,
 			nsfw: true,
 			sortOrder: true,
+			viewMode: true,
 			files: {
 				where: dbSearchObject,
 				select: {
@@ -152,6 +154,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		files,
 		isNsfw: album.nsfw,
 		sortOrder: album.sortOrder,
+		viewMode: album.viewMode,
 		count: album._count.files
 	});
 };

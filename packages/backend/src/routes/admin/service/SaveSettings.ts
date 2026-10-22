@@ -85,6 +85,38 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			parsedSettings.usersStorageQuota = String(parsedSettings.usersStorageQuota);
 		}
 
+		if (parsedSettings.anonymousUploadsMaxSize !== undefined) {
+			// @ts-expect-error anonymousUploadsMaxSize is a string on the db, but int here.
+			parsedSettings.anonymousUploadsMaxSize = String(parsedSettings.anonymousUploadsMaxSize);
+		}
+
+		if (
+			parsedSettings.anonymousUploadsPerIpLimit !== undefined &&
+			(!Number.isInteger(parsedSettings.anonymousUploadsPerIpLimit) ||
+				parsedSettings.anonymousUploadsPerIpLimit < 0)
+		) {
+			void res.badRequest('The anonymous uploads per IP limit can not be negative');
+			return;
+		}
+
+		if (
+			parsedSettings.anonymousUploadsWindowMinutes !== undefined &&
+			(!Number.isInteger(parsedSettings.anonymousUploadsWindowMinutes) ||
+				parsedSettings.anonymousUploadsWindowMinutes < 1)
+		) {
+			void res.badRequest('The anonymous uploads window has to be at least 1 minute');
+			return;
+		}
+
+		if (
+			parsedSettings.anonymousUploadsMaxSize !== undefined &&
+			(!Number.isInteger(Number(parsedSettings.anonymousUploadsMaxSize)) ||
+				Number(parsedSettings.anonymousUploadsMaxSize) < 0)
+		) {
+			void res.badRequest('The anonymous uploads max size can not be negative');
+			return;
+		}
+
 		await prisma.settings.update({
 			where: {
 				id: 1

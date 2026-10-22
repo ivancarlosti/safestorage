@@ -62,6 +62,34 @@ export const deleteLink = async (uuid: string, albumUuid: string) => {
 	}
 };
 
+export const updateLinkSettings = async (_: any, form: FormData) => {
+	const uuid = form.get('uuid') as string;
+	const albumUuid = form.get('albumUuid') as string;
+	const viewMode = form.get('viewMode') as 'default' | 'list' | 'thumbs';
+	const allowUploads = form.get('allowUploads') === 'true';
+	const hideFiles = form.get('hideFiles') === 'true';
+
+	try {
+		const { error } = await request.post({
+			url: `album/${albumUuid}/link/${uuid}/edit`,
+			body: {
+				viewMode: viewMode === 'default' ? null : viewMode,
+				allowUploads,
+				hideFiles
+			},
+			headers: {
+				authorization: `Bearer ${await getToken()}`
+			}
+		});
+
+		if (error) return { message: error, type: MessageType.Error };
+
+		return { message: 'Link updated', type: MessageType.Success };
+	} catch (error: any) {
+		return { message: error, type: MessageType.Error };
+	}
+};
+
 export const toggleEnabled = async (_: any, form: FormData) => {
 	const uuid = form.get('uuid') as string;
 	const albumUuid = form.get('albumUuid') as string;

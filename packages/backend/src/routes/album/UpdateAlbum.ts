@@ -6,6 +6,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { isValidSortOrder } from '@/utils/SortOrder.js';
+import { isValidViewMode } from '@/utils/ViewMode.js';
 
 export const schema = {
 	summary: 'Update album',
@@ -20,7 +21,8 @@ export const schema = {
 		name: z.string().optional().describe('The name of the album.'),
 		description: z.string().optional().describe('The description of the album.'),
 		nsfw: z.boolean().optional().describe('Whether the album is nsfw or not.'),
-		sortOrder: z.string().optional().nullable().describe('The sort order for files in this album.')
+		sortOrder: z.string().optional().nullable().describe('The sort order for files in this album.'),
+		viewMode: z.enum(['list', 'thumbs']).optional().describe('The default view mode for this album.')
 	}),
 	response: {
 		200: z.object({
@@ -40,13 +42,14 @@ export const options = {
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { uuid } = req.params as { uuid: string };
 
-	const { name, nsfw, description, sortOrder } = req.body as {
+	const { name, nsfw, description, sortOrder, viewMode } = req.body as {
 		description?: string;
 		name?: string;
 		nsfw?: boolean;
 		sortOrder?: string | null;
+		viewMode?: string;
 	};
-	if (!name && nsfw === undefined && !description && sortOrder === undefined) {
+	if (!name && nsfw === undefined && !description && sortOrder === undefined && viewMode === undefined) {
 		void res.badRequest('No data supplied');
 		return;
 	}
@@ -55,6 +58,11 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		void res.badRequest(
 			'Invalid sort order. Valid options: createdAt:asc, createdAt:desc, name:asc, name:desc, id:desc'
 		);
+		return;
+	}
+
+	if (viewMode !== undefined && !isValidViewMode(viewMode)) {
+		void res.badRequest('Invalid view mode. Valid options: list, thumbs');
 		return;
 	}
 
@@ -75,7 +83,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		name: name ?? album.name,
 		nsfw: nsfw === true ? true : nsfw === false ? false : album.nsfw,
 		description: description ?? album.description,
-		sortOrder: sortOrder === undefined ? album.sortOrder : sortOrder
+		sortOrder: sortOrder === undefined ? album.sortOrder : sortOrder,
+		viewMode: viewMode ?? album.viewMode
 	};
 
 	await prisma.albums.update({

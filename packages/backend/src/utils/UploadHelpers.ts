@@ -54,16 +54,74 @@ export const authUser = async (authorization?: string | null) => {
 	} as RequestUser;
 };
 
-export const validateAlbum = async (albumUuid?: string | null, user?: any) => {
-	if (!albumUuid) return null;
-	if (!user) throw new Error('Only registered users can upload files to an album.');
+export type UploadTarget =
+	| { albumId: null; type: 'none' }
+	| { albumId: number; type: 'album' }
+	| { albumId: number; linkUuid: string; type: 'link' };
+
+export type UploadTargetValidation = { error: string; status: number } | { target: UploadTarget };
+
+/*
+	Works out where an upload should go and whether the caller is allowed to send
+	it. Public links can accept uploads even when the instance is not in public
+	mode, while guests uploading without a link still need public mode. Both are
+	disabled together by the anonymous uploads master switch.
+*/
+export const validateUploadTarget = async ({
+	albumUuid,
+	linkIdentifier,
+	user
+}: {
+	albumUuid?: string | null;
+	linkIdentifier?: string | null;
+	user?: RequestUser | undefined;
+}): Promise<UploadTargetValidation> => {
+	if (linkIdentifier) {
+		const link = await prisma.links.findFirst({
+			where: {
+				identifier: linkIdentifier,
+				enabled: true
+			},
+			select: {
+				albumId: true,
+				allowUploads: true,
+				expiresAt: true,
+				uuid: true
+			}
+		});
+
+		if (!link) return { error: "The link is disabled or it doesn't exist", status: 404 };
+		if (link.expiresAt && link.expiresAt < new Date()) return { error: 'The link has expired', status: 404 };
+		if (!link.allowUploads) return { error: 'This link does not allow uploads', status: 403 };
+		if (!SETTINGS.anonymousUploadsEnabled) return { error: 'Anonymous uploads are disabled', status: 403 };
+
+		return { target: { albumId: link.albumId, linkUuid: link.uuid, type: 'link' } };
+	}
+
+	if (!albumUuid) {
+		if (!user) {
+			if (!SETTINGS.anonymousUploadsEnabled) return { error: 'Anonymous uploads are disabled', status: 403 };
+			if (!SETTINGS.publicMode) {
+				return { error: 'Only registered users are allowed to upload files.', status: 401 };
+			}
+		}
+
+		return { target: { albumId: null, type: 'none' } };
+	}
+
+	if (!user) return { error: 'Only registered users can upload files to an album.', status: 401 };
 
 	const album = await prisma.albums.findFirst({
 		where: {
 			uuid: albumUuid,
 			userId: user.id
+		},
+		select: {
+			id: true
 		}
 	});
-	if (!album) throw new Error("Album doesn't exist or it doesn't belong to the user.");
-	return album.id;
+
+	if (!album) return { error: "Album doesn't exist or it doesn't belong to the user.", status: 400 };
+
+	return { target: { albumId: album.id, type: 'album' } };
 };

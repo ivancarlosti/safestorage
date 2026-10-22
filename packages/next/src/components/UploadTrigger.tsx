@@ -6,11 +6,11 @@ import type { FileTriggerProps } from 'react-aria-components';
 import { FileTrigger } from '@/components/ui/file-trigger';
 import { getSignedUrl, processDropItem } from '@/lib/dropzone';
 import { settingsAtom } from '@/lib/atoms/settings';
-import { toast } from 'sonner';
 import { useUploadFile } from '@/hooks/useUploadFile';
 import { uploadQueue } from '@/lib/uploadQueue';
 
 interface FileTriggerPropsWithAlbumUuid extends FileTriggerProps {
+	readonly albumLink?: string;
 	readonly albumUuid?: string;
 }
 
@@ -18,7 +18,10 @@ export const UploadTrigger = forwardRef<HTMLInputElement, FileTriggerPropsWithAl
 	const { children, ...additionalProps } = props;
 	const settings = useAtomValue(settingsAtom);
 
-	const { uploadFile } = useUploadFile({ albumUuid: props.albumUuid ?? undefined });
+	const { failUpload, uploadFile } = useUploadFile({
+		albumUuid: props.albumUuid ?? undefined,
+		albumLink: props.albumLink
+	});
 
 	const onSelect = useCallback(
 		async (files: FileList | null) => {
@@ -48,9 +51,9 @@ export const UploadTrigger = forwardRef<HTMLInputElement, FileTriggerPropsWithAl
 				void files.map(async file => {
 					void uploadQueue.add(async () => {
 						const actualFile = file instanceof File ? file : await file.getFile();
-						const target = await getSignedUrl(actualFile);
+						const target = await getSignedUrl(actualFile, props.albumLink, props.albumUuid);
 						if ('error' in target) {
-							toast.error(target.error);
+							failUpload(actualFile, target.error);
 							return;
 						}
 
@@ -64,7 +67,7 @@ export const UploadTrigger = forwardRef<HTMLInputElement, FileTriggerPropsWithAl
 				});
 			}
 		},
-		[settings, uploadFile]
+		[failUpload, props.albumLink, props.albumUuid, settings, uploadFile]
 	);
 
 	return (

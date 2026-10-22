@@ -11,6 +11,10 @@
 # server you run yourself (see `.env.example`). Only `./uploads` and `./logs` live
 # next to this file. If you would rather have the database shipped for you, use
 # `docker-compose-bundle.yml` instead.
+#
+# There is no default account: a fresh install needs `ACCOUNT_LOGIN` (and
+# `ACCOUNT_PASSWORD`) in `.env` before the first start, and you sign in with that
+# email afterwards.
 
 services:
   safestorage:
@@ -29,8 +33,6 @@ services:
       # inside the container; only this single port is published.
       - '${SAFESTORAGE_PORT:-24424}:80'
     environment:
-      # Password of the automatically created admin user (first boot only).
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       # --- Authentication (see docs/configuration.md) -------------------------
       # These are only the switches; an empty value means "not configured" to
       # the backend, so the ones you leave commented out in `.env` are simply

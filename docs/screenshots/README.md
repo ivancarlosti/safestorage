@@ -78,7 +78,8 @@ contacted) purely to photograph its `/login` page.
 | `SAFESTORAGE_KEYCLOAK_URL`  | –                                         | Instance serving `AUTH_METHOD=keycloak` (for `login-keycloak.png` when not booting one). |
 | `SAFESTORAGE_KEYCLOAK_PORT` | `SAFESTORAGE_PORT + 1`                    | Host port for the throwaway keycloak instance.                                           |
 | `SAFESTORAGE_CONTAINER`     | `safestorage-screenshots`                 | Container name used for the throwaway run.                                               |
-| `ADMIN_PASSWORD`            | `admin`                                   | Password given to the auto-created admin user.                                           |
+| `ACCOUNT_LOGIN`             | `owner@example.com`                       | Email of the account created on the throwaway instance.                                  |
+| `ACCOUNT_PASSWORD`          | `safestorage-screenshots`                 | Password of that account.                                                                |
 | `PW_CHANNEL`                | –                                         | Force a Playwright browser channel (e.g. `chrome`).                                      |
 
 Examples:
@@ -88,7 +89,7 @@ Examples:
 SAFESTORAGE_IMAGE=safestorage:local ./generate.sh
 
 # Capture against an instance you are already running
-SAFESTORAGE_BASE_URL=http://localhost:8001 ADMIN_PASSWORD=hunter2 ./generate.sh
+SAFESTORAGE_BASE_URL=http://localhost:8001 ACCOUNT_LOGIN=owner@example.com ACCOUNT_PASSWORD=hunter2 ./generate.sh
 
 # ... and capture the single sign-on login from a second instance you run
 SAFESTORAGE_BASE_URL=http://localhost:8001 SAFESTORAGE_KEYCLOAK_URL=http://localhost:8002 ./generate.sh

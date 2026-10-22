@@ -11,12 +11,12 @@ import { DropZone } from '@/components/ui/dropzone';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { settingsAtom } from '@/lib/atoms/settings';
-import { toast } from 'sonner';
 import { getSignedUrl, processDropItem } from '@/lib/dropzone';
 import { useUploadFile } from '@/hooks/useUploadFile';
 import { uploadQueue } from '@/lib/uploadQueue';
 
 interface DropZonePropsWithAlbumUuid extends DropZoneProps {
+	readonly albumLink?: string;
 	readonly albumUuid?: string;
 }
 
@@ -32,7 +32,7 @@ export const GlobalDropZone = (props: DropZonePropsWithAlbumUuid) => {
 
 	// Use prop albumUuid if provided, otherwise fall back to global uploadAlbumUuid atom (only if authenticated)
 	const albumUuid = props.albumUuid ?? (currentUser?.uuid ? uploadAlbumUuid : null) ?? undefined;
-	const { uploadFile } = useUploadFile({ albumUuid });
+	const { failUpload, uploadFile } = useUploadFile({ albumUuid, albumLink: props.albumLink });
 
 	const onDrop = useCallback(
 		async (ev: DropEvent) => {
@@ -59,9 +59,9 @@ export const GlobalDropZone = (props: DropZonePropsWithAlbumUuid) => {
 				void files.map(async file => {
 					void uploadQueue.add(async () => {
 						const actualFile = file instanceof File ? file : await file.getFile();
-						const target = await getSignedUrl(actualFile);
+						const target = await getSignedUrl(actualFile, props.albumLink, albumUuid);
 						if ('error' in target) {
-							toast.error(target.error);
+							failUpload(actualFile, target.error);
 							return;
 						}
 
@@ -75,7 +75,7 @@ export const GlobalDropZone = (props: DropZonePropsWithAlbumUuid) => {
 				});
 			}
 		},
-		[settings, uploadFile]
+		[albumUuid, failUpload, props.albumLink, settings, uploadFile]
 	);
 
 	const onPaste = useCallback(
@@ -109,9 +109,9 @@ export const GlobalDropZone = (props: DropZonePropsWithAlbumUuid) => {
 				void files.map(async file => {
 					void uploadQueue.add(async () => {
 						const actualFile = file instanceof File ? file : await file.getFile();
-						const target = await getSignedUrl(actualFile);
+						const target = await getSignedUrl(actualFile, props.albumLink, albumUuid);
 						if ('error' in target) {
-							toast.error(target.error);
+							failUpload(actualFile, target.error);
 							return;
 						}
 
@@ -125,7 +125,7 @@ export const GlobalDropZone = (props: DropZonePropsWithAlbumUuid) => {
 				});
 			}
 		},
-		[settings, uploadFile]
+		[albumUuid, failUpload, props.albumLink, settings, uploadFile]
 	);
 
 	useEffect(() => {

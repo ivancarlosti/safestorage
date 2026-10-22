@@ -8,7 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import { currentTypeAtom, allFilesAtom } from '@/lib/atoms/fileDialog';
 import { useUploadsQuery } from '@/hooks/useUploadsQuery';
 import { FilesTable } from './tables/files-table/FilesTable';
-import { isMasonryViewAtom } from '@/lib/atoms/settings';
+import { isMasonryViewAtom, albumViewModeAtom } from '@/lib/atoms/settings';
 import { Button } from './ui/button';
 import { Masonry } from './Masonry';
 import { cn } from '@/lib/utils';
@@ -161,6 +161,8 @@ export function FilesWrapper({
 	const setAllFilesAtom = useSetAtom(allFilesAtom);
 	const setCurrentType = useSetAtom(currentTypeAtom);
 	const showMasonry = useAtomValue(isMasonryViewAtom);
+	const albumViewMode = useAtomValue(albumViewModeAtom);
+	const showMasonryFiles = albumViewMode ? albumViewMode === 'thumbs' : showMasonry;
 
 	const filesToUse = useMemo(() => {
 		return (files?.length ? files : isUploads || isAlbumUploads ? (data?.files ?? []) : []).map((file, index) => ({
@@ -187,7 +189,7 @@ export function FilesWrapper({
 	return (
 		<>
 			<div className="flex flex-col w-full h-full gap-4 relative" ref={container}>
-				{showMasonry ? (
+				{showMasonryFiles ? (
 					<Masonry files={filesToUse} type={type} />
 				) : (
 					<FilesTable data={files?.length ? files : (data?.files ?? [])} type={type} />

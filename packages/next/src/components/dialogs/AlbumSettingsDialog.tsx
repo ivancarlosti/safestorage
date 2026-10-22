@@ -38,16 +38,18 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 	const album = useAtomValue(selectedAlbumAtom);
 	const queryClient = useQueryClient();
 	const [sortOrder, setSortOrder] = useState<string>('');
+	const [viewMode, setViewMode] = useState<'list' | 'thumbs'>('thumbs');
 
 	const [state, formAction] = useActionState(updateAlbumSettings, {
 		message: '',
 		type: MessageType.Uninitialized
 	});
 
-	// Sync sortOrder state when album changes
+	// Sync dialog state when album changes
 	useEffect(() => {
 		setSortOrder(album?.sortOrder ?? '');
-	}, [album?.sortOrder]);
+		setViewMode(album?.viewMode ?? 'thumbs');
+	}, [album?.sortOrder, album?.viewMode]);
 
 	const createNewAlbumLink = async () => {
 		try {
@@ -167,6 +169,25 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 								</Select>
 								<p className="text-[0.8rem] text-muted-foreground mt-1">
 									Choose how files are sorted in this album.
+								</p>
+							</div>
+							<div>
+								<Label htmlFor="viewMode">Default view</Label>
+								<input type="hidden" name="viewMode" value={viewMode} />
+								<Select
+									value={viewMode}
+									onValueChange={value => setViewMode(value as 'list' | 'thumbs')}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="Thumbnails" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="thumbs">Thumbnails</SelectItem>
+										<SelectItem value="list">List</SelectItem>
+									</SelectContent>
+								</Select>
+								<p className="text-[0.8rem] text-muted-foreground mt-1">
+									Used by public links that do not override it.
 								</p>
 							</div>
 						</form>

@@ -79,6 +79,10 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.termsOfServicePageContent = settingsTable.termsOfServicePageContent;
 		SETTINGS.rulesPageContent = settingsTable.rulesPageContent;
 		SETTINGS.defaultSortOrder = settingsTable.defaultSortOrder;
+		SETTINGS.anonymousUploadsEnabled = settingsTable.anonymousUploadsEnabled;
+		SETTINGS.anonymousUploadsPerIpLimit = settingsTable.anonymousUploadsPerIpLimit;
+		SETTINGS.anonymousUploadsWindowMinutes = settingsTable.anonymousUploadsWindowMinutes;
+		SETTINGS.anonymousUploadsMaxSize = Number(settingsTable.anonymousUploadsMaxSize);
 		return;
 	}
 
@@ -126,7 +130,11 @@ export const loadSettings = async (force = false) => {
 		privacyPolicyPageContent: '',
 		termsOfServicePageContent: '',
 		rulesPageContent: '',
-		defaultSortOrder: 'createdAt:desc'
+		defaultSortOrder: 'createdAt:desc',
+		anonymousUploadsEnabled: true,
+		anonymousUploadsPerIpLimit: 100,
+		anonymousUploadsWindowMinutes: 60,
+		anonymousUploadsMaxSize: 0
 	};
 
 	await prisma.settings.create({
@@ -135,7 +143,8 @@ export const loadSettings = async (force = false) => {
 			// This is due to prisma not supporting int64
 			maxSize: String(data.maxSize),
 			chunkSize: String(data.chunkSize),
-			usersStorageQuota: String(data.usersStorageQuota)
+			usersStorageQuota: String(data.usersStorageQuota),
+			anonymousUploadsMaxSize: String(data.anonymousUploadsMaxSize)
 		}
 	});
 
@@ -214,6 +223,36 @@ const SETTINGS_META = {
 		description: 'The maximum size of an upload in bytes.',
 		name: 'Max Size',
 		example: '1000000000',
+		category: 'uploads'
+	},
+	anonymousUploadsEnabled: {
+		type: 'boolean',
+		description: 'Whether visitors can upload files without an account, through public links or public mode.',
+		name: 'Anonymous Uploads',
+		category: 'uploads'
+	},
+	anonymousUploadsPerIpLimit: {
+		type: 'number',
+		description:
+			'The maximum amount of anonymous uploads allowed per IP address in a time window. 0 for unlimited.',
+		name: 'Anonymous Uploads Per IP Limit',
+		example: '100',
+		notice: 'The limit is tracked in memory and resets when the server restarts. Every server process keeps its own counter, so instances running multiple replicas allow more uploads than this limit.',
+		category: 'uploads'
+	},
+	anonymousUploadsWindowMinutes: {
+		type: 'number',
+		description: 'The length in minutes of the anonymous uploads time window.',
+		name: 'Anonymous Uploads Window (minutes)',
+		example: '60',
+		category: 'uploads'
+	},
+	anonymousUploadsMaxSize: {
+		type: 'number',
+		description:
+			'The maximum size of an anonymous upload in bytes. 0 uses the instance Max Size instead. It can only lower the Max Size, never raise it.',
+		name: 'Anonymous Uploads Max Size',
+		example: '0',
 		category: 'uploads'
 	},
 	generateZips: {

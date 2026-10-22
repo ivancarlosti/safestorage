@@ -10,8 +10,10 @@ import { Button } from './ui/button';
 import { ChevronLeft, ChevronRight, LayoutDashboardIcon, SearchIcon, TableIcon } from 'lucide-react';
 import type { FilePropsType } from '@/types';
 import { useUploadsQuery } from '@/hooks/useUploadsQuery';
-import { useAtom } from 'jotai';
-import { isMasonryViewAtom } from '@/lib/atoms/settings';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { isMasonryViewAtom, albumViewModeAtom } from '@/lib/atoms/settings';
+import { updateAlbumViewMode } from '@/actions/UpdateAlbumSettings';
+import { selectedAlbumAtom } from '@/lib/atoms/albumSettingsDialog';
 import { Tooltip } from './Tooltip';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
@@ -39,6 +41,41 @@ export function Pagination({
 
 	const [search, setSearch] = useState(searchParams.get('search') ?? '');
 	const [showMasonry, setShowMasonry] = useAtom(isMasonryViewAtom);
+	const albumViewMode = useAtomValue(albumViewModeAtom);
+	const setAlbumViewMode = useSetAtom(albumViewModeAtom);
+	const setSelectedAlbum = useSetAtom(selectedAlbumAtom);
+	const showMasonryView = albumViewMode ? albumViewMode === 'thumbs' : showMasonry;
+
+	const toggleViewMode = useCallback(() => {
+		const nextViewMode = showMasonryView ? 'list' : 'thumbs';
+
+		/*
+			Albums (and public links) carry their own view mode, so the toggle
+			updates the per-album atom. Other listings keep using the global
+			preference. Only an album owned by the user is persisted.
+		*/
+		if (albumViewMode || type === 'album') {
+			setAlbumViewMode(nextViewMode);
+		} else {
+			setShowMasonry(!showMasonry);
+		}
+
+		if (type === 'album' && albumUuid) {
+			setSelectedAlbum(previous =>
+				previous?.uuid === albumUuid ? { ...previous, viewMode: nextViewMode } : previous
+			);
+			void updateAlbumViewMode(albumUuid, nextViewMode);
+		}
+	}, [
+		albumUuid,
+		albumViewMode,
+		setAlbumViewMode,
+		setSelectedAlbum,
+		setShowMasonry,
+		showMasonry,
+		showMasonryView,
+		type
+	]);
 
 	const { data } = useUploadsQuery({ currentPage, perPage, search, type, albumUuid });
 
@@ -125,20 +162,37 @@ export function Pagination({
 		<>
 			<PaginationBase className="justify-between flex-col gap-4 sm:gap-0 sm:flex-row">
 				{type === 'publicAlbum' ? (
-					<div className="flex w-full sm:max-w-xs items-center gap-2">{itemsTotal} results</div>
+					<div className="flex w-full sm:max-w-xs items-center gap-2">
+						<Tooltip content={showMasonryView ? 'Switch to list view' : 'Switch to thumbnail view'}>
+							<Button
+								type="button"
+								size={'icon'}
+								variant={'outline'}
+								className="min-w-10 min-h-10"
+								onClick={() => toggleViewMode()}
+							>
+								{showMasonryView ? (
+									<TableIcon className="h-4 w-4" />
+								) : (
+									<LayoutDashboardIcon className="h-4 w-4" />
+								)}
+							</Button>
+						</Tooltip>
+						<div>{itemsTotal} results</div>
+					</div>
 				) : (
 					<>
 						<div className="flex w-full sm:max-w-xs items-center gap-2">
 							<div className="hidden lg:block">
-								<Tooltip content={showMasonry ? 'Switch to table view' : 'Switch to masonry view'}>
+								<Tooltip content={showMasonryView ? 'Switch to table view' : 'Switch to masonry view'}>
 									<Button
 										type="button"
 										size={'icon'}
 										variant={'outline'}
 										className="min-w-10 min-h-10"
-										onClick={() => setShowMasonry(!showMasonry)}
+										onClick={() => toggleViewMode()}
 									>
-										{showMasonry ? (
+										{showMasonryView ? (
 											<TableIcon className="h-4 w-4" />
 										) : (
 											<LayoutDashboardIcon className="h-4 w-4" />

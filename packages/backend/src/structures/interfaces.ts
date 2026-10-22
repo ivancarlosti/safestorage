@@ -101,6 +101,7 @@ export interface Album {
 	name: string;
 	nsfw: boolean;
 	sortOrder?: string | null;
+	viewMode?: string;
 	userId: number;
 	uuid: string;
 	zippedAt: Date | null;
@@ -116,6 +117,10 @@ export interface Settings {
 	S3PublicUrl: string;
 	S3Region: string;
 	S3SecretKey: string;
+	anonymousUploadsEnabled: boolean;
+	anonymousUploadsMaxSize: number;
+	anonymousUploadsPerIpLimit: number;
+	anonymousUploadsWindowMinutes: number;
 	backgroundImageURL: string;
 	blockNoExtension: boolean;
 	blockedExtensions: string[];

@@ -14,6 +14,7 @@ import { Suspense } from 'react';
 import { Pagination } from '@/components/Pagination';
 import { FilesWrapper } from '@/components/FilesWrapper';
 import { FileDialog } from '@/components/dialogs/FileDialog';
+import { AlbumViewModeSync } from '@/components/AlbumViewModeSync';
 
 export const metadata: Metadata = {
 	title: 'Dashboard - Albums'
@@ -75,6 +76,7 @@ export default async function AlbumPage({
 			<div className="px-2 w-full">
 				<HydrationBoundary state={dehydrate(queryClient)}>
 					<div className="grid gap-4">
+						<AlbumViewModeSync viewMode={response.viewMode ?? 'thumbs'} />
 						<Suspense>
 							<Pagination type="album" albumUuid={uuid} />
 							<FilesWrapper type="album" albumUuid={uuid} />

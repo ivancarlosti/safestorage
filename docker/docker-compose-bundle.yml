@@ -4,10 +4,12 @@
 # published SafeStorage image next to the official MariaDB image, so nothing has
 # to be installed or configured on the host besides Docker.
 #
-#   cp .env.example .env        # optional: edit ADMIN_PASSWORD / the passwords
+#   cp .env.example .env        # optional: edit ACCOUNT_LOGIN / the passwords
 #   docker compose -f docker-compose-bundle.yml up -d
 #
-# Open http://<host>:<SAFESTORAGE_PORT> (default 24424) and log in as `admin`.
+# Open http://<host>:<SAFESTORAGE_PORT> (default 24424) and log in with the
+# `ACCOUNT_LOGIN` email declared in `.env`. There is no default account: without
+# `ACCOUNT_LOGIN` the stack starts but nobody can sign in.
 #
 # Everything persistent lives in the named volumes declared at the bottom:
 # `uploads` (files, thumbnails, zips), `logs` and `mariadb` (the database). They
@@ -60,8 +62,6 @@ services:
       # inside the container; only this single port is published.
       - '${SAFESTORAGE_PORT:-24424}:80'
     environment:
-      # Password of the automatically created admin user (first boot only).
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       # --- Authentication (see docs/configuration.md) -------------------------
       # These are only the switches; an empty value means "not configured" to
       # the backend, so the ones you leave commented out in `.env` are simply

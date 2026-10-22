@@ -176,9 +176,9 @@ export const validateAuthConfiguration = () => {
 		}
 	}
 
-	if (isAccountMethod && !isAccountConfigured && !process.env.ADMIN_PASSWORD) {
+	if (isAccountMethod && !isAccountConfigured) {
 		warnings.push(
-			'No ACCOUNT_LOGIN is configured: the legacy "admin" user will be created from ADMIN_PASSWORD (or the default password).'
+			'No ACCOUNT_LOGIN is configured, so no account will be created. Declare ACCOUNT_LOGIN/ACCOUNT_PASSWORD on a fresh instance, or sign in with an account already stored in the database.'
 		);
 	}
 

@@ -9,18 +9,20 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { getAnonymousUploadMaxSize } from '@/utils/AnonymousUploadLimiter.js';
 import { storeFileToDb, constructFilePublicLink, checkFileHashOnDB, deleteTmpFile } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
 import { fetchNetworkStorageFile, getNetworkStorageTmpPath, isValidFileIdentifier } from '@/utils/NetworkStorage.js';
 import { generateThumbnails, imageExtensions, videoExtensions } from '@/utils/Thumbnails.js';
-import { validateAlbum } from '@/utils/UploadHelpers.js';
+import { validateUploadTarget } from '@/utils/UploadHelpers.js';
 
 export const schema = {
 	summary: 'Process uploaded file',
 	description: 'Processes an uploaded file',
 	tags: ['Files'],
 	headers: z.object({
-		albumuuid: z.string().optional().describe('The uuid of the album.')
+		albumuuid: z.string().optional().describe('The uuid of the album.'),
+		albumlink: z.string().optional().describe('The identifier of the album link the file is uploaded through.')
 	}),
 	/*
 		No `.required()` on this object: it would also turn the optional
@@ -74,7 +76,20 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { createS3Client } = await import('@/structures/s3.js');
 	const S3Client = createS3Client();
 
-	const album = await validateAlbum(req.headers.albumuuid as string, req.user ? req.user : undefined);
+	const validation = await validateUploadTarget({
+		albumUuid: req.headers.albumuuid as string,
+		linkIdentifier: req.headers.albumlink as string,
+		user: req.user
+	});
+
+	if ('error' in validation) {
+		void res.code(validation.status).send({ message: validation.error });
+		return;
+	}
+
+	const { target } = validation;
+	const anonymous = !req.user || target.type === 'link';
+	const maxSize = anonymous ? getAnonymousUploadMaxSize() : SETTINGS.maxSize;
 
 	const newPath = getNetworkStorageTmpPath(identifier);
 
@@ -97,6 +112,26 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 
 	const extension = path.extname(identifier);
 
+	if (SETTINGS.blockedExtensions.includes(extension.toLowerCase())) {
+		const command = new DeleteObjectCommand({
+			Bucket: SETTINGS.S3Bucket,
+			Key: identifier
+		});
+
+		await S3Client.send(command);
+		return res.badRequest('File type is not allowed.');
+	}
+
+	if (fileSize > maxSize) {
+		const command = new DeleteObjectCommand({
+			Bucket: SETTINGS.S3Bucket,
+			Key: identifier
+		});
+
+		await S3Client.send(command);
+		return res.payloadTooLarge('File is too big');
+	}
+
 	const file = {
 		name: identifier,
 		extension,
@@ -112,7 +147,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	};
 
 	let uploadedFile;
-	const fileOnDb = await checkFileHashOnDB(req.user, file);
+	const fileOnDb = target.type === 'link' ? null : await checkFileHashOnDB(req.user, file);
 	if (fileOnDb?.repeated) {
 		uploadedFile = fileOnDb.file;
 		await deleteTmpFile(newPath);
@@ -125,7 +160,11 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		await S3Client.send(command);
 	} else {
 		// Store file in database
-		const savedFile = await storeFileToDb(req.user ? req.user : undefined, file, album ? album : undefined);
+		const savedFile = await storeFileToDb(
+			target.type === 'link' ? undefined : req.user ? req.user : undefined,
+			file,
+			target.albumId ? target.albumId : undefined
+		);
 
 		uploadedFile = savedFile.file;
 

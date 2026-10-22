@@ -27,7 +27,8 @@ cd "$(dirname "$0")"
 IMAGE="${SAFESTORAGE_IMAGE:-ghcr.io/ivancarlosti/safestorage:latest}"
 DB_IMAGE="${SAFESTORAGE_DB_IMAGE:-mariadb:11.4}"
 PORT="${SAFESTORAGE_PORT:-24425}"
-ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
+ACCOUNT_LOGIN="${ACCOUNT_LOGIN:-owner@example.com}"
+ACCOUNT_PASSWORD="${ACCOUNT_PASSWORD:-safestorage-screenshots}"
 CONTAINER="${SAFESTORAGE_CONTAINER:-safestorage-screenshots}"
 DB_CONTAINER="${SAFESTORAGE_DB_CONTAINER:-safestorage-screenshots-db}"
 NETWORK="${SAFESTORAGE_NETWORK:-safestorage-screenshots-net}"
@@ -110,7 +111,8 @@ if [ -z "${SAFESTORAGE_BASE_URL:-}" ]; then
 		--name "$CONTAINER" \
 		--network "$NETWORK" \
 		-p "${PORT}:80" \
-		-e "ADMIN_PASSWORD=${ADMIN_PASSWORD}" \
+		-e "ACCOUNT_LOGIN=${ACCOUNT_LOGIN}" \
+		-e "ACCOUNT_PASSWORD=${ACCOUNT_PASSWORD}" \
 		-e "DATABASE_URL=mysql://safestorage:safestorage@${DB_CONTAINER}:3306/safestorage" \
 		-e TZ=UTC \
 		-v /app/uploads \
@@ -153,6 +155,6 @@ if [ ! -d node_modules/playwright ]; then
 	npm install --no-fund --no-audit
 fi
 
-BASE_URL="$BASE_URL" KEYCLOAK_URL="$KEYCLOAK_URL" ADMIN_PASSWORD="$ADMIN_PASSWORD" node capture.mjs
+BASE_URL="$BASE_URL" KEYCLOAK_URL="$KEYCLOAK_URL" ACCOUNT_LOGIN="$ACCOUNT_LOGIN" ACCOUNT_PASSWORD="$ACCOUNT_PASSWORD" node capture.mjs
 
 echo "[generate] done. Screenshots written to $(pwd)"

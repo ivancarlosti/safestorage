@@ -7,9 +7,10 @@ import { FilesListNsfwToggle } from '@/components/FilesListNsfwToggle';
 import { notFound, redirect } from 'next/navigation';
 import request from '@/lib/request';
 import { Suspense } from 'react';
-import { Pagination } from '@/components/Pagination';
-import { FilesWrapper } from '@/components/FilesWrapper';
 import { FileDialog } from '@/components/dialogs/FileDialog';
+import { AlbumViewModeSync } from '@/components/AlbumViewModeSync';
+import { PublicAlbumFiles } from '@/components/PublicAlbumFiles';
+import { PublicAlbumUploader } from '@/components/PublicAlbumUploader';
 
 export async function generateMetadata({
 	searchParams,
@@ -99,10 +100,16 @@ export default async function PublicAlbumPage({
 			<div className="px-2 w-full flex h-full flex-grow flex-col">
 				<FilesListNsfwToggle nsfw={response.album.isNsfw}>
 					<div className="grid gap-4">
+						<AlbumViewModeSync viewMode={response.album.viewMode ?? 'thumbs'} />
+						{response.album.allowUploads ? (
+							<PublicAlbumUploader identifier={identifier} hideFiles={response.album.hideFiles} />
+						) : null}
 						<Suspense>
-							<Pagination itemsTotal={response.album.count} type="publicAlbum" />
-							<FilesWrapper files={response.album.files} type="publicAlbum" />
-							<Pagination itemsTotal={response.album.count} type="publicAlbum" />
+							<PublicAlbumFiles
+								identifier={identifier}
+								initialResponse={response}
+								hideFiles={response.album.hideFiles}
+							/>
 						</Suspense>
 						<FileDialog />
 					</div>

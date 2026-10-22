@@ -278,17 +278,20 @@ export const constructFilePublicLink = ({
 };
 
 export const checkFileHashOnDB = async (user: RequestUser | User | undefined, file: FileInProgress) => {
+	/*
+		Guests are never deduplicated: matching them against every anonymous row
+		would hand them a file that belongs to another visitor (and that is not
+		part of the album they are uploading to).
+	*/
+	if (!user) return null;
+
 	const dbFile = await prisma.files.findFirst({
 		where: {
 			hash: file.hash,
 			size: file.size,
-			// Must be null for guest uploads,
-			// to ensure guests uploads will only be matched against other guest uploads
-			user: user
-				? {
-						id: user.id
-					}
-				: {}
+			user: {
+				id: user.id
+			}
 		}
 	});
 

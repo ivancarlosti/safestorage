@@ -24,6 +24,14 @@ export const schema = {
 					uuid: z.string().describe('The uuid of the link'),
 					enabled: z.boolean().describe('Whether the link is enabled'),
 					enableDownload: z.boolean().describe('Whether the link allows downloads'),
+					allowUploads: z.boolean().describe('Whether visitors can upload files through the link'),
+					hideFiles: z
+						.boolean()
+						.describe('Whether the album contents are hidden and only the visitor uploads are shown'),
+					viewMode: z
+						.enum(['list', 'thumbs'])
+						.nullable()
+						.describe('The view mode of the link, or null to inherit the album'),
 					expiresAt: z.date().nullable().describe('The expiration date of the link'),
 					views: z.number().describe('The amount of views the link has'),
 					createdAt: z.date().describe('The creation date of the link'),
@@ -76,6 +84,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			views: true,
 			enabled: true,
 			enableDownload: true,
+			allowUploads: true,
+			hideFiles: true,
+			viewMode: true,
 			expiresAt: true,
 			createdAt: true,
 			editedAt: true

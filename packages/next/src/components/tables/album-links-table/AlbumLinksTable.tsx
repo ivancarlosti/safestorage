@@ -14,6 +14,7 @@ import { DataTable } from '../DataTable';
 import type { AlbumLink } from '@/types';
 import { DeleteLinkButton } from './DeleteLinkButton';
 import { AlbumLinksToggleAction } from './AlbumLinksToggleAction';
+import { LinkSettingsDialog } from './LinkSettingsDialog';
 
 const columnHelper = createColumnHelper<AlbumLink>();
 const columns = [
@@ -36,6 +37,24 @@ const columns = [
 		)
 	}),
 	columnHelper.display({
+		id: 'access',
+		header: 'Access',
+		cell: props => (
+			<div className="flex flex-col text-xs text-muted-foreground">
+				{props.row.original.allowUploads ? <span>Uploads</span> : null}
+				{props.row.original.hideFiles ? <span>Drop-only</span> : null}
+				{!props.row.original.allowUploads && !props.row.original.hideFiles ? <span>View only</span> : null}
+				<span>
+					{props.row.original.viewMode === 'thumbs'
+						? 'Thumbnails'
+						: props.row.original.viewMode === 'list'
+							? 'List'
+							: 'Album default'}
+				</span>
+			</div>
+		)
+	}),
+	columnHelper.display({
 		id: 'enabled',
 		header: 'Enabled',
 		cell: props => (
@@ -51,7 +70,8 @@ const columns = [
 		id: 'actions',
 		header: '',
 		cell: props => (
-			<div className="flex justify-end">
+			<div className="flex justify-end gap-2">
+				<LinkSettingsDialog link={props.row.original} />
 				<DeleteLinkButton uuid={props.row.original.uuid} albumUuid={props.row.original.albumUuid} />
 			</div>
 		)

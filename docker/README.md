@@ -16,21 +16,23 @@ This folder ships two stacks; pick the one that matches your setup:
 **Bundled database** (nothing else to install):
 
 ```bash
-cp .env.example .env   # edit ADMIN_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
+cp .env.example .env   # edit ACCOUNT_LOGIN, ACCOUNT_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
 docker compose -f docker-compose-bundle.yml up -d
 ```
 
 **Existing database:**
 
 ```bash
-cp .env.example .env   # edit DATABASE_URL, ADMIN_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
+cp .env.example .env   # edit DATABASE_URL, ACCOUNT_LOGIN, ACCOUNT_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
 docker compose pull
 docker compose up -d
 ```
 
-Open `http://<host>:<SAFESTORAGE_PORT>` (default `24424`) and log in as `admin`
-with the `ADMIN_PASSWORD` you configured. The schema is created on the first
-boot, and the database itself too when it does not exist yet.
+Open `http://<host>:<SAFESTORAGE_PORT>` (default `24424`) and log in with the
+email and password declared in `ACCOUNT_LOGIN`/`ACCOUNT_PASSWORD`. There is no
+default account, so a fresh install needs that pair before the first start. The
+schema is created on the first boot, and the database itself too when it does
+not exist yet.
 
 ## Users & authentication
 
@@ -44,8 +46,9 @@ container).
 | `keycloak`          | "Sign in with single sign-on" button | the `KEYCLOAK_*` variables           |
 
 The accounts declared in `ACCOUNT_LOGIN` (comma-separated emails; the first one
-becomes the `owner`) are created on the first boot. `ADMIN_PASSWORD` still works
-for the legacy single `admin` user when nothing else is configured. Setting
+becomes the `owner`) are created on the first boot. An instance that declares no
+account starts with no users at all and logs a warning; nothing is created
+implicitly (the old `ADMIN_PASSWORD` variable is gone). Setting
 `RECAPTCHA_CLIENTID` and `RECAPTCHA_CLIENTSECRET` adds a reCAPTCHA v2 checkbox to
 the login form.
 

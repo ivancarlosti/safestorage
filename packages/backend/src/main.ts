@@ -16,7 +16,7 @@ import { log, logError } from './utils/Logger.js';
 import Requirements from './utils/Requirements.js';
 import { jumpstartStatistics } from './utils/StatsGenerator.js';
 import { startUpdateCheckSchedule } from './utils/UpdateCheck.js';
-import { createAdminUserIfNotExists, VERSION } from './utils/Util.js';
+import { createConfiguredAccounts, VERSION } from './utils/Util.js';
 import { fileWatcher, getFileWatcher } from './utils/Watcher.js';
 
 // Create the Fastify server
@@ -62,8 +62,9 @@ const start = async () => {
 	// Create the settings in the database
 	await loadSettings();
 
-	// Create the admin user if it doesn't exist
-	await createAdminUserIfNotExists();
+	// Create the accounts declared through ACCOUNT_LOGIN (there is no implicit
+	// default account: an instance without any declaration stays without users)
+	await createConfiguredAccounts();
 
 	// Register the fastify-sensible plugin
 	await server.register(import('@fastify/sensible'));
@@ -137,6 +138,8 @@ const start = async () => {
 			'X-Requested-With',
 			'Content-Type',
 			'albumUuid',
+			'albumlink',
+			'x-album-visitor',
 			'X-API-KEY',
 			// @safestorage/uploader headers
 			'safestorage-chunk-number',

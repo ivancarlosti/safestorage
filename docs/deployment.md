@@ -22,7 +22,7 @@ The [`docker/`](../docker) folder ships two ready-to-use, **pull-only** stacks (
 
 ```bash
 cd docker
-cp .env.example .env                            # edit ADMIN_PASSWORD, SAFESTORAGE_PORT, AUTH_METHOD
+cp .env.example .env                            # edit ACCOUNT_LOGIN, ACCOUNT_PASSWORD, SAFESTORAGE_PORT, AUTH_METHOD
 docker compose -f docker-compose-bundle.yml up -d
 ```
 
@@ -30,12 +30,12 @@ docker compose -f docker-compose-bundle.yml up -d
 
 ```bash
 cd docker
-cp .env.example .env      # edit DATABASE_URL, ADMIN_PASSWORD, SAFESTORAGE_PORT, AUTH_METHOD
+cp .env.example .env      # edit DATABASE_URL, ACCOUNT_LOGIN, ACCOUNT_PASSWORD, SAFESTORAGE_PORT, AUTH_METHOD
 docker compose pull
 docker compose up -d
 ```
 
-Open `http://<host>:<port>` (default `24424`) and log in as `admin` with the `ADMIN_PASSWORD` you set. The password is only used the **first** time the container starts, while the database is still empty. Migrations are applied on start: they create the schema, and the database itself when it does not exist yet.
+Open `http://<host>:<port>` (default `24424`) and log in with the email and password you declared in `ACCOUNT_LOGIN`/`ACCOUNT_PASSWORD`. Those accounts are created the **first** time the container starts, while the database is still empty; there is no default account. Migrations are applied on start: they create the schema, and the database itself when it does not exist yet.
 
 ### `.env` variables
 
@@ -44,7 +44,6 @@ Open `http://<host>:<port>` (default `24424`) and log in as `admin` with the `AD
 | `SAFESTORAGE_PORT` | `24424`  | Host port published to the container's port 80.                         |
 | `SAFESTORAGE_TAG`  | `latest` | Image tag to run (`latest` or a pinned release such as `1.1.0`).        |
 | `DATABASE_URL`     | —        | MariaDB/MySQL connection string. Required by `docker-compose.yml`.      |
-| `ADMIN_PASSWORD`   | `admin`  | Password of the auto-created `admin` user (first boot only, legacy single-user setup). |
 | `AUTH_METHOD`      | `account` | `account` (email + password form) or `keycloak` (OIDC single sign-on). |
 | `ACCOUNT_LOGIN`    | —        | Comma-separated emails allowed to sign in; the first one becomes the `owner`. |
 | `ACCOUNT_PASSWORD` | —        | Comma-separated passwords matched to `ACCOUNT_LOGIN` (a bcrypt hash works too). |
@@ -133,7 +132,8 @@ docker run -d \
   --name safestorage \
   -p 24424:80 \
   --add-host=host.docker.internal:host-gateway \
-  -e ADMIN_PASSWORD=change-me \
+  -e ACCOUNT_LOGIN=owner@example.com \
+  -e ACCOUNT_PASSWORD=change-me \
   -e DATABASE_URL="mysql://safestorage:password@host.docker.internal:3306/safestorage" \
   -e TZ=UTC \
   -v "$PWD/uploads:/app/uploads" \

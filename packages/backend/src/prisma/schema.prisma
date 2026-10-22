@@ -95,6 +95,7 @@ model albums {
 	editedAt DateTime?
 	nsfw Boolean @default(false)
 	sortOrder String?
+	viewMode String @default("thumbs")
 	files files[]
 }
 
@@ -114,6 +115,9 @@ model links {
 	views Int @default(0)
 	enabled Boolean @default(true)
 	enableDownload Boolean @default(false)
+	allowUploads Boolean @default(false)
+	hideFiles Boolean @default(false)
+	viewMode String?
 	expiresAt DateTime?
 	createdAt DateTime @default(now())
 	editedAt DateTime?
@@ -163,6 +167,10 @@ model settings {
 	S3PathStyle Boolean @default(false)
 	S3PublicUrl String @db.VarChar(1024) @default("")
 	defaultSortOrder String @default("createdAt:desc")
+	anonymousUploadsEnabled Boolean @default(true)
+	anonymousUploadsPerIpLimit Int @default(100)
+	anonymousUploadsWindowMinutes Int @default(60)
+	anonymousUploadsMaxSize String @default("0")
 }
 
 model statistics {

@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import process from 'node:process';
 import { URL, fileURLToPath } from 'node:url';
 import bcrypt from 'bcryptjs';
 import type { FastifyRequest } from 'fastify';
@@ -60,73 +59,37 @@ export const unlistenEmitters = (emitters: any[], eventName: string, listener?: 
 };
 
 /*
-	Creates the accounts declared through `ACCOUNT_LOGIN`, or the historical
-	`admin` user when nothing is declared.
+	Creates the accounts declared through `ACCOUNT_LOGIN`.
+
+	There is no implicit default account: an instance that declares none is left
+	without users, which means it cannot be signed into until one is declared
+	through `ACCOUNT_LOGIN`/`ACCOUNT_PASSWORD` (or, under keycloak, until the first
+	allow-listed SSO login provisions the owner).
 
 	The function is idempotent: existing rows are never touched (their password is
 	the one the UI rotates, and re-seeding would silently roll it back on every
 	restart). The very first `ACCOUNT_LOGIN` entry is the owner of the instance,
 	the remaining ones are plain users.
 */
-export const createAdminUserIfNotExists = async () => {
-	// Nothing declared: keep the historical behaviour, where `ADMIN_PASSWORD`
-	// seeds a single `admin` user the first time the database is empty. Under
-	// keycloak there is nothing to seed, because the owner is provisioned by the
-	// first allow-listed SSO login instead.
+export const createConfiguredAccounts = async () => {
+	// Nothing declared: nothing is seeded. Under keycloak the owner is provisioned
+	// by the first allow-listed SSO login, and a database that already holds users
+	// (including the legacy `admin` row) keeps working as it is.
 	if (!isAccountConfigured) {
+		log.info('>>>');
+		log.info('');
+
 		if (isKeycloakMethod) {
-			log.info('>>>');
-			log.info('');
 			log.info(
 				'No ACCOUNT_LOGIN is configured: the owner account will be created by the first allowed keycloak login.'
 			);
-			log.info('');
-			log.info('>>>');
-			return;
+		} else if ((await prisma.users.count()) === 0) {
+			log.warn('No ACCOUNT_LOGIN is configured and the database has no users, so nobody can sign in.');
+			log.warn('Declare ACCOUNT_LOGIN (and ACCOUNT_PASSWORD) and restart the instance.');
+		} else {
+			log.info('No ACCOUNT_LOGIN is configured: sign in with an account already stored in the database.');
 		}
 
-		const ownerUser = await prisma.users.findFirst({
-			where: {
-				roles: {
-					some: {
-						name: 'owner'
-					}
-				}
-			}
-		});
-
-		if (ownerUser) return;
-
-		// Determine where the initial admin password comes from without ever
-		// passing the secret (or a secret-derived value) to the logger below.
-		const adminPasswordFromEnv = Boolean(process.env.ADMIN_PASSWORD);
-		const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin';
-		const hash = await bcrypt.hash(adminPassword, 10);
-		await prisma.users.create({
-			data: {
-				uuid: uuidv4(),
-				username: 'admin',
-				password: hash,
-				roles: {
-					connect: [
-						{
-							name: 'owner'
-						},
-						{
-							name: 'admin'
-						}
-					]
-				}
-			}
-		});
-
-		log.info('>>>');
-		log.info('');
-		log.info(
-			adminPasswordFromEnv
-				? 'Created the admin user "admin" with the password from the ADMIN_PASSWORD environment variable'
-				: 'Created the admin user "admin" with the default password. Change it after the first login.'
-		);
 		log.info('');
 		log.info('>>>');
 		return;

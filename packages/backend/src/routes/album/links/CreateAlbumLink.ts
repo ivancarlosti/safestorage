@@ -7,6 +7,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { getUniqueAlbumIdentifier } from '@/utils/Util.js';
+import { isValidViewMode } from '@/utils/ViewMode.js';
 
 export const schema = {
 	summary: 'Create link',
@@ -26,6 +27,14 @@ export const schema = {
 				albumId: z.string().describe('The album id of the link'),
 				enabled: z.boolean().describe('Whether the link is enabled'),
 				enableDownload: z.boolean().describe('Whether the link allows downloads'),
+				allowUploads: z.boolean().describe('Whether visitors can upload files through the link'),
+				hideFiles: z
+					.boolean()
+					.describe('Whether the album contents are hidden and only the visitor uploads are shown'),
+				viewMode: z
+					.enum(['list', 'thumbs'])
+					.nullable()
+					.describe('The view mode of the link, or null to inherit the album'),
 				expiresAt: z.date().nullable().describe('The expiration date of the link'),
 				views: z.number().describe('The amount of views the link has')
 			})
@@ -56,7 +65,20 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
-	let { identifier } = req.body as { identifier?: string };
+	const body = (req.body ?? {}) as {
+		allowUploads?: boolean;
+		hideFiles?: boolean;
+		identifier?: string;
+		viewMode?: string | null;
+	};
+	let { identifier } = body;
+	const { allowUploads, hideFiles, viewMode } = body;
+
+	if (viewMode !== undefined && viewMode !== null && !isValidViewMode(viewMode)) {
+		void res.badRequest('Invalid view mode. Valid options: list, thumbs');
+		return;
+	}
+
 	if (identifier) {
 		if (!req.user?.roles.some(role => role.name === 'admin')) {
 			void res.unauthorized('Only administrators can create custom links');
@@ -92,6 +114,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		albumId: exists.id,
 		enabled: true,
 		enableDownload: true,
+		allowUploads: allowUploads === true,
+		hideFiles: hideFiles === true,
+		viewMode: viewMode ?? null,
 		expiresAt: null,
 		views: 0
 	};
@@ -108,6 +133,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			albumId: exists.uuid,
 			enabled: insertObj.enabled,
 			enableDownload: insertObj.enableDownload,
+			allowUploads: insertObj.allowUploads,
+			hideFiles: insertObj.hideFiles,
+			viewMode: insertObj.viewMode,
 			expiresAt: insertObj.expiresAt,
 			views: insertObj.views
 		}

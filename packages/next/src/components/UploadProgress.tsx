@@ -16,13 +16,12 @@ import { useCopyToClipboard } from 'usehooks-ts';
 import { Label, ProgressBar as ReactAriaProgressBar } from 'react-aria-components';
 import { Tooltip } from './Tooltip';
 
-type Status = 'complete' | 'idle' | 'uploading';
+type Status = 'complete' | 'error' | 'idle' | 'uploading';
 
 export const UploadProgress = () => {
 	const [open, setOpen] = useState(false);
 	const [uploads, setUploads] = useAtom(uploadsAtom);
 	const [buttonText, setButtonText] = useState('');
-	const [filesUploading, setFilesUploading] = useState(0);
 	const [totalProgress, setTotalProgress] = useState(0);
 	const [status, setStatus] = useState<Status>('idle');
 	const [_, copy] = useCopyToClipboard();
@@ -45,16 +44,25 @@ export const UploadProgress = () => {
 	};
 
 	useEffect(() => {
-		setFilesUploading(uploads.filter(file => file.processing).length);
+		const uploading = uploads.filter(file => file.processing).length;
+		const failed = uploads.filter(file => file.status === 'error').length;
 		let timeout: NodeJS.Timeout;
 
-		if (filesUploading > 0) {
+		if (uploading > 0) {
 			setStatus('uploading');
-			setButtonText(`Uploading ${filesUploading} file${filesUploading === 1 ? '' : 's'}`);
+			setButtonText(`Uploading ${uploading} file${uploading === 1 ? '' : 's'}`);
+
+			const counted = uploads.filter(file => file.status !== 'error');
 			setTotalProgress(
-				uploads.filter(file => file.status !== 'error').reduce((acc, file) => acc + file.progress, 0) /
-					uploads.length
+				counted.length === 0 ? 0 : counted.reduce((acc, file) => acc + file.progress, 0) / counted.length
 			);
+		} else if (failed > 0) {
+			/*
+				A failed upload is not a completed one. Saying so here is what keeps
+				the panel from claiming success while files were never uploaded.
+			*/
+			setStatus('error');
+			setButtonText(`${failed} of ${uploads.length} upload${uploads.length === 1 ? '' : 's'} failed`);
 		} else if (uploads.length > 0) {
 			setStatus('complete');
 			setButtonText('All uploads complete 🎉');
@@ -75,13 +83,13 @@ export const UploadProgress = () => {
 		return () => {
 			clearTimeout(timeout);
 		};
-	}, [filesUploading, queryClient, uploads]);
+	}, [queryClient, uploads]);
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				{buttonText ? (
 					<Button
-						variant="default"
+						variant={status === 'error' ? 'destructive' : 'default'}
 						className={cn('transition-all', status === 'uploading' ? 'flex-col gap-2 py-8' : '')}
 					>
 						{status === 'uploading' ? (
@@ -95,11 +103,13 @@ export const UploadProgress = () => {
 				) : null}
 			</PopoverTrigger>
 			<PopoverContent className="w-[512px] mt-2">
-				{uploads.length > 1 ? (
+				{uploads.length > 0 ? (
 					<div className="flex flex-row gap-2 text-sm justify-end mb-4">
-						<Button size="sm" variant="outline" onClick={() => copyAllLinks()}>
-							Copy all links
-						</Button>
+						{uploads.length > 1 ? (
+							<Button size="sm" variant="outline" onClick={() => copyAllLinks()}>
+								Copy all links
+							</Button>
+						) : null}
 						<Button size="sm" variant="outline" onClick={() => clearAll()}>
 							Clear all
 						</Button>
@@ -157,13 +167,29 @@ export const UploadProgress = () => {
 														</div>
 													</div>
 												) : file.status === 'error' ? (
-													<div className="flex justify-between flex-1">
-														{file.name}
-														<div className="flex">
+													<div className="flex justify-between flex-1 gap-4 items-start">
+														<div className="flex flex-col">
+															<span>{file.name}</span>
+															<span className="text-xs text-red-400">
+																{file.error ?? 'An unexpected error ocurred'}
+															</span>
+														</div>
+														<div className="flex items-center">
 															<Tooltip
 																content={file.error ?? 'An unexpected error ocurred'}
 															>
 																<InfoIcon className="h-4 w-4 text-red-500" />
+															</Tooltip>
+
+															<Tooltip content="Remove from list">
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	className="w-6 h-6"
+																	onClick={() => removeFile(file.uuid)}
+																>
+																	<XIcon className="h-4 w-4" />
+																</Button>
 															</Tooltip>
 														</div>
 													</div>

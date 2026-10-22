@@ -1,7 +1,7 @@
 /**
  * SafeStorage screenshot generator.
  *
- * Logs into a running SafeStorage instance as the admin user, seeds it with
+ * Logs into a running SafeStorage instance with the configured account, seeds it
  * synthetic demo content (albums, tags, snippets, short links and generated
  * images uploaded through the real UI uploader) and then captures the pages
  * referenced from the root README into `docs/screenshots`.
@@ -10,8 +10,8 @@
  *   BASE_URL        Base URL of the account instance (default http://localhost:24424)
  *   KEYCLOAK_URL    Base URL of an instance booted with AUTH_METHOD=keycloak, used
  *                   to capture the single sign-on login screen (skipped when unset)
- *   ADMIN_USERNAME  Login username (default `admin`)
- *   ADMIN_PASSWORD  Login password (default `admin`)
+ *   ACCOUNT_LOGIN      Login email (default `owner@example.com`)
+ *   ACCOUNT_PASSWORD   Login password (default `safestorage-screenshots`)
  *   OUTPUT_DIR      Where the PNGs are written (default this folder)
  *   PW_CHANNEL      Force a Playwright browser channel (e.g. `chrome`)
  *   ASSET_DIR       Where the demo images are generated (default ./.assets)
@@ -26,15 +26,14 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 // None of the values below are ever interpolated into log output: CodeQL's
 // `js/clear-text-logging` query treats every `process.env` read as a potential
-// secret (and `*user*name` / `*id` names such as ADMIN_USERNAME as sensitive
-// outright), so this script logs static messages only.
+// secret, so this script logs static messages only.
 const BASE_URL = (process.env.BASE_URL ?? 'http://localhost:24424').replace(/\/+$/, '');
 // `authMethod` is resolved server-side from the environment, so the single
 // sign-on login screen can only be photographed on an instance booted with
 // `AUTH_METHOD=keycloak`. That instance is booted separately (see generate.sh).
 const KEYCLOAK_URL = (process.env.KEYCLOAK_URL ?? '').replace(/\/+$/, '');
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin';
+const ACCOUNT_LOGIN = process.env.ACCOUNT_LOGIN ?? 'owner@example.com';
+const ACCOUNT_PASSWORD = process.env.ACCOUNT_PASSWORD ?? 'safestorage-screenshots';
 const OUTPUT_DIR = process.env.OUTPUT_DIR ? path.resolve(process.env.OUTPUT_DIR) : here;
 const ASSET_DIR = process.env.ASSET_DIR ? path.resolve(process.env.ASSET_DIR) : path.join(here, '.assets');
 const VIEWPORT = { width: 1440, height: 900 };
@@ -198,7 +197,8 @@ const seedDemoContent = async () => {
 				'    ports:',
 				"      - '24424:80'",
 				'    environment:',
-				'      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}',
+				'      ACCOUNT_LOGIN: ${ACCOUNT_LOGIN:-owner@example.com}',
+				'      ACCOUNT_PASSWORD: ${ACCOUNT_PASSWORD:-change-me}',
 				'      DATABASE_URL: mysql://safestorage:secret@mariadb:3306/safestorage',
 				'    volumes:',
 				'      - ./uploads:/app/uploads',
@@ -288,10 +288,10 @@ const main = async () => {
 	log('waiting for the instance to become healthy');
 	await waitForInstance();
 
-	log('logging in as the configured admin user');
+	log('logging in with the configured account');
 	const session = await api('/auth/login', {
 		method: 'POST',
-		body: { username: ADMIN_USERNAME, password: ADMIN_PASSWORD },
+		body: { username: ACCOUNT_LOGIN, password: ACCOUNT_PASSWORD },
 		auth: false
 	});
 	token = session.token;
