@@ -7,6 +7,7 @@ import { useCallback } from 'react';
 import { debug } from '@/lib/utils';
 import { uploadsAtom } from '@/lib/atoms/uploads';
 import { formatBytes } from '@/lib/file';
+import { randomUuid } from '@/lib/random';
 import { toast } from 'sonner';
 import type { MultipartUploadTarget } from '@/lib/s3-multipart';
 import { uploadFileInParts } from '@/lib/s3-multipart';
@@ -91,7 +92,7 @@ export const useUploadFile = ({
 			debug(`Upload of ${file.name} failed`, message);
 			setUploads(draft => {
 				draft.push({
-					uuid: `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
+					uuid: `local-${randomUuid()}`,
 					name: file.name,
 					type: file.type,
 					processing: false,
