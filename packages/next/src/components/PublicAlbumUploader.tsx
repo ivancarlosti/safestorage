@@ -8,7 +8,8 @@ import { uploadsAtom } from '@/lib/atoms/uploads';
 import { UploadTrigger } from '@/components/UploadTrigger';
 import { UploadProgress } from '@/components/UploadProgress';
 import { GlobalDropZone } from '@/components/Dropzone';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/react-aria-button';
+import { buttonVariants } from '@/styles/button';
 
 export const PublicAlbumUploader = ({
 	identifier,
@@ -43,7 +44,7 @@ export const PublicAlbumUploader = ({
 					</p>
 				</div>
 				<UploadTrigger albumLink={identifier}>
-					<Button type="button">Select files</Button>
+					<Button className={buttonVariants()}>Select files</Button>
 				</UploadTrigger>
 				<UploadProgress />
 			</div>
