@@ -173,6 +173,22 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 		return chunks;
 	};
 
+	/*
+		Progress must never move backwards: chunks are sent in parallel and a
+		retried chunk starts over from zero, so the highest percentage reached is
+		the only one worth reporting. Without this the bar would jump back as
+		soon as a slower chunk reported a lower figure than a faster one.
+	*/
+	let highestProgress = 0;
+
+	const reportProgress = (percentProgress: number) => {
+		const clamped = Math.min(100, Math.max(0, Math.round(percentProgress)));
+		if (clamped <= highestProgress) return;
+		highestProgress = clamped;
+		options.onProgress?.(uuid, clamped);
+		debug('Progress:', clamped, '%');
+	};
+
 	const sendChunk = async (chunk: ArrayBuffer, index: number) => {
 		const form = new FormData();
 
@@ -192,8 +208,7 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 
 			xhr.upload.addEventListener('progress', (event: ProgressEvent) => {
 				if (event.lengthComputable) {
-					const percentProgress = ((event.loaded / event.total) * 100) | 0;
-					options.onProgress?.(uuid, percentProgress);
+					reportProgress((event.loaded / event.total) * 100);
 				}
 			});
 
@@ -231,7 +246,55 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 			form.append('file', new Blob([chunk], { type: 'application/octet-stream' }));
 			// @ts-expect-error: headers type
 			headers['safestorage-chunk-number'] = index;
-			return fetch(endpoint, { method, headers, body: form });
+
+			/*
+				`fetch` cannot report upload progress: the request body is not
+				observable, so a file bigger than the chunk size stayed at 0%
+				until a whole chunk had been sent. XHR exposes
+				`upload.onprogress`, which is the only way to move the bar while
+				the bytes of a chunk are still in flight in a browser.
+			*/
+			const bytesBeforeChunk = (index - 1) * chunkSize;
+
+			return new Promise<Response>((resolve, reject) => {
+				const xhr = new XMLHttpRequest();
+				xhr.open(method, endpoint);
+
+				// @ts-expect-error: headers type
+				for (const key of Object.keys(headers)) xhr.setRequestHeader(key, headers[key]);
+
+				xhr.upload.addEventListener('progress', (event: ProgressEvent) => {
+					if (!event.lengthComputable) return;
+					// Bytes already sent by the previous chunks plus the ones of this request
+					const bytesSent = Math.min(file.size, bytesBeforeChunk + event.loaded);
+					reportProgress((bytesSent / file.size) * 100);
+				});
+
+				xhr.addEventListener('load', () => {
+					try {
+						/*
+							`Response` refuses a body for the statuses that must not
+							carry one (204 is what the backend answers for a chunk),
+							so the body is dropped for those.
+						*/
+						const body = [101, 204, 205, 304].includes(xhr.status) ? null : xhr.response;
+						resolve(new Response(body, { status: xhr.status }));
+					} catch {
+						// A status `Response` rejects (0, for instance) must not leave the caller hanging
+						reject(new Error(`Unexpected status ${xhr.status} while sending chunk ${index}`));
+					}
+				});
+
+				xhr.addEventListener('error', () => {
+					reject(new Error(`Network error while sending chunk ${index}`));
+				});
+
+				xhr.addEventListener('abort', () => {
+					reject(new Error(`Chunk ${index} upload was aborted`));
+				});
+
+				xhr.send(form);
+			});
 		}
 	};
 
@@ -265,10 +328,8 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 			if (!response) return;
 			if (response.status === 200 || response.status === 201 || response.status === 204) {
 				if (totalChunks > 1) {
-					// Calculate the progress based on the filesize, the total amount of chunks and the chunk index
-					const percentProgress = Math.round((100 / uploader.totalChunks) * index);
-					options.onProgress?.(uuid, percentProgress);
-					debug('Progress:', percentProgress, '%');
+					// Floor: the XHR progress may have stopped just short of the chunk boundary
+					reportProgress((100 / uploader.totalChunks) * index);
 
 					// Last chunk has a JSON response with the URL
 					if (uploader.totalChunks === index) {
