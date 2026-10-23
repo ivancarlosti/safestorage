@@ -50,7 +50,7 @@ function SelectionActions({
 					<DropdownMenuItem className="p-0" onSelect={e => e.preventDefault()}>
 						<BulkCompareAction files={selectedFiles} />
 					</DropdownMenuItem>
-					{type === 'album' && albumUuid ? (
+					{type === 'uploads' || (type === 'album' && albumUuid) ? (
 						<DropdownMenuItem className="p-0" onSelect={e => e.preventDefault()}>
 							<BulkDownloadZipAction albumUuid={albumUuid} uuids={selectedFiles.map(file => file.uuid)} />
 						</DropdownMenuItem>

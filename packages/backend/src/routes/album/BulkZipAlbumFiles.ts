@@ -1,15 +1,11 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import Zip from 'adm-zip';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
-import { uploadPath, watchPath } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
-import { fetchNetworkStorageFile } from '@/utils/NetworkStorage.js';
+import { createZipFromFiles, getZipContentDisposition } from '@/utils/Zip.js';
 
 export const schema = {
 	summary: 'Download album files as ZIP',
@@ -34,38 +30,6 @@ export const options = {
 	url: '/album/:uuid/zip',
 	method: 'post',
 	middlewares: ['apiKey', 'auth']
-};
-
-const sanitizeEntryName = (name: string) => {
-	const baseName = path
-		.basename(name)
-		.replaceAll(/\p{Cc}/gu, '')
-		.trim();
-	if (!baseName || baseName === '.' || baseName === '..') return 'file';
-	return baseName;
-};
-
-const buildEntryName = (original: string, used: Set<string>) => {
-	const extension = path.extname(original);
-	const baseName = path.basename(original, extension);
-
-	let candidate = original;
-	let counter = 1;
-	while (used.has(candidate)) {
-		candidate = `${baseName} (${counter})${extension}`;
-		counter++;
-	}
-
-	used.add(candidate);
-	return candidate;
-};
-
-const getSafeDownloadName = (name: string) => {
-	const sanitized = name
-		.replaceAll(/[^\u0020-\u007E]/g, '_')
-		.replaceAll(/["\\]/g, '_')
-		.trim();
-	return sanitized || 'album';
 };
 
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
@@ -112,34 +76,12 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	}
 
 	try {
-		const zip = new Zip();
-		const usedNames = new Set<string>();
-
-		for (const file of album.files) {
-			let data: Buffer;
-
-			if (file.isS3) {
-				const response = await fetchNetworkStorageFile(file.name);
-				if (!response.ok) throw new Error(`Could not fetch file ${file.name} from network storage`);
-				data = Buffer.from(await response.arrayBuffer());
-			} else {
-				data = await readFile(path.join(file.isWatched ? watchPath : uploadPath, file.name));
-			}
-
-			const entryName = buildEntryName(sanitizeEntryName(file.original || file.name), usedNames);
-			zip.addFile(entryName, data);
-		}
-
-		const downloadName = `${getSafeDownloadName(album.name)}.zip`;
-		const encodedName = encodeURIComponent(downloadName);
+		const buffer = await createZipFromFiles(album.files);
 
 		return res
 			.header('content-type', 'application/zip')
-			.header(
-				'content-disposition',
-				`attachment; filename="${downloadName.replaceAll(/[^\u0020-\u007E]/g, '_')}"; filename*=UTF-8''${encodedName}`
-			)
-			.send(zip.toBuffer());
+			.header('content-disposition', getZipContentDisposition(album.name))
+			.send(buffer);
 	} catch (error) {
 		logError(req.log, 'Could not create a zip with the selected album files', error);
 		void res.internalServerError('There was a problem creating the ZIP archive');

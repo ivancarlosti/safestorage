@@ -5,8 +5,8 @@ import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import request from '@/lib/request';
 
-const getFileName = (disposition: string | null) => {
-	if (!disposition) return 'album.zip';
+const getFileName = (disposition: string | null, fallbackName: string) => {
+	if (!disposition) return fallbackName;
 
 	const encodedMatch = /filename\*=UTF-8''(?<name>[^;]+)/i.exec(disposition);
 	if (encodedMatch?.groups?.name) {
@@ -18,17 +18,18 @@ const getFileName = (disposition: string | null) => {
 	}
 
 	const plainMatch = /filename="(?<name>[^"]+)"/i.exec(disposition);
-	return plainMatch?.groups?.name ?? 'album.zip';
+	return plainMatch?.groups?.name ?? fallbackName;
 };
 
 export const BulkDownloadZipAction = ({
 	albumUuid,
 	uuids
 }: {
-	readonly albumUuid: string;
+	readonly albumUuid?: string | undefined;
 	readonly uuids: string[];
 }) => {
 	const [isPending, setIsPending] = useState(false);
+	const fallbackName = albumUuid ? 'album.zip' : 'files.zip';
 
 	const download = async () => {
 		setIsPending(true);
@@ -36,7 +37,7 @@ export const BulkDownloadZipAction = ({
 		try {
 			const { data, error } = await request.raw({
 				method: 'POST',
-				url: `album/${albumUuid}/zip`,
+				url: albumUuid ? `album/${albumUuid}/zip` : 'files/zip',
 				options: {
 					body: JSON.stringify({ files: uuids })
 				}
@@ -48,7 +49,7 @@ export const BulkDownloadZipAction = ({
 			}
 
 			const blob = await data.blob();
-			saveAs(blob, getFileName(data.headers.get('content-disposition')));
+			saveAs(blob, getFileName(data.headers.get('content-disposition'), fallbackName));
 			toast.success(`Downloaded ${uuids.length} ${uuids.length > 1 ? 'files' : 'file'} as ZIP`);
 		} catch (error: any) {
 			toast.error(error?.message ?? 'There was a problem creating the ZIP archive');
