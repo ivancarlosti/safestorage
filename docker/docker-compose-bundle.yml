@@ -81,7 +81,8 @@ services:
       # assembled here from the MariaDB settings above; `DATABASE_URL` from the
       # `.env` file is intentionally not used by this stack.
       DATABASE_URL: mysql://${MARIADB_USER:-safestorage}:${MARIADB_PASSWORD:-safestorage}@mariadb:3306/${MARIADB_DATABASE:-safestorage}
-      # Used for the timestamps in the container logs.
+      # Used for the timestamps in the container logs (IANA name, e.g.
+      # `America/Sao_Paulo`). Read at boot, so a change needs --force-recreate.
       TZ: ${TZ:-UTC}
     volumes:
       - uploads:/app/uploads

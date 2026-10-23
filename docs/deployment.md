@@ -49,7 +49,7 @@ Open `http://<host>:<port>` (default `24424`) and log in with the email and pass
 | `ACCOUNT_PASSWORD` | —        | Comma-separated passwords matched to `ACCOUNT_LOGIN` (a bcrypt hash works too). |
 | `KEYCLOAK_*`       | —        | The six variables the `keycloak` method needs: base URL, realm, client id/secret, redirect URI and the email allow-list. |
 | `RECAPTCHA_*`      | —        | `RECAPTCHA_CLIENTID` + `RECAPTCHA_CLIENTSECRET` add a reCAPTCHA v2 checkbox to the login form. |
-| `TZ`               | `UTC`    | Timezone for container log timestamps.                                  |
+| `TZ`               | `UTC`    | Timezone for log timestamps, e.g. `America/Sao_Paulo`.                  |
 | `DB_WAIT_ATTEMPTS` | `60`     | Optional: how many times (every 2 s) the entrypoint retries migrations. |
 
 `docker-compose-bundle.yml` defines its own credentials — `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD` and `MARIADB_ROOT_PASSWORD`, all defaulting to `safestorage`/`safestorage-root`. Uncomment the matching lines in `.env` to change them. That file ignores `DATABASE_URL`, because it builds its own connection string pointing at the bundled `mariadb` service.
@@ -135,7 +135,7 @@ docker run -d \
   -e ACCOUNT_LOGIN=owner@example.com \
   -e ACCOUNT_PASSWORD=change-me \
   -e DATABASE_URL="mysql://safestorage:password@host.docker.internal:3306/safestorage" \
-  -e TZ=UTC \
+  -e TZ=America/Sao_Paulo \
   -v "$PWD/uploads:/app/uploads" \
   -v "$PWD/logs:/app/logs" \
   safestorage:local

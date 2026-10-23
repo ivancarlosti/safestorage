@@ -120,3 +120,7 @@ docker compose down             # stop (data stays on disk)
     variables — needs a restart (`docker compose up -d --force-recreate`). A
     sign-in that is still in flight through Keycloak is tracked in the process
     memory, so run a single replica.
+-   `TZ` (default `UTC`) sets the timezone of the container logs. Use an IANA
+    name such as `America/Sao_Paulo`; it is read at boot and also drives the
+    nginx timestamps, so apply a change with
+    `docker compose up -d --force-recreate`.

@@ -95,7 +95,10 @@ ENV NODE_ENV=production \
 # nginx       - reverse proxy and static upload server (replaces Caddy)
 # supervisor  - process manager for the three services in this container
 # ffmpeg      - thumbnail generation for video uploads (checked by the backend)
-RUN apk add --no-cache nginx supervisor ffmpeg openssl libc6-compat
+# tzdata      - /usr/share/zoneinfo, so nginx, supervisord and `date` honour the
+#               TZ variable. Node ships its own ICU timezone data and works
+#               without it, but the libc based timestamps would stay in UTC.
+RUN apk add --no-cache nginx supervisor ffmpeg openssl libc6-compat tzdata
 
 WORKDIR /app
 

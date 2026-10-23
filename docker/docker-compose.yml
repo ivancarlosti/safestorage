@@ -52,7 +52,8 @@ services:
       # The `:?` makes `docker compose up` fail with a clear message instead of
       # starting a container that cannot reach its database.
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your .env file}
-      # Used for the timestamps in the container logs.
+      # Used for the timestamps in the container logs (IANA name, e.g.
+      # `America/Sao_Paulo`). Read at boot, so a change needs --force-recreate.
       TZ: ${TZ:-UTC}
     volumes:
       - ./uploads:/app/uploads
