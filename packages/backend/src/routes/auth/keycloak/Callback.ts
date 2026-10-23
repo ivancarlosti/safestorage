@@ -1,11 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import {
-	KEYCLOAK_REDIRECT_URI,
-	isKeycloakConfigured,
-	isKeycloakEmailAllowed,
-	isKeycloakMethod
-} from '@/structures/auth.js';
+import { isKeycloakConfigured, isKeycloakEmailAllowed, isKeycloakMethod } from '@/structures/auth.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { AUTH_TOKEN_MAX_AGE, signAuthToken } from '@/utils/Auth.js';
@@ -13,6 +8,7 @@ import {
 	consumePendingAuthorization,
 	exchangeCode,
 	findOrCreateKeycloakUser,
+	getFrontendUrl,
 	verifyIdToken
 } from '@/utils/Keycloak.js';
 import { logError } from '@/utils/Logger.js';
@@ -49,20 +45,9 @@ export const options = {
 	The callback is reached by a browser navigation, so a JSON body would be the
 	page the user sees. Every outcome is therefore a redirect: failures land on the
 	login page with a `?error=` code the frontend translates.
-
-	The target origin is derived from the redirect URI (which the browser is
-	already known to reach) instead of being a second variable to keep in sync.
 */
-const frontendUrl = (path: string) => {
-	try {
-		return new URL(path, KEYCLOAK_REDIRECT_URI).toString();
-	} catch {
-		return path;
-	}
-};
-
 const fail = (res: FastifyReply, reason: string) =>
-	res.redirect(frontendUrl(`/login?error=${encodeURIComponent(reason)}`));
+	res.redirect(getFrontendUrl(`/login?error=${encodeURIComponent(reason)}`));
 
 export const run = async (req: FastifyRequest, res: FastifyReply) => {
 	if (!isKeycloakMethod || !isKeycloakConfigured) {
@@ -109,7 +94,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 				path: '/',
 				sameSite: 'lax'
 			})
-			.redirect(frontendUrl('/dashboard'));
+			.redirect(getFrontendUrl('/dashboard'));
 	} catch (error) {
 		logError(req.log, 'The keycloak login failed', error);
 		return fail(res, 'server_error');

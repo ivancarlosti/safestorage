@@ -104,6 +104,7 @@ Paths below are relative to `/api`.
 | POST   | `/auth/login`              | Public (10/min) | Log in with email + password; returns a JWT and sets the `token` cookie. Only with `AUTH_METHOD=account`. |
 | GET    | `/auth/keycloak/login`     | Public          | Start the single sign-on flow: redirects the browser to the configured provider. |
 | GET    | `/auth/keycloak/callback`  | Public          | The provider's redirect target: verifies the response, provisions the account if needed, sets the `token` cookie and redirects to the dashboard. Failures redirect to `/login?error=<code>`. |
+| GET    | `/auth/keycloak/logout`    | Public          | Clears the `token` cookie and redirects to the provider's end-session endpoint, which sends the browser back to `/login`. Without `AUTH_METHOD=keycloak` it only clears the cookie and redirects to `/login`. |
 | POST   | `/auth/password/change`    | Auth            | Change the authenticated user's password. Only with `AUTH_METHOD=account`; with `keycloak` it answers `403`, as the password belongs to the provider. |
 | POST   | `/auth/apikey/change`      | Auth            | Generate / replace the authenticated user's API key. Available with both methods. |
 

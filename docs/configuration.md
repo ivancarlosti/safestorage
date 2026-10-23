@@ -71,7 +71,7 @@ The flow runs entirely on the backend (`GET /api/auth/keycloak/login` → the pr
 
 > **Single instance only:** the `state`/PKCE material of a pending login lives in the process memory, so several replicas would need sticky sessions or shared storage. The shipped container is a single instance.
 
-Signing out only deletes SafeStorage's own `token` cookie; it does **not** end the session at the provider, so the next sign-in may complete without asking for credentials again. Configure the realm's SSO session idle timeout if that matters.
+Signing out (`GET /api/auth/keycloak/logout` — the **Sign out** item in the user menu and the **Log out and try another account** button on a failed sign-in) deletes SafeStorage's own `token` cookie **and** ends the session at the provider, so the next sign-in asks for credentials again instead of silently reusing the previous account. Keycloak only allows the redirect back from that end-session call when the login page is registered on the client: add `https://<your-domain>/login` to its _Valid post logout redirect URIs_. Because the instance never keeps the `id_token`, no `id_token_hint` is sent, so the provider asks for confirmation before ending the session.
 
 ### reCAPTCHA on the login form
 

@@ -24,12 +24,16 @@ The **diagnostic** endpoint reports environment details (Node version, `ffmpeg` 
 | -------------------- | ------------------------------------------------------------------------------------------- |
 | `invalid_state`      | The login was stale, replayed or started on another instance — try again from the login page. |
 | `invalid_token`      | The provider's response could not be verified (clock skew, wrong realm or client).          |
-| `not_allowed`        | The email is not in `KEYCLOAK_RESTRICT`.                                                     |
+| `not_allowed`        | The email is not in `KEYCLOAK_RESTRICT`. Use **Log out and try another account** to end the provider session. |
 | `email_not_verified` | The realm does not mark the address as verified.                                             |
 | `user_disabled`      | The SafeStorage account is disabled — re-enable it in **Admin → Users**.                     |
 | `invalid_request`    | The redirect came back without the expected `code`/`state` parameters.                        |
 
 A page from the provider itself ("Invalid redirect URI") means `KEYCLOAK_REDIRECT_URI` and the client's _Valid redirect URI_ do not match exactly, scheme and trailing path included.
+
+**Signing out shows "Invalid redirect URI" on the provider.** Ending the provider's session sends the browser back to `/login`, and Keycloak only accepts that target when it is registered: add `https://<your-domain>/login` to the client's _Valid post logout redirect URIs_. The provider may also ask "Do you want to log out?" first — that confirmation is expected, because the instance does not keep the `id_token` it would need to skip it.
+
+**Signing in again silently uses the previous account.** The provider's own session outlives SafeStorage's cookie. Use **Sign out** in the user menu (or the logout button on the error box) instead of just closing the tab: both go through `/api/auth/keycloak/logout`, which deletes the cookie and ends the provider session.
 
 **The container refuses to start with `AUTH_METHOD=keycloak needs KEYCLOAK_RESTRICT ...`.** That check exists so the first visitor cannot quietly claim the `owner` role. Set `KEYCLOAK_RESTRICT` (whole emails or bare domains), or declare the accounts you trust in `ACCOUNT_LOGIN`.
 

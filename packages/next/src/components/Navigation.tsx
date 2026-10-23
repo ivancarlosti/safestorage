@@ -12,12 +12,14 @@ import { NavigationDrawer } from './NavigationDrawer';
 export function Navigation({
 	logo,
 	serviceName = '',
+	authMethod,
 	showDocsMenu = true,
 	showGuidesMenu = true,
 	showFaqMenu = true
 }: {
 	readonly logo: ReactNode;
 	readonly serviceName?: string | undefined;
+	readonly authMethod?: 'account' | 'keycloak' | undefined;
 	readonly showDocsMenu?: boolean | undefined;
 	readonly showGuidesMenu?: boolean | undefined;
 	readonly showFaqMenu?: boolean | undefined;
@@ -79,6 +81,7 @@ export function Navigation({
 			<NavigationDrawer
 				logo={logo}
 				className="md:hidden flex"
+				authMethod={authMethod}
 				showDocsMenu={docsMenuVisible}
 				showFaqMenu={faqMenuVisible}
 			/>

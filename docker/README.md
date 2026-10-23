@@ -54,10 +54,11 @@ the login form.
 
 For Keycloak, point `KEYCLOAK_BASE_URL` / `KEYCLOAK_REALM` at your realm,
 register `https://<your-domain>/api/auth/keycloak/callback` as the client's
-_Valid redirect URI_, and list the people who may sign in in `KEYCLOAK_RESTRICT`
-(whole emails or bare domains). The backend refuses to start with
-`AUTH_METHOD=keycloak` while that allow-list is empty, so the first visitor
-cannot quietly claim the instance.
+_Valid redirect URI_ and `https://<your-domain>/login` as its _Valid post logout
+redirect URI_ (signing out ends the provider session and returns to the login
+page), and list the people who may sign in in `KEYCLOAK_RESTRICT` (whole emails
+or bare domains). The backend refuses to start with `AUTH_METHOD=keycloak` while
+that allow-list is empty, so the first visitor cannot quietly claim the instance.
 
 Every variable is documented in
 [`../docs/configuration.md#authentication`](../docs/configuration.md#authentication).

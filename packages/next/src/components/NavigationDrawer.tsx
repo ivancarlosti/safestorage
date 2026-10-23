@@ -89,11 +89,13 @@ const BaseDrawer = ({
 export const NavigationDrawer = ({
 	className = '',
 	logo,
+	authMethod,
 	showDocsMenu = true,
 	showFaqMenu = true
 }: PropsWithChildren<{
 	readonly className?: string | undefined;
 	readonly logo: ReactNode;
+	readonly authMethod?: 'account' | 'keycloak' | undefined;
 	readonly showDocsMenu?: boolean | undefined;
 	readonly showFaqMenu?: boolean | undefined;
 }>) => {
@@ -157,9 +159,25 @@ export const NavigationDrawer = ({
 						</nav>
 					) : null}
 					{currentUser?.uuid ? (
-						<Button className="w-full mb-8" variant="secondary" onClick={async () => doLogout()}>
-							Log out
-						</Button>
+						authMethod === 'keycloak' ? (
+							/*
+								A local-only logout would leave the provider's
+								session alive and the next single sign-on click
+								would sign the same account back in, so this goes
+								through the backend and ends it there as well.
+							*/
+							<a
+								href="/api/auth/keycloak/logout"
+								className={cn(buttonVariants({ variant: 'secondary' }), 'w-full mb-8')}
+								onClick={() => setOpen(false)}
+							>
+								Log out
+							</a>
+						) : (
+							<Button className="w-full mb-8" variant="secondary" onClick={async () => doLogout()}>
+								Log out
+							</Button>
+						)
 					) : (
 						<Link
 							href="/login"

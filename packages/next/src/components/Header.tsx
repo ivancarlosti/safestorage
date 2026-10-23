@@ -22,6 +22,7 @@ export const Header = async () => {
 				<Navigation
 					logo={<SafeStorageLogo className="w-6 h-6" />}
 					serviceName={data?.serviceName}
+					authMethod={data?.authMethod}
 					showDocsMenu={data?.showDocsMenu !== false}
 					showGuidesMenu={data?.showGuidesMenu !== false}
 					showFaqMenu={data?.showFaqMenu !== false}
@@ -42,7 +43,7 @@ export const Header = async () => {
 						</a>
 					)}
 					<div className="hidden md:inline-flex ml-4">
-						<NavigationUser />
+						<NavigationUser authMethod={data?.authMethod} />
 					</div>
 				</nav>
 			</div>

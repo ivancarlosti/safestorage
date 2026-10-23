@@ -49,6 +49,19 @@ const dropExpiredAuthorizations = () => {
 };
 
 /*
+	Public URL of a frontend page. The origin is derived from the redirect URI
+	(which the browser is already known to reach) instead of being a second
+	variable to keep in sync with the frontend deployment.
+*/
+export const getFrontendUrl = (path: string) => {
+	try {
+		return new URL(path, KEYCLOAK_REDIRECT_URI).toString();
+	} catch {
+		return path;
+	}
+};
+
+/*
 	Starts an Authorization Code + PKCE login: the code is only exchanged later by
 	the callback, which is what makes the frontend able to be a plain redirect.
 */
@@ -74,6 +87,25 @@ export const createAuthorizationUrl = () => {
 	});
 
 	return `${getKeycloakEndpoints().authorization}?${params.toString()}`;
+};
+
+/*
+	RP-initiated logout: the provider ends its own session and then sends the
+	browser back to the login page, which is what allows another account to be
+	used on the next sign-in.
+
+	`post_logout_redirect_uri` has to be registered in the client's valid post
+	logout redirect URIs. No `id_token_hint` is sent because the app never keeps
+	the id_token around (it is only verified during the callback); without it
+	keycloak asks for confirmation on its own page before ending the session.
+*/
+export const createLogoutUrl = () => {
+	const params = new URLSearchParams({
+		client_id: KEYCLOAK_CLIENT_ID,
+		post_logout_redirect_uri: getFrontendUrl('/login')
+	});
+
+	return `${getKeycloakEndpoints().endSession}?${params.toString()}`;
 };
 
 // Removes the entry as it returns it, so a replayed `state` can never pass twice.

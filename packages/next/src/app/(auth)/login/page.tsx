@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { KeycloakLoginButton } from '@/components/auth/KeycloakLoginButton';
+import { KeycloakLogoutButton } from '@/components/auth/KeycloakLogoutButton';
 import { SafeStorageLogo } from '@/components/svg/SafeStorageLogo';
 import { buttonVariants } from '@/styles/button';
 import request from '@/lib/request';
@@ -48,7 +49,7 @@ export default async function LoginPage({ searchParams }: { readonly searchParam
 	// authenticates against local accounts or delegates the whole login to the
 	// configured single sign-on provider.
 	const keycloakMethod = settings?.authMethod === 'keycloak';
-	const errorMessage = error ? KEYCLOAK_ERRORS[error] ?? 'The sign-in failed, please try again.' : null;
+	const errorMessage = error ? (KEYCLOAK_ERRORS[error] ?? 'The sign-in failed, please try again.') : null;
 
 	return (
 		<div className="container flex h-screen w-screen flex-col items-center justify-center">
@@ -71,10 +72,22 @@ export default async function LoginPage({ searchParams }: { readonly searchParam
 					</p>
 				</div>
 
+				{/*
+					`text-red-300` on a translucent red panel instead of the
+					`destructive` token: that token is a very dark red meant for
+					solid buttons, and as text on the dark background it is barely
+					legible.
+				*/}
 				{errorMessage ? (
-					<p className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-center text-sm text-destructive">
-						{errorMessage}
-					</p>
+					<div className="flex flex-col gap-3 rounded-md border border-red-500/50 bg-red-500/10 px-4 py-3 text-center text-sm text-red-300">
+						<p>{errorMessage}</p>
+						{/*
+							A refused sign-in leaves the provider's session alive,
+							so retrying the login would land on the same error.
+							This ends it and comes back to a clean login page.
+						*/}
+						{keycloakMethod ? <KeycloakLogoutButton /> : null}
+					</div>
 				) : null}
 
 				{keycloakMethod ? <KeycloakLoginButton /> : <LoginForm recaptchaSiteKey={settings?.recaptchaSiteKey} />}
@@ -90,4 +103,3 @@ export default async function LoginPage({ searchParams }: { readonly searchParam
 		</div>
 	);
 }
-
