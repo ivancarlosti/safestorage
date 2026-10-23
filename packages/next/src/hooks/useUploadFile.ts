@@ -193,6 +193,13 @@ export const useUploadFile = ({
 							if (error) draft[upload]!.error = error;
 							if (url) draft[upload]!.url = url;
 							draft[upload]!.processing = false;
+
+							// All the parts were sent: the bar has to show that
+							// instead of stopping a few percent short.
+							if (!error) {
+								draft[upload]!.progress = 100;
+								draft[upload]!.bytesSent = file.size;
+							}
 						}
 					});
 
@@ -357,12 +364,13 @@ export const useUploadFile = ({
 
 					toast.error(`${file.name}: ${message}`);
 				},
-				onProgress: (uuid: string, progress: any) => {
+				onProgress: (uuid: string, progress: number) => {
 					debug(`Progress uploading ${file.name} with uuid ${uuid}`, progress);
 					setUploads(draft => {
 						const upload = draft.findIndex(u => u.uuid === uuid);
 						if (upload !== -1) {
 							draft[upload]!.progress = progress;
+							draft[upload]!.bytesSent = Math.round((progress / 100) * file.size);
 						}
 					});
 				},
@@ -383,6 +391,8 @@ export const useUploadFile = ({
 								draft[upload]!.status = 'success';
 								draft[upload]!.url = publicUrl;
 								draft[upload]!.processing = false;
+								draft[upload]!.progress = 100;
+								draft[upload]!.bytesSent = file.size;
 							}
 						});
 
@@ -417,6 +427,8 @@ export const useUploadFile = ({
 							draft[upload]!.status = 'success';
 							draft[upload]!.url = response.url;
 							draft[upload]!.processing = false;
+							draft[upload]!.progress = 100;
+							draft[upload]!.bytesSent = file.size;
 						}
 					});
 					return null;

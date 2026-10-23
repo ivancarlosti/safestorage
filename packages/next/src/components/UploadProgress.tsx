@@ -9,7 +9,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { Button } from './ui/button';
-import { ProgressBar } from '@tremor/react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCopyToClipboard } from 'usehooks-ts';
@@ -17,6 +16,28 @@ import { Label, ProgressBar as ReactAriaProgressBar } from 'react-aria-component
 import { Tooltip } from './Tooltip';
 
 type Status = 'complete' | 'error' | 'idle' | 'uploading';
+
+/*
+	Tremor's ProgressBar paints its track with `bg-opacity-20`, a utility that
+	Tailwind v4 no longer ships, so the track was rendered as an opaque bar of
+	the same colour as the fill: the widget looked full from the first byte.
+	The track and the fill are drawn here with utilities that exist in v4, and
+	the width is transitioned so a big upload moves instead of jumping.
+*/
+const ProgressTrack = ({
+	fillClassName,
+	percentage
+}: {
+	readonly fillClassName: string;
+	readonly percentage: number | undefined;
+}) => (
+	<div className="relative h-2 w-full overflow-hidden rounded-full bg-white/40">
+		<div
+			className={cn('h-full rounded-full transition-[width] duration-300 ease-out', fillClassName)}
+			style={{ width: `${Math.min(100, Math.max(0, percentage ?? 0))}%` }}
+		/>
+	</div>
+);
 
 export const UploadProgress = () => {
 	const [open, setOpen] = useState(false);
@@ -52,10 +73,17 @@ export const UploadProgress = () => {
 			setStatus('uploading');
 			setButtonText(`Uploading ${uploading} file${uploading === 1 ? '' : 's'}`);
 
-			const counted = uploads.filter(file => file.status !== 'error');
-			setTotalProgress(
-				counted.length === 0 ? 0 : counted.reduce((acc, file) => acc + file.progress, 0) / counted.length
-			);
+			/*
+				Only the uploads in flight are counted: including the ones that
+				already finished would make a newly started upload begin with a
+				bar that is partially (or completely) full. Each upload is
+				weighted by its size so a small file finishing first does not
+				report a big one as done.
+			*/
+			const inFlight = uploads.filter(file => file.processing);
+			const bytesTotal = inFlight.reduce((acc, file) => acc + file.bytesTotal, 0);
+			const bytesProgress = inFlight.reduce((acc, file) => acc + file.progress * file.bytesTotal, 0);
+			setTotalProgress(bytesTotal === 0 ? 0 : Math.min(100, bytesProgress / bytesTotal));
 		} else if (failed > 0) {
 			/*
 				A failed upload is not a completed one. Saying so here is what keeps
@@ -94,7 +122,15 @@ export const UploadProgress = () => {
 					>
 						{status === 'uploading' ? (
 							<>
-								<ProgressBar value={totalProgress} color="blue" className="max-w-sm w-80" />
+								<ReactAriaProgressBar
+									value={totalProgress}
+									aria-label="Overall upload progress"
+									className="max-w-sm w-80"
+								>
+									{({ percentage }) => (
+										<ProgressTrack fillClassName="bg-white" percentage={percentage} />
+									)}
+								</ReactAriaProgressBar>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 							</>
 						) : null}
@@ -195,15 +231,10 @@ export const UploadProgress = () => {
 													</div>
 												) : null}
 											</div>
-											<div className="h-2 top-[50%] transform translate-y-[-50%] w-full rounded-full bg-white/40">
-												<div
-													className={cn(
-														'absolute h-2 top-[50%] transform translate-y-[-50%] rounded-full',
-														file.error ? 'bg-red-500' : 'bg-white'
-													)}
-													style={{ width: percentage + '%' }}
-												/>
-											</div>
+											<ProgressTrack
+												fillClassName={file.error ? 'bg-red-500' : 'bg-white'}
+												percentage={percentage}
+											/>
 										</>
 									)}
 								</ReactAriaProgressBar>
