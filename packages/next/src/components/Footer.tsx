@@ -13,7 +13,7 @@ export const SiteFooter = async ({ className = '' }: { readonly className?: stri
 		}
 	});
 
-	if (data?.showFooter === false) return null;
+	if (data?.showFooter === false) return <div aria-hidden="true" className="h-8 shrink-0" />;
 
 	return (
 		<footer className={cn(className, 'bg-background-transparent')}>
