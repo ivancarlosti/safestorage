@@ -42,6 +42,8 @@ export const schema = {
 						name: z.string().describe('The name of the file.'),
 						original: z.string().describe('The original name of the file.'),
 						type: z.string().describe('The type of the file.'),
+						size: z.coerce.number().describe('The size of the file in bytes.'),
+						createdAt: z.date().describe('The date the file was uploaded.'),
 						url: z.string().describe('The URL of the file.'),
 						thumb: z.string().describe('The URL of the thumbnail of the file.'),
 						preview: z.string().describe('The URL of the preview of the file.'),
@@ -133,8 +135,10 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			files: {
 				where: fileWhere,
 				select: {
+					createdAt: true,
 					name: true,
 					original: true,
+					size: true,
 					type: true,
 					isS3: true,
 					isWatched: true,
