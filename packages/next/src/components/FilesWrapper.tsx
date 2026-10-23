@@ -28,7 +28,12 @@ import { BulkRegenerateThumbnailsAction } from './dialogs/bulk-actions/BulkRegen
 import { BulkUnquarantineFilesAction } from './dialogs/bulk-actions/BulkUnquarantineFilesAction';
 import { BulkQuarantineFilesAction } from './dialogs/bulk-actions/BulkQuarantineFilesAction';
 import { BulkCompareAction } from './dialogs/bulk-actions/BulkCompareAction';
-function SelectionActions({ children, type }: PropsWithChildren<{ readonly type: FilePropsType }>) {
+import { BulkDownloadZipAction } from './dialogs/bulk-actions/BulkDownloadZipAction';
+function SelectionActions({
+	children,
+	type,
+	albumUuid
+}: PropsWithChildren<{ readonly albumUuid?: string | undefined; readonly type: FilePropsType }>) {
 	const selectedFiles = useAtomValue(selectedFilesAtom);
 
 	return (
@@ -45,6 +50,11 @@ function SelectionActions({ children, type }: PropsWithChildren<{ readonly type:
 					<DropdownMenuItem className="p-0" onSelect={e => e.preventDefault()}>
 						<BulkCompareAction files={selectedFiles} />
 					</DropdownMenuItem>
+					{type === 'album' && albumUuid ? (
+						<DropdownMenuItem className="p-0" onSelect={e => e.preventDefault()}>
+							<BulkDownloadZipAction albumUuid={albumUuid} uuids={selectedFiles.map(file => file.uuid)} />
+						</DropdownMenuItem>
+					) : null}
 					{type === 'admin' ? (
 						<>
 							<DropdownMenuSeparator />
@@ -80,7 +90,15 @@ function SelectionActions({ children, type }: PropsWithChildren<{ readonly type:
 	);
 }
 
-function SelectionWrapper({ selectAllFiles, type }: { selectAllFiles(): void; readonly type: FilePropsType }) {
+function SelectionWrapper({
+	selectAllFiles,
+	type,
+	albumUuid
+}: {
+	selectAllFiles(): void;
+	readonly albumUuid?: string | undefined;
+	readonly type: FilePropsType;
+}) {
 	const [selectedFiles, setSelectedFiles] = useAtom(selectedFilesAtom);
 
 	return (
@@ -103,7 +121,7 @@ function SelectionWrapper({ selectAllFiles, type }: { selectAllFiles(): void; re
 				{selectedFiles.length ? (
 					<div className="flex flex-row items-center md:gap-4">
 						<span>{selectedFiles.length} selected</span>
-						<SelectionActions type={type}>
+						<SelectionActions type={type} albumUuid={albumUuid}>
 							<Button size="sm" className="text-sm font-medium">
 								Actions
 							</Button>
@@ -113,7 +131,7 @@ function SelectionWrapper({ selectAllFiles, type }: { selectAllFiles(): void; re
 			</div>
 			<div className="h-full flex-row flex-grow  md:hidden flex gap-4 justify-between">
 				<div className="flex flex-row items-center">
-					<SelectionActions type={type}>
+					<SelectionActions type={type} albumUuid={albumUuid}>
 						<Button size="sm" className="text-sm font-medium gap-1 items-center tabular-nums">
 							{selectedFiles.length} selected <Pencil className="h-4 w-4" />
 						</Button>
@@ -195,7 +213,7 @@ export function FilesWrapper({
 					<FilesTable data={files?.length ? files : (data?.files ?? [])} type={type} />
 				)}
 			</div>
-			<SelectionWrapper selectAllFiles={selectAllFiles} type={type} />
+			<SelectionWrapper selectAllFiles={selectAllFiles} type={type} albumUuid={albumUuid} />
 		</>
 	);
 }

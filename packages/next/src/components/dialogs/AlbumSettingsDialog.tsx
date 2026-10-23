@@ -116,7 +116,7 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="w-11/12">
+			<DialogContent className="w-11/12 sm:max-w-3xl">
 				<ScrollArea className="max-h-[calc(100vh-12rem)]">
 					<DialogHeader>
 						<DialogTitle>Album settings</DialogTitle>

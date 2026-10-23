@@ -26,6 +26,11 @@ const formSchema = z.object({
 	metaKeywords: z.string().optional(),
 	metaTwitterHandle: z.string().optional(),
 	metaDomain: z.string().optional(),
+	showFooter: z.boolean().optional(),
+	showDocsMenu: z.boolean().optional(),
+	showGuidesMenu: z.boolean().optional(),
+	showFaqMenu: z.boolean().optional(),
+	showGithubIcon: z.boolean().optional(),
 	// Service
 	serveUploadsFrom: z.string().refine(
 		value => {

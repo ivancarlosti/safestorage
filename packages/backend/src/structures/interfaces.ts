@@ -153,6 +153,11 @@ export interface Settings {
 	secret: string;
 	serveUploadsFrom: string;
 	serviceName: string;
+	showDocsMenu: boolean;
+	showFaqMenu: boolean;
+	showFooter: boolean;
+	showGithubIcon: boolean;
+	showGuidesMenu: boolean;
 	statisticsCron: string;
 	termsOfServicePageContent: string;
 	updateCheckCron: string;

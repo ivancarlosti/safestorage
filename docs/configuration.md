@@ -141,6 +141,11 @@ _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` ar
 | `metaDescription`    | string  | `description for please-change-me.com 🚀` | Meta description.                          |
 | `metaKeywords`       | string  | `comma, separated, keywords, …`           | Meta keywords.                             |
 | `metaTwitterHandle`  | string  | `@your-twitter-handle`                    | Twitter/X handle used in embeds.           |
+| `showFooter`         | boolean | `true`                                    | Show the footer at the bottom of pages.    |
+| `showDocsMenu`       | boolean | `true`                                    | Show the docs link in the menu.            |
+| `showGuidesMenu`     | boolean | `true`                                    | Show the guides link in the menu.          |
+| `showFaqMenu`        | boolean | `true`                                    | Show the FAQ link in the menu.             |
+| `showGithubIcon`     | boolean | `true`                                    | Show the GitHub icon in the header.        |
 
 ### Other
 

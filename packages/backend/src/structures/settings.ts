@@ -60,6 +60,11 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.disableUpdateCheck = settingsTable.disableUpdateCheck;
 		SETTINGS.backgroundImageURL = settingsTable.backgroundImageURL;
 		SETTINGS.logoURL = settingsTable.logoURL;
+		SETTINGS.showFooter = settingsTable.showFooter;
+		SETTINGS.showDocsMenu = settingsTable.showDocsMenu;
+		SETTINGS.showGuidesMenu = settingsTable.showGuidesMenu;
+		SETTINGS.showFaqMenu = settingsTable.showFaqMenu;
+		SETTINGS.showGithubIcon = settingsTable.showGithubIcon;
 		SETTINGS.metaDescription = settingsTable.metaDescription;
 		SETTINGS.metaKeywords = settingsTable.metaKeywords;
 		SETTINGS.metaTwitterHandle = settingsTable.metaTwitterHandle;
@@ -112,6 +117,11 @@ export const loadSettings = async (force = false) => {
 		disableUpdateCheck: false,
 		backgroundImageURL: '',
 		logoURL: '',
+		showFooter: true,
+		showDocsMenu: true,
+		showGuidesMenu: true,
+		showFaqMenu: true,
+		showGithubIcon: true,
 		metaDomain: 'https://your-domain.com',
 		metaDescription: 'description for please-change-me.com 🚀',
 		metaKeywords: 'comma, separated, keywords, that, describe, this, website',
@@ -348,6 +358,36 @@ const SETTINGS_META = {
 		type: 'string',
 		description: 'The URL for the logo.',
 		name: 'Logo URL',
+		category: 'customization'
+	},
+	showFooter: {
+		type: 'boolean',
+		description: 'Whether or not to show the footer at the bottom of the pages.',
+		name: 'Show Footer',
+		category: 'customization'
+	},
+	showDocsMenu: {
+		type: 'boolean',
+		description: 'Whether or not to show the docs link in the navigation menu.',
+		name: 'Show Docs Menu',
+		category: 'customization'
+	},
+	showGuidesMenu: {
+		type: 'boolean',
+		description: 'Whether or not to show the guides link in the navigation menu.',
+		name: 'Show Guides Menu',
+		category: 'customization'
+	},
+	showFaqMenu: {
+		type: 'boolean',
+		description: 'Whether or not to show the FAQ link in the navigation menu.',
+		name: 'Show FAQ Menu',
+		category: 'customization'
+	},
+	showGithubIcon: {
+		type: 'boolean',
+		description: 'Whether or not to show the GitHub icon in the header.',
+		name: 'Show GitHub Icon',
 		category: 'customization'
 	},
 	metaDomain: {

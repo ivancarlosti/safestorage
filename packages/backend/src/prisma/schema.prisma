@@ -171,6 +171,11 @@ model settings {
 	anonymousUploadsPerIpLimit Int @default(100)
 	anonymousUploadsWindowMinutes Int @default(60)
 	anonymousUploadsMaxSize String @default("0")
+	showFooter Boolean @default(true)
+	showDocsMenu Boolean @default(true)
+	showGuidesMenu Boolean @default(true)
+	showFaqMenu Boolean @default(true)
+	showGithubIcon Boolean @default(true)
 }
 
 model statistics {

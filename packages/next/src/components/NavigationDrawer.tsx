@@ -12,7 +12,17 @@ import { currentUserAtom } from '@/lib/atoms/currentUser';
 import { useAtom } from 'jotai';
 import { logout } from '@/lib/logout';
 
-const BaseDrawer = ({ path, onClick }: PropsWithChildren<{ onClick(): void; readonly path: string }>) => {
+const BaseDrawer = ({
+	path,
+	onClick,
+	showDocsMenu,
+	showFaqMenu
+}: PropsWithChildren<{
+	onClick(): void;
+	readonly path: string;
+	readonly showDocsMenu: boolean;
+	readonly showFaqMenu: boolean;
+}>) => {
 	const [open, setOpen] = useState(false);
 	const closeDrawer = () => {
 		setOpen(false);
@@ -47,24 +57,28 @@ const BaseDrawer = ({ path, onClick }: PropsWithChildren<{ onClick(): void; read
 						>
 							Dashboard
 						</Link>
-						<a
-							href="/docs"
-							rel="noopener noreferrer"
-							target="_blank"
-							className={cn(buttonVariants({ variant: 'link' }), 'text-lg font-medium')}
-						>
-							Docs
-						</a>
-						<Link
-							href="/faq"
-							className={cn(
-								buttonVariants({ variant: 'link' }),
-								'text-lg font-medium',
-								path === '/faq' ? 'underline' : ''
-							)}
-						>
-							FAQ
-						</Link>
+						{showDocsMenu ? (
+							<a
+								href="/docs"
+								rel="noopener noreferrer"
+								target="_blank"
+								className={cn(buttonVariants({ variant: 'link' }), 'text-lg font-medium')}
+							>
+								Docs
+							</a>
+						) : null}
+						{showFaqMenu ? (
+							<Link
+								href="/faq"
+								className={cn(
+									buttonVariants({ variant: 'link' }),
+									'text-lg font-medium',
+									path === '/faq' ? 'underline' : ''
+								)}
+							>
+								FAQ
+							</Link>
+						) : null}
 					</nav>
 				</div>
 			</DrawerContent>
@@ -74,8 +88,15 @@ const BaseDrawer = ({ path, onClick }: PropsWithChildren<{ onClick(): void; read
 
 export const NavigationDrawer = ({
 	className = '',
-	logo
-}: PropsWithChildren<{ readonly className?: string | undefined; readonly logo: ReactNode }>) => {
+	logo,
+	showDocsMenu = true,
+	showFaqMenu = true
+}: PropsWithChildren<{
+	readonly className?: string | undefined;
+	readonly logo: ReactNode;
+	readonly showDocsMenu?: boolean | undefined;
+	readonly showFaqMenu?: boolean | undefined;
+}>) => {
 	const path = usePathname();
 	const [currentUser, setCurrentUser] = useAtom(currentUserAtom);
 	const [open, setOpen] = useState(false);
@@ -122,7 +143,12 @@ export const NavigationDrawer = ({
 			</DrawerTrigger>
 			<DrawerContent>
 				<div className="py-4 px-8">
-					<BaseDrawer path={path} onClick={() => setOpen(false)} />
+					<BaseDrawer
+						path={path}
+						onClick={() => setOpen(false)}
+						showDocsMenu={showDocsMenu}
+						showFaqMenu={showFaqMenu}
+					/>
 				</div>
 				<div className="py-4 px-8 overflow-auto">
 					{path.startsWith('/dashboard') ? (

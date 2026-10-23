@@ -121,6 +121,11 @@ export interface Settings {
 	rulesPageContent: boolean;
 	serveUploadsFrom: string;
 	serviceName: string;
+	showDocsMenu: boolean;
+	showFaqMenu: boolean;
+	showFooter: boolean;
+	showGithubIcon: boolean;
+	showGuidesMenu: boolean;
 	termsOfServicePageContent: boolean;
 	useNetworkStorage: boolean;
 	useUrlShortener: boolean;
