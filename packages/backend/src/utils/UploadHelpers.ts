@@ -59,6 +59,15 @@ export type UploadTarget =
 	| { albumId: number; type: 'album' }
 	| { albumId: number; linkUuid: string; type: 'link' };
 
+/*
+	Browsers report an empty `type` for formats they cannot name (an `.iso`
+	image, for instance). An empty value is not a usable MIME type: it becomes
+	the object's Content-Type on the multipart path and the database row that
+	`UploadProcess` writes. Every upload path uses this fallback so the stored
+	metadata and the database always agree.
+*/
+export const normalizeContentType = (contentType?: string | null) => contentType || 'application/octet-stream';
+
 export type UploadTargetValidation = { error: string; status: number } | { target: UploadTarget };
 
 /*

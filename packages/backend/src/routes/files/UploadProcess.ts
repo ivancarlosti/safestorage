@@ -14,7 +14,7 @@ import { storeFileToDb, constructFilePublicLink, checkFileHashOnDB, deleteTmpFil
 import { logError } from '@/utils/Logger.js';
 import { fetchNetworkStorageFile, getNetworkStorageTmpPath, isValidFileIdentifier } from '@/utils/NetworkStorage.js';
 import { generateThumbnails, imageExtensions, videoExtensions } from '@/utils/Thumbnails.js';
-import { validateUploadTarget } from '@/utils/UploadHelpers.js';
+import { normalizeContentType, validateUploadTarget } from '@/utils/UploadHelpers.js';
 
 export const schema = {
 	summary: 'Process uploaded file',
@@ -33,7 +33,10 @@ export const schema = {
 	body: z.object({
 		identifier: z.string().describe('The identifier of the file.'),
 		name: z.string().describe('The name of the file.'),
-		type: z.string().describe('The type of the file.'),
+		type: z
+			.string()
+			.optional()
+			.describe('The type of the file. Defaults to application/octet-stream when it is missing.'),
 		sourceUrl: z.string().optional().describe('The source URL of the file.')
 	}),
 	response: {
@@ -68,9 +71,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		identifier: string;
 		name: string;
 		sourceUrl?: string;
-		type: string;
+		type?: string;
 	};
-	if (!identifier || !name || !type) return res.badRequest('Missing file identifier');
+	if (!identifier || !name) return res.badRequest('Missing file identifier');
 	if (!isValidFileIdentifier(identifier)) return res.badRequest('Invalid file identifier');
 
 	const { createS3Client } = await import('@/structures/s3.js');
@@ -137,7 +140,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		extension,
 		path: newPath,
 		original: name,
-		type,
+		type: normalizeContentType(type),
 		size: String(fileSize),
 		hash,
 		ip: req.ip,

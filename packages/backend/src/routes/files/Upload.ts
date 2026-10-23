@@ -14,7 +14,7 @@ import { SETTINGS } from '@/structures/settings.js';
 import { consumeAnonymousUploadSlot, getAnonymousUploadMaxSize } from '@/utils/AnonymousUploadLimiter.js';
 import { getUniqueFileIdentifier, constructFilePublicLink, deleteTmpFile, handleUploadFile } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
-import { type UploadTarget, validateUploadTarget } from '@/utils/UploadHelpers.js';
+import { type UploadTarget, normalizeContentType, validateUploadTarget } from '@/utils/UploadHelpers.js';
 import { getUsedQuota } from '@/utils/User.js';
 
 /*
@@ -44,7 +44,12 @@ export const schema = {
 		.object({
 			size: z.number().describe('The size of the file.'),
 			name: z.string().describe('The name of the file.'),
-			contentType: z.string().describe('The content type of the file.'),
+			contentType: z
+				.string()
+				.optional()
+				.describe(
+					'The content type of the file. Defaults to application/octet-stream when it is empty or missing.'
+				),
 			sourceUrl: z.string().optional().describe('The source URL of the file.')
 		})
 		.or(z.null()),
@@ -106,10 +111,12 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 		name?: string;
 		size?: number;
 	};
-	if (!contentType || !size || !name) {
+	if (!size || !name) {
 		void res.badRequest('Missing file information');
 		return;
 	}
+
+	const fileType = normalizeContentType(contentType);
 
 	const anonymous = !req.user || target.type === 'link';
 	const maxSize = anonymous ? getAnonymousUploadMaxSize() : SETTINGS.maxSize;
@@ -173,7 +180,7 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 				new PutObjectCommand({
 					Bucket: SETTINGS.S3Bucket,
 					Key: newFilename,
-					ContentType: contentType,
+					ContentType: fileType,
 					ContentLength: size
 				}),
 				{ expiresIn: 3600 }
@@ -204,7 +211,7 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 			new CreateMultipartUploadCommand({
 				Bucket: SETTINGS.S3Bucket,
 				Key: newFilename,
-				ContentType: contentType
+				ContentType: fileType
 			})
 		);
 
@@ -354,7 +361,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			upload: {
 				name: upload.metadata.name,
 				path: upload.path as string,
-				type: upload.metadata.type as string,
+				type: normalizeContentType(upload.metadata.type),
 				size: upload.metadata.size ?? '0',
 				sourceUrl: (req.headers['x-source-url'] as string) ?? undefined
 			},

@@ -4,7 +4,7 @@ import type { Settings } from '@/types';
 import type { DropItem, FileDropItem } from 'react-aria-components';
 import { isDirectoryDropItem, isFileDropItem } from 'react-aria-components';
 import type { MultipartUploadTarget } from './s3-multipart';
-import { getFileExtension } from './file';
+import { getFileExtension, getUploadContentType } from './file';
 
 export const processDropItem = async (item: DropItem | File, settings: Settings | null) => {
 	if (item instanceof File) {
@@ -66,7 +66,7 @@ export const getSignedUrl = async (
 			albumuuid: albumUuid ?? ''
 		},
 		body: JSON.stringify({
-			contentType: file.type,
+			contentType: getUploadContentType(file),
 			name: file.name,
 			size: file.size
 		})

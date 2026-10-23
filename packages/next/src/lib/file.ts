@@ -45,3 +45,11 @@ export const isFilePDF = (file: FileWithAdditionalData | null) => {
 export const getFileExtension = (name: string) => {
 	return name.split('.').pop();
 };
+
+/*
+	Browsers report an empty `type` for formats they cannot name (an `.iso`
+	image, for instance). The value sent as the `Content-Type` header becomes
+	the object's Content-Type on S3, and `/upload/process` stores the same
+	value, so both use application/octet-stream instead of an empty string.
+*/
+export const getUploadContentType = (file: File) => file.type || 'application/octet-stream';

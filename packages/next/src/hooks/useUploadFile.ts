@@ -6,7 +6,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useCallback } from 'react';
 import { debug } from '@/lib/utils';
 import { uploadsAtom } from '@/lib/atoms/uploads';
-import { formatBytes } from '@/lib/file';
+import { formatBytes, getUploadContentType } from '@/lib/file';
 import { randomUuid } from '@/lib/random';
 import { toast } from 'sonner';
 import type { MultipartUploadTarget } from '@/lib/s3-multipart';
@@ -184,7 +184,7 @@ export const useUploadFile = ({
 					const { error, url } = await processNetworkStorageFile({
 						identifier,
 						name: file.name,
-						type: file.type
+						type: getUploadContentType(file)
 					});
 					setUploads(draft => {
 						const upload = draft.findIndex(entry => entry.uuid === multipart.uploadId);
@@ -290,7 +290,7 @@ export const useUploadFile = ({
 
 			if (isNetworkStored) {
 				options.headers = {
-					'Content-Type': file.type
+					'Content-Type': getUploadContentType(file)
 				};
 
 				if (isDigitalOceanSpacesEndpoint(endpoint ?? '')) {
@@ -299,7 +299,7 @@ export const useUploadFile = ({
 			} else {
 				options.postParams = {
 					name: file.name,
-					type: file.type,
+					type: getUploadContentType(file),
 					size: file.size.toString()
 				};
 
@@ -399,7 +399,7 @@ export const useUploadFile = ({
 						const { error, url } = await processNetworkStorageFile({
 							identifier,
 							name: file.name,
-							type: file.type
+							type: getUploadContentType(file)
 						});
 						setUploads(draft => {
 							const upload = draft.findIndex(file => file.uuid === uuid);
