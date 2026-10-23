@@ -51,7 +51,7 @@ A page from the provider itself ("Invalid redirect URI") means `KEYCLOAK_REDIREC
 
 **Large uploads stall or time out.** Increase `chunkedUploadsTimeout` in the settings, and make sure the proxy's read/send timeouts are long enough (the bundled nginx uses 600s).
 
-**`413 Request Entity Too Large`.** Almost always an upstream proxy limit, not SafeStorage.
+**`413 Request Entity Too Large`.** The panel shows the reason the backend returned: `File is too big` means the upload is above **Max Size** (or the anonymous upload cap of a public link), `Chunk is too big` means a single request is above **Chunk Size**, and `Chunked upload is above size limit` means the file needs more chunks than the size limit allows — raise **Max Size** there. Any other `413` text comes from an upstream proxy that is limiting the request body; raise or disable its body limit, or lower **Chunk Size** below it.
 
 **Video thumbnails are missing.** Video thumbnails require `ffmpeg`. It is bundled in the Docker image; for a source install, install `ffmpeg` and make sure it is on `PATH`. Confirm with the diagnostic endpoint.
 

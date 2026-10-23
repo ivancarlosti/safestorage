@@ -154,7 +154,9 @@ boot only, driven by Playwright on `/dashboard` with a 125,829,120-byte file):
 -   `StopUploadsBecauseError` in `packages/uploader-client` is still a
     module-level flag, so one 413 can abort other files that are in flight. It is
     out of scope here (the client bundle is rebuilt from `src/` by the Dockerfile)
-    and is the natural next hardening step.
+    and is the natural next hardening step. *Fixed in
+    `plans/2026-10-22-upload-413-error-reporting.md`, together with the generic
+    `Chunks are too big` text.*
 -   No migration is shipped: databases that already contain the seeded `admin`
     keep that account. Removing it is a manual action in **Admin → Users**.
 -   `packages/backend/src/prisma/migrations/20261014033039_seed_roles/migration.sql`

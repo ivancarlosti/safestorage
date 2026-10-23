@@ -25,7 +25,6 @@ export interface UploaderOptions {
 type Debug = (...args: any[]) => void;
 
 let DEBUG = false;
-let StopUploadsBecauseError = false;
 
 let debug: Debug = () => {};
 
@@ -63,6 +62,28 @@ const validateFileExtension = (file: File, allowedExtensions?: string[], blocked
 	}
 };
 
+/*
+	The backend answers a rejected request with a JSON `message` that names the
+	limit that was reached ("File is too big", "Chunk is too big", "Chunked
+	upload is above size limit"). A reverse proxy in front of the instance
+	answers with its own HTML page instead, where the status is the only useful
+	information available.
+*/
+const parseErrorMessage = (responseText: string, status: number): string => {
+	try {
+		const parsed = JSON.parse(responseText);
+		if (typeof parsed?.message === 'string' && parsed.message.length > 0) return parsed.message;
+	} catch {
+		// Not JSON: the request was most likely rejected before reaching the backend
+	}
+
+	if (status === 413) {
+		return 'The upload was rejected as too big (413 Payload Too Large). If the file is below the Max Size, a reverse proxy in front of this instance is limiting the request size.';
+	}
+
+	return responseText;
+};
+
 export const safeStorageUploader = async (options: UploaderOptions) => {
 	const {
 		autoStart = true,
@@ -91,7 +112,12 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 		);
 	}
 
-	StopUploadsBecauseError = false;
+	/*
+		A 413 dooms the remaining chunks of the file being uploaded. The flag is
+		local to this call because every call uploads a single file: one rejected
+		file must not stop the files that are uploading at the same time.
+	*/
+	let stoppedBecauseError = false;
 
 	const uuid = uuidv4();
 	const totalChunks = Math.ceil(file.size / chunkSize);
@@ -195,12 +221,7 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 							options.onError?.(uuid, new Error('There was a problem parsing the JSON response'));
 						}
 					} else {
-						try {
-							const message = JSON.parse(xhr.response).message;
-							options.onError?.(uuid, new Error(message));
-						} catch {
-							options.onError?.(uuid, new Error(xhr.response));
-						}
+						options.onError?.(uuid, new Error(parseErrorMessage(xhr.response, xhr.status)));
 					}
 				}
 			};
@@ -233,7 +254,7 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 	};
 
 	const actuallySendChunks = async (chunk: ArrayBuffer, index: number) => {
-		if (StopUploadsBecauseError) {
+		if (stoppedBecauseError) {
 			debug('Skipping because of an error');
 			return;
 		}
@@ -269,9 +290,22 @@ export const safeStorageUploader = async (options: UploaderOptions) => {
 				debug('Received response:', response.status);
 				manageRetries(index);
 			} else if (response.status === 413) {
-				options.onError?.(uuid, new Error(`Chunks are too big. Stopping upload`));
+				/*
+					Show the reason the backend returned instead of a generic message:
+					"File is too big" (above Max Size), "Chunk is too big" (above Chunk
+					Size) and "Chunked upload is above size limit" need different fixes.
+				*/
+				let responseText = '';
+				try {
+					responseText = await response.text();
+				} catch {
+					// The body could not be read, the status still explains the failure
+				}
+
+				debug('Received a 413:', responseText);
+				options.onError?.(uuid, new Error(parseErrorMessage(responseText, response.status)));
 				// eslint-disable-next-line require-atomic-updates
-				StopUploadsBecauseError = true;
+				stoppedBecauseError = true;
 			} else {
 				if (uploader.paused || uploader.offline) return;
 				options.onError?.(uuid, new Error(`Server responded with ${response.status}. Stopping upload`));

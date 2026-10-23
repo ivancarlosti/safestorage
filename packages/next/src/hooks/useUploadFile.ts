@@ -238,6 +238,12 @@ export const useUploadFile = ({
 				anonymousUpload && settings.anonymousUploadsMaxSize > 0
 					? Math.min(settings.maxSize, settings.anonymousUploadsMaxSize)
 					: settings.maxSize;
+			/*
+				Network storage sends the file as a single PUT, so its "chunk" is
+				the whole file. A chunk size of zero would make the chunk count
+				infinite, hence the fallback that the uploader itself uses.
+			*/
+			const uploadChunkSize = (isNetworkStored ? maxSize : chunkSize) || 81_000_000;
 
 			if (!isNetworkStored) {
 				if (maxSize <= 0) {
@@ -249,9 +255,14 @@ export const useUploadFile = ({
 				}
 
 				if (file.size > maxSize) {
+					/*
+						The chunk size and the chunk count are included so the limits
+						that apply can be compared at a glance when a file is refused.
+					*/
+					const chunks = Math.ceil(file.size / uploadChunkSize);
 					failUpload(
 						file,
-						`The file is ${formatBytes(file.size)}, but this instance allows at most ${formatBytes(maxSize)} per file.`
+						`The file is ${formatBytes(file.size)}, but this instance allows at most ${formatBytes(maxSize)} per file (it would be split into ${chunks} chunks of ${formatBytes(uploadChunkSize)}).`
 					);
 					return;
 				}
@@ -265,8 +276,7 @@ export const useUploadFile = ({
 				maxFileSize: maxSize,
 				// If we're storing in s3, we don't want to chunk the file. Files that
 				// are too big for a single PUT request are uploaded in parts instead.
-				// A chunk size of zero would make the chunk count infinite.
-				chunkSize: (isNetworkStored ? maxSize : chunkSize) || 81_000_000,
+				chunkSize: uploadChunkSize,
 				autoStart: true,
 				maxParallelUploads: 1
 			};
