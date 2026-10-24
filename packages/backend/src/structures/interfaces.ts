@@ -81,6 +81,14 @@ export interface ExtendedFile extends File {
 	url?: string;
 }
 
+export interface FileWithAlbums extends ExtendedFile {
+	albums: {
+		name: string;
+		userId: number;
+		uuid: string;
+	}[];
+}
+
 export interface ExtendedFileWithData extends ExtendedFile {
 	data: {
 		filename: string;

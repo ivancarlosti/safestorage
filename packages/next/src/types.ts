@@ -87,6 +87,14 @@ export interface FileWithAdditionalData extends File {
 	quarantine: boolean;
 	size: number;
 	thumb: string;
+	albums?: {
+		name: string;
+		uuid: string;
+		user?: {
+			username: string;
+			uuid: string;
+		} | null;
+	}[];
 	user?: {
 		createdAt: number;
 		enabled: boolean;

@@ -8,6 +8,8 @@ import { useSetAtom } from 'jotai';
 import { FileWarning, Video, FileAudio, FileText, FileIcon } from 'lucide-react';
 import { useState, type PropsWithChildren } from 'react';
 
+const truncateName = (name: string) => (name.length > 60 ? `${name.slice(0, 40)}...` : name);
+
 const ComponentType = ({
 	children,
 	isTableView,
@@ -24,7 +26,7 @@ const ComponentType = ({
 	return isTableView && file ? (
 		<button
 			type="button"
-			className="flex flex-col justify-center items-center"
+			className="flex flex-col justify-center items-center relative"
 			onClick={e => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -57,16 +59,23 @@ export const FileThumbnail = ({
 }) => {
 	const [error, setError] = useState(false);
 
+	// Table rows show a compact preview; the grid keeps the big masonry thumbnails.
+	const iconClassName = isTableView ? 'h-6 w-6' : 'h-16 w-16';
+	const placeholderClassName = isTableView ? 'h-10 w-10' : 'h-40 bg-dark-90';
+
 	return file.quarantine ? (
-		<div className={cn('flex flex-col justify-center items-center', isTableView ? '' : 'h-40 bg-dark-90')}>
-			<FileWarning className="text-red-500 w-16 h-16" />
+		<div className={cn('flex flex-col justify-center items-center', placeholderClassName)}>
+			<FileWarning className={cn('text-red-500', iconClassName)} />
 		</div>
 	) : (isFileImage(file) && !error) || (isFileVideo(file) && file.thumb && !error) ? (
 		<ComponentType isTableView={isTableView} file={file} type={type}>
-			<picture>
+			<picture className={isTableView ? 'block' : undefined}>
 				<img
 					src={file.thumb}
-					className="cursor-pointer w-full sm:min-w-[160px] min-w-0"
+					className={cn(
+						'cursor-pointer',
+						isTableView ? 'h-10 w-10 rounded object-cover' : 'w-full sm:min-w-[160px] min-w-0'
+					)}
 					onError={() => setError(true)}
 				/>
 			</picture>
@@ -82,26 +91,21 @@ export const FileThumbnail = ({
 				</video>
 			)}
 
-			{isFileVideo(file) && <Video className="absolute bottom-1 right-1 w-6 h-6 pointer-events-none" />}
+			{isFileVideo(file) ? (
+				<Video
+					className={cn('absolute bottom-1 right-1 pointer-events-none', isTableView ? 'h-4 w-4' : 'h-6 w-6')}
+				/>
+			) : null}
 		</ComponentType>
 	) : (
-		<div
-			className={cn(
-				'flex flex-col justify-center items-center cursor-pointer',
-				isTableView ? '' : 'h-40 bg-dark-90'
-			)}
-		>
+		<div className={cn('flex flex-col justify-center items-center cursor-pointer', placeholderClassName)}>
 			<ComponentType isTableView={isTableView} file={file} type={type}>
-				{isFileAudio(file) && <FileAudio className=" w-16 h-16" />}
-				{isFilePDF(file) && <FileText className=" w-16 h-16" />}
-				{!isFileAudio(file) && !isFilePDF(file) && <FileIcon className=" w-16 h-16" />}
-				{file.original ? (
-					<span className={cn('break-all w-[160px]', isTableView ? '' : 'mt-4 text-lg text-center')}>
-						{file.original.length > 60 ? `${file.original.slice(0, 40)}...` : file.original}
-					</span>
-				) : (
-					<span className={cn('break-all w-[160px]', isTableView ? '' : 'mt-4 text-lg text-center')}>
-						{file.name.length > 60 ? `${file.name.slice(0, 40)}...` : file.name}
+				{isFileAudio(file) ? <FileAudio className={iconClassName} /> : null}
+				{isFilePDF(file) ? <FileText className={iconClassName} /> : null}
+				{isFileAudio(file) || isFilePDF(file) ? null : <FileIcon className={iconClassName} />}
+				{isTableView ? null : (
+					<span className="break-all w-[160px] mt-4 text-lg text-center">
+						{truncateName(file.original ? file.original : file.name)}
 					</span>
 				)}
 			</ComponentType>

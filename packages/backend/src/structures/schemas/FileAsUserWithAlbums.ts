@@ -1,15 +1,8 @@
 import { z } from 'zod';
-import { fileAsUserSchema } from './FileAsUser.js';
+import { fileAlbumSchema, fileAsUserSchema } from './FileAsUser.js';
 
 export const fileAsUserWithAlbumsSchema = fileAsUserSchema.extend({
-	albums: z
-		.array(
-			z.object({
-				uuid: z.string().describe('The uuid of the album.'),
-				name: z.string().describe('The name of the album.')
-			})
-		)
-		.optional(),
+	albums: z.array(fileAlbumSchema).optional(),
 	tags: z
 		.array(
 			z.object({

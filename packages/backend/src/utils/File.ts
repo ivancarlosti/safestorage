@@ -277,6 +277,42 @@ export const constructFilePublicLink = ({
 	return data;
 };
 
+/**
+ * Replaces the raw `albums` rows of the given files with their public shape,
+ * adding the owner (username + uuid) of every album.
+ *
+ * Album ownership is stored as a plain `albums.userId` column, so all owners
+ * referenced by the page are resolved with a single extra query.
+ */
+export const resolveAlbumOwners = async <T extends { albums: { name: string; userId: number; uuid: string }[] }>(
+	files: T[]
+) => {
+	const ownerIds = [...new Set(files.flatMap(file => file.albums.map(album => album.userId)))];
+	const owners = ownerIds.length
+		? await prisma.users.findMany({
+				where: { id: { in: ownerIds } },
+				select: {
+					id: true,
+					username: true,
+					uuid: true
+				}
+			})
+		: [];
+	const ownersById = new Map(owners.map(owner => [owner.id, owner] as const));
+
+	return files.map(file => ({
+		...file,
+		albums: file.albums.map(album => {
+			const owner = ownersById.get(album.userId);
+			return {
+				name: album.name,
+				uuid: album.uuid,
+				user: owner ? { username: owner.username, uuid: owner.uuid } : null
+			};
+		})
+	}));
+};
+
 export const checkFileHashOnDB = async (user: RequestUser | User | undefined, file: FileInProgress) => {
 	/*
 		Guests are never deduplicated: matching them against every anonymous row

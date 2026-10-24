@@ -2,7 +2,7 @@ import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 import type { Prisma } from '@/generated/prisma/client.js';
 import prisma from '@/structures/database.js';
-import type { RequestWithUser, ExtendedFile } from '@/structures/interfaces.js';
+import type { RequestWithUser, FileWithAlbums } from '@/structures/interfaces.js';
 import { booleanSchema } from '@/structures/schemas/Boolean.js';
 import { fileAsAdminSchema } from '@/structures/schemas/FileAsAdmin.js';
 import { fileAsUserSchema } from '@/structures/schemas/FileAsUser.js';
@@ -10,7 +10,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { queryLimitSchema } from '@/structures/schemas/QueryLimit.js';
 import { queryPageSchema } from '@/structures/schemas/QueryPage.js';
-import { constructFilePublicLink } from '@/utils/File.js';
+import { constructFilePublicLink, resolveAlbumOwners } from '@/utils/File.js';
 
 export const schema = {
 	summary: 'Get all files',
@@ -75,6 +75,13 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			quarantineFile: {
 				select: {
 					name: true
+				}
+			},
+			albums: {
+				select: {
+					name: true,
+					userId: true,
+					uuid: true
 				}
 			},
 			isS3: true,
@@ -166,15 +173,16 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	}
 
 	const count = await prisma.files.count(dbSearchObject);
-	const files = (await prisma.files.findMany(dbObject)) as ExtendedFile[] | [];
+	const files = (await prisma.files.findMany(dbObject)) as unknown as FileWithAlbums[];
+	const filesWithAlbumOwners = await resolveAlbumOwners(files);
 
 	const readyFiles = [];
-	for (const file of files) {
+	for (const file of filesWithAlbumOwners) {
 		readyFiles.push({
 			...file,
 			...constructFilePublicLink({
 				req,
-				fileName: quarantine ? file.quarantineFile.name : file.name,
+				fileName: quarantine ? (file.quarantineFile?.name ?? file.name) : file.name,
 				quarantine,
 				isS3: file.isS3,
 				isWatched: file.isWatched

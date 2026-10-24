@@ -201,8 +201,9 @@ export function FilesWrapper({
 	}, [filesToUse, setAllFilesAtom, setCurrentType, setSelectedFiles, type]);
 
 	const selectAllFiles = useCallback(() => {
-		setSelectedFiles(filesToUse);
-	}, [filesToUse, setSelectedFiles]);
+		// Quarantined files cannot be downloaded, so they are never bulk selected.
+		setSelectedFiles(type === 'quarantine' ? filesToUse : filesToUse.filter(file => !file.quarantine));
+	}, [filesToUse, setSelectedFiles, type]);
 
 	return (
 		<>
@@ -210,7 +211,7 @@ export function FilesWrapper({
 				{showMasonryFiles ? (
 					<Masonry files={filesToUse} type={type} />
 				) : (
-					<FilesTable data={files?.length ? files : (data?.files ?? [])} type={type} />
+					<FilesTable data={filesToUse} type={type} />
 				)}
 			</div>
 			<SelectionWrapper selectAllFiles={selectAllFiles} type={type} albumUuid={albumUuid} />

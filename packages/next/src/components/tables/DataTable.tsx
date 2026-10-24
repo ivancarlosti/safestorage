@@ -9,8 +9,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { Table as TableType } from '@tanstack/react-table';
+import type { RowData, Table as TableType } from '@tanstack/react-table';
 import { flexRender } from '@tanstack/react-table';
+
+declare module '@tanstack/table-core' {
+	interface ColumnMeta<TData extends RowData, TValue> {
+		/** Extra classes for every body cell of this column (e.g. compact padding). */
+		className?: string;
+	}
+}
 
 export const DataTable = ({
 	table,
@@ -73,7 +80,7 @@ export const DataTable = ({
 							table.getRowModel().rows.map(row => (
 								<TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
 									{row.getVisibleCells().map(cell => (
-										<TableCell key={cell.id}>
+										<TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
 											{flexRender(cell.column.columnDef.cell, cell.getContext())}
 										</TableCell>
 									))}
