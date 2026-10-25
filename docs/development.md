@@ -2,7 +2,7 @@
 
 ## Requirements
 
--   **Node.js ≥ 22.12.0** (the Docker image uses Node 22; `jotai` 3 requires 22.12+).
+-   **Node.js ≥ 22.19.0** (the Docker image uses Node 22; `jotai` 3 requires 22.12+, and `@scalar/fastify-api-reference` 1.76 pulls `@scalar/json-magic`/`undici`, which declare 22.19+).
 -   **Yarn 4** — vendored in the repository (`.yarn/releases`) and pinned via `packageManager: yarn@4.1.1`, so just run `yarn` (Enable Corepack if your shell cannot find it: `corepack enable`).
 -   **MariaDB 10.5+ / MySQL 8** — reachable from your machine: installed locally, running in a container, or managed. See [Setup](#setup) for a one-liner that starts a throwaway server.
 -   **ffmpeg** — optional; only needed for video thumbnail generation (`ffmpeg` is bundled in the Docker image).
@@ -120,6 +120,31 @@ yarn lint
 yarn build
 ```
 
+## Dependency security
+
+Yarn 4's audit only walks the **direct** dependencies unless told otherwise, so
+advisories that reach a workspace transitively stay invisible. Always audit the
+full graph, high severity and above:
+
+```bash
+yarn npm audit -A -R --severity high
+```
+
+The same command runs in CI on every push and pull request against `main`, and
+once a week on a schedule (`.github/workflows/audit.yml`).
+
+When the patched release cannot be picked up by a normal range bump — for
+example because an intermediate package pins an exact version — force it through
+the root `resolutions` field. Scope the key by range when several majors are in
+the tree at once, so a pinned major does not drag unrelated packages down:
+
+```json
+"resolutions": {
+	"fast-uri@^3.0.1": "3.1.9",
+	"fast-uri@^4.0.0": "4.2.3"
+}
+```
+
 ## Database changes
 
 1. Edit `packages/backend/src/prisma/schema.prisma`.
@@ -136,4 +161,5 @@ Two MySQL-specific things to keep in mind:
 
 -   **`semantic-release.yml`** drives versioning and changelogs from [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, …). Write commit messages accordingly.
 -   **`build.yml`** runs on every published release: it zips the source, uploads it to the GitHub release, and builds/pushes the multi-arch image to `ghcr.io/ivancarlosti/safestorage`.
+-   **`audit.yml`** runs `yarn npm audit -A -R --severity high` on every push and pull request against `main`, plus a weekly scheduled run, so new advisories in the transitive graph fail fast.
 -   **`update-readme.yml`** syncs the README's `<!-- buttons -->` / `<!-- footer -->` blocks from the `ivancarlosti/.github` template — keep those markers intact in `README.md`.

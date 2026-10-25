@@ -93,7 +93,10 @@ export const SettingsForm = ({
 	readonly defaultValues: any;
 }) => {
 	const queryClient = useQueryClient();
-	const form = useForm<FormValues>({
+	// Zod 4 types the input of `z.coerce.number()` as `unknown` (the form stores
+	// raw strings), while `z.infer` resolves to the parsed output, so the form
+	// needs both types: raw values in, coerced values out.
+	const form = useForm<z.input<typeof formSchema>, unknown, FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues,
 		mode: 'onChange'

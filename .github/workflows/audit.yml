@@ -1,0 +1,42 @@
+name: 🔐 Dependency Audit
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: 🛡️ Audit transitive dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: 🧶 Enable Corepack
+        run: corepack enable
+
+      # --immutable fails when yarn.lock and the manifests disagree, so a PR that
+      # bumps a manifest without regenerating the lockfile is caught here too.
+      - name: 📦 Install dependencies
+        run: yarn install --immutable
+
+      # -A audits the whole workspace set and -R walks the transitive graph;
+      # without them Yarn only reports advisories of the direct dependencies.
+      - name: 🛡️ Audit
+        run: yarn npm audit -A -R --severity high

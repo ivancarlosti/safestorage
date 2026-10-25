@@ -933,7 +933,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastify/error@npm:^4.0.0":
+"@fastify/error@npm:^4.0.0, @fastify/error@npm:^4.2.0":
   version: 4.2.1
   resolution: "@fastify/error@npm:4.2.1"
   checksum: 10c0/f78f92be049776b73a319bf86598b9193f9a326dc764af32fd52f786703286f19eecbec6921f20abed94356f2c85c3554309acc0ac8a1ee423c292945e8e02fd
@@ -3478,7 +3478,7 @@ __metadata:
     "@prisma/adapter-mariadb": "npm:7.10.1"
     "@prisma/client": "npm:7.10.1"
     "@safestorage/uploader-module": "workspace:*"
-    "@scalar/fastify-api-reference": "npm:^1.74.0"
+    "@scalar/fastify-api-reference": "npm:^1.76.0"
     "@sindresorhus/slugify": "npm:^3.0.1"
     "@types/envinfo": "npm:^7.8.4"
     "@types/fluent-ffmpeg": "npm:^2.1.28"
@@ -3494,7 +3494,7 @@ __metadata:
     envinfo: "npm:^7.21.0"
     eslint: "npm:^9.39.5"
     fastify: "npm:^5.12.6"
-    fastify-type-provider-zod: "npm:^4.0.2"
+    fastify-type-provider-zod: "npm:^7.0.0"
     file-stream-rotator: "npm:^1.0.0"
     file-type: "npm:^22.1.1"
     fluent-ffmpeg: "npm:^2.1.3"
@@ -3502,6 +3502,7 @@ __metadata:
     jsonwebtoken: "npm:^9.0.3"
     lookpath: "npm:^1.2.3"
     node-schedule: "npm:^2.1.1"
+    openapi-types: "npm:^12.1.3"
     pino: "npm:^10.4.0"
     pino-pretty: "npm:^13.2.0"
     prettier: "npm:^3.9.10"
@@ -3514,7 +3515,7 @@ __metadata:
     typescript: "npm:^5.9.3"
     unzipit: "npm:^2.1.1"
     uuid: "npm:^14.0.3"
-    zod: "npm:^3.25.76"
+    zod: "npm:^4.6.7"
   languageName: unknown
   linkType: soft
 
@@ -3579,7 +3580,7 @@ __metadata:
     typescript: "npm:^5.9.3"
     usehooks-ts: "npm:^3.1.1"
     vaul: "npm:^1.1.2"
-    zod: "npm:^3.25.76"
+    zod: "npm:^4.6.7"
   languageName: unknown
   linkType: soft
 
@@ -3609,69 +3610,69 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@scalar/client-side-rendering@npm:0.4.11":
-  version: 0.4.11
-  resolution: "@scalar/client-side-rendering@npm:0.4.11"
+"@scalar/client-side-rendering@npm:0.4.13":
+  version: 0.4.13
+  resolution: "@scalar/client-side-rendering@npm:0.4.13"
   dependencies:
-    "@scalar/helpers": "npm:0.16.3"
-    "@scalar/schemas": "npm:0.13.2"
-    "@scalar/types": "npm:0.23.2"
+    "@scalar/helpers": "npm:0.16.4"
+    "@scalar/schemas": "npm:0.15.0"
+    "@scalar/types": "npm:0.25.0"
     "@scalar/validation": "npm:0.6.7"
-  checksum: 10c0/90f251abc4d36025f1383e5eac949135563aa3f52e83b0f48de24087134a674619a2826143289491583139ea4415ecfb82f988de8dffbe0f5dcdf1d2c5177363
+  checksum: 10c0/cc44050d181d6d3e09bced52fc3cffdc8c8110da75dcc56064b3c3408d9b9777060dd07bce699c05a221067f7bf03968f447ebcf187123b2e7f1215941de9353
   languageName: node
   linkType: hard
 
-"@scalar/fastify-api-reference@npm:^1.74.0":
-  version: 1.74.0
-  resolution: "@scalar/fastify-api-reference@npm:1.74.0"
+"@scalar/fastify-api-reference@npm:^1.76.0":
+  version: 1.76.0
+  resolution: "@scalar/fastify-api-reference@npm:1.76.0"
   dependencies:
-    "@scalar/client-side-rendering": "npm:0.4.11"
-    "@scalar/json-magic": "npm:0.15.7"
-    fastify-plugin: "npm:^4.5.1"
+    "@scalar/client-side-rendering": "npm:0.4.13"
+    "@scalar/json-magic": "npm:0.17.0"
+    fastify-plugin: "npm:^6.0.1"
     github-slugger: "npm:2.0.0"
-    yaml: "npm:^2.9.0"
-  checksum: 10c0/760b7de57f743a78d5816840924503bd690252dfb1a3ae899b434936f0068bd240bbffa1108645c9254264c90111547159b881f80bc0112257a15818fd7eb54a
+    yaml: "npm:^2.9.1"
+  checksum: 10c0/712c77f76abb468beae4adabbfcd5dec676c0812b6405812c365e0ca297dbb4542b3d7e16fd6d474c5799afbb1d09dbd9e4eb2af1d50b4f6b7bb569a09bf18fa
   languageName: node
   linkType: hard
 
-"@scalar/helpers@npm:0.16.3":
-  version: 0.16.3
-  resolution: "@scalar/helpers@npm:0.16.3"
-  checksum: 10c0/3a1d2d4e2aa0eb019d0bce0305ff52b502ee87062b06bfaea1adea44c46127c5eb7915b12f70d83c00e2f878c69c432ec0fb5c1e6ccab1619056c023315579eb
+"@scalar/helpers@npm:0.16.4":
+  version: 0.16.4
+  resolution: "@scalar/helpers@npm:0.16.4"
+  checksum: 10c0/5347ace1a7451b2145a37087419efa201c756427aa5b902b2b92647bf99c8ecf511a1ca36e269ef8a26573966e251e276b370395f728f7cff2b24dea93463843
   languageName: node
   linkType: hard
 
-"@scalar/json-magic@npm:0.15.7":
-  version: 0.15.7
-  resolution: "@scalar/json-magic@npm:0.15.7"
+"@scalar/json-magic@npm:0.17.0":
+  version: 0.17.0
+  resolution: "@scalar/json-magic@npm:0.17.0"
   dependencies:
-    "@scalar/helpers": "npm:0.16.3"
+    "@scalar/helpers": "npm:0.16.4"
     pathe: "npm:^2.0.3"
-    undici: "npm:7.29.1"
-    yaml: "npm:^2.9.0"
-  checksum: 10c0/f5dec4cf64eaa19986b77a2b295dfa98a3f0be14dd8da6cbf8418fadf6c14859ad82133ecdbeb2e29c57a8c92b04a4b3000722438ed1e83cccac8f9339afd6c3
+    undici: "npm:8.12.3"
+    yaml: "npm:^2.9.1"
+  checksum: 10c0/bd024809345474526b6ad803f37476a82e1c33aa942d2d98cbcdbf0a25b2c36b8c2b6941708dffa22d496da4ba625588fb101cd1caf05627495005349a11286e
   languageName: node
   linkType: hard
 
-"@scalar/schemas@npm:0.13.2":
-  version: 0.13.2
-  resolution: "@scalar/schemas@npm:0.13.2"
+"@scalar/schemas@npm:0.15.0":
+  version: 0.15.0
+  resolution: "@scalar/schemas@npm:0.15.0"
   dependencies:
-    "@scalar/helpers": "npm:0.16.3"
+    "@scalar/helpers": "npm:0.16.4"
     "@scalar/validation": "npm:0.6.7"
-  checksum: 10c0/115d8719bf6c8396a149ab0135b72d245fdda4bcce877efd0f3e722e8d60561b860d9f8879aef069a0d399d4001103abc3dd02d6131d429a1395f4200096202e
+  checksum: 10c0/9e673cb15ae3fd3e8ed572d7c3340ff45016c704c5d1a935373a6a0c62626e6676e4d79eb5993e9b910af4567d10996fe97199b103bad74bbb6ebef0da943fa2
   languageName: node
   linkType: hard
 
-"@scalar/types@npm:0.23.2":
-  version: 0.23.2
-  resolution: "@scalar/types@npm:0.23.2"
+"@scalar/types@npm:0.25.0":
+  version: 0.25.0
+  resolution: "@scalar/types@npm:0.25.0"
   dependencies:
-    "@scalar/helpers": "npm:0.16.3"
-    nanoid: "npm:^5.1.6"
-    type-fest: "npm:^5.8.0"
-    zod: "npm:^4.4.3"
-  checksum: 10c0/2bd74d62301d77aee8c732e1178be1f8f6f7ebc66da303782ae0ed715718723a6ba62ea5fb56a9542a4f118b8823efb19f7eab8d47e4d1762446eaca2690e5f4
+    "@scalar/helpers": "npm:0.16.4"
+    nanoid: "npm:^5.1.16"
+    type-fest: "npm:^5.10.0"
+    zod: "npm:^4.6.7"
+  checksum: 10c0/1fd0fee2315fb54b827f8e4ebbbf59a193cb4c4e340ab9a3fa604e0f5cae0066654fc3f4b0d77edbab7f17c27ab56f05e19d1d513051d066517994ff9d79ae3c
   languageName: node
   linkType: hard
 
@@ -7626,44 +7627,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-uri@npm:^3.0.1, fast-uri@npm:^3.0.5":
-  version: 3.1.8
-  resolution: "fast-uri@npm:3.1.8"
-  checksum: 10c0/c9c47860a7f9110176d94bb30a02942182f0bfc8d6780e9702f320336dc2dadb83b1d9879cceaf8d4b439642d1ec6d78c317cb808ab155455551bd5d9d7c22d8
+"fast-uri@npm:3.1.9":
+  version: 3.1.9
+  resolution: "fast-uri@npm:3.1.9"
+  checksum: 10c0/052757540d8c0bbc16bb124a45b8f5cb5d0932f9b89f019221ee41cdb3cafc1db44b2e809d6b888b87922af3e5560a863124454e9d9193e1fc955887357b5add
   languageName: node
   linkType: hard
 
-"fast-uri@npm:^4.0.0":
-  version: 4.2.2
-  resolution: "fast-uri@npm:4.2.2"
-  checksum: 10c0/7ca6dfa94440c42a63edf4fd0cc2b9430d162a3e149304fc59d941f3328dbb5157a44f641b8bc0c6ee6434caa1931f6c8ff6965f1ca7e761c3528cd3d00f2eab
+"fast-uri@npm:4.2.3":
+  version: 4.2.3
+  resolution: "fast-uri@npm:4.2.3"
+  checksum: 10c0/de121e1d98e5cf75ad31971ac799d6fd12edff6c4c62c7ad0aa64d87d669e9b0418eb5880588dba7e6a991a686c1ec0f8e91654ad2f6440a1f4ad48b8657c3df
   languageName: node
   linkType: hard
 
-"fastify-plugin@npm:^4.5.1":
-  version: 4.5.1
-  resolution: "fastify-plugin@npm:4.5.1"
-  checksum: 10c0/f58f79cd9d3c88fd7f79a3270276c6339fc57bbe72ef14d20b73779193c404e317ac18e8eae2c5071b3909ebee45d7eb6871da4e65464ac64ed0d9746b4e9b9f
-  languageName: node
-  linkType: hard
-
-"fastify-plugin@npm:^6.0.0":
+"fastify-plugin@npm:^6.0.0, fastify-plugin@npm:^6.0.1":
   version: 6.0.1
   resolution: "fastify-plugin@npm:6.0.1"
   checksum: 10c0/01bae91a7b8283232ff16cf7cad24dfe2d4bea9dc0b44a7eecc3f649bfe8ca0479ddabaf2a24690d90dbc5c118bec19c884b44ba2f34be80b72c4413d6f8b1df
   languageName: node
   linkType: hard
 
-"fastify-type-provider-zod@npm:^4.0.2":
-  version: 4.0.2
-  resolution: "fastify-type-provider-zod@npm:4.0.2"
+"fastify-type-provider-zod@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "fastify-type-provider-zod@npm:7.0.0"
   dependencies:
-    "@fastify/error": "npm:^4.0.0"
-    zod-to-json-schema: "npm:^3.23.3"
+    "@fastify/error": "npm:^4.2.0"
   peerDependencies:
-    fastify: ^5.0.0
-    zod: ^3.14.2
-  checksum: 10c0/b9508d6e27b1632615f5b1facbe589302a68838aca29a3be6b8800e12682c8f4f85f370e7769abb9de793b48627618ff2d6098fc22617b4676d2596a053be6a9
+    "@fastify/swagger": ">=9.5.1"
+    fastify: ^5.5.0
+    openapi-types: ^12.1.3
+    zod: ">=4.1.5"
+  checksum: 10c0/90d19a20aeb53b4bb31f12df32cbda77644aad7ea66770ef2a10af3acbe29bf15aae3d134dc954502c1013b2969fdef750dc2c735b5d0634692283f649004ac8
   languageName: node
   linkType: hard
 
@@ -10538,7 +10533,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^5.1.6":
+"nanoid@npm:^5.1.16":
   version: 5.1.16
   resolution: "nanoid@npm:5.1.16"
   bin:
@@ -13243,7 +13238,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^5.8.0":
+"type-fest@npm:^5.10.0":
   version: 5.10.0
   resolution: "type-fest@npm:5.10.0"
   dependencies:
@@ -13461,10 +13456,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:7.29.1":
-  version: 7.29.1
-  resolution: "undici@npm:7.29.1"
-  checksum: 10c0/5a419b1364531071ebdfd93748f7f2392d4eb6d68dd99814e1020f8fc6a517e3298129004c871516ee204bac68aba93541f587200b04a7449b8d45683a7d86f6
+"undici@npm:8.12.3":
+  version: 8.12.3
+  resolution: "undici@npm:8.12.3"
+  checksum: 10c0/714919e62b4160eea195fb35c7f5c4907235741e47bfde8a014ac58f6d24df13434e23400d7f48e2c455fd2b259d27f07fce514f04a5b4e99936ba62cbc4bb71
   languageName: node
   linkType: hard
 
@@ -14183,15 +14178,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod-to-json-schema@npm:^3.23.3":
-  version: 3.25.2
-  resolution: "zod-to-json-schema@npm:3.25.2"
-  peerDependencies:
-    zod: ^3.25.28 || ^4
-  checksum: 10c0/dd300554393903022487688af14fbda5c719ba8179702bb55b3aa86318830467f0f7beb7d654036975ac963dc4843b72e59636448bfff9a0608f277bb6a14939
-  languageName: node
-  linkType: hard
-
 "zod-validation-error@npm:^3.5.0 || ^4.0.0":
   version: 4.0.2
   resolution: "zod-validation-error@npm:4.0.2"
@@ -14201,17 +14187,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.4.3":
+"zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.6.7":
   version: 4.6.7
   resolution: "zod@npm:4.6.7"
   checksum: 10c0/4ce2eb14034317b7254e347ca37b5ad591cf8333147030cf05b9b5d31692d45073f7f2747aa50cf8c6b29012194d2b22978cecc89969cf34a0d18e89d0ee7d7b
-  languageName: node
-  linkType: hard
-
-"zod@npm:^3.25.76":
-  version: 3.25.76
-  resolution: "zod@npm:3.25.76"
-  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
   languageName: node
   linkType: hard
 
