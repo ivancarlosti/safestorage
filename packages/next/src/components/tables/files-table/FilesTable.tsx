@@ -124,9 +124,9 @@ const columns = [
 			}
 
 			return (
-				<div className="flex flex-col gap-0.5">
+				<div className="flex max-w-64 flex-col gap-0.5">
 					{albums.map(album => (
-						<span key={album.uuid} className="whitespace-nowrap">
+						<span key={album.uuid} className="wrap-anywhere">
 							{album.name}
 							{album.user ? (
 								<Link
