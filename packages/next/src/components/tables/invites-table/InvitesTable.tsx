@@ -96,5 +96,5 @@ export const InvitesTable = ({ data = [] }: PropsWithChildren<{ readonly data?: 
 		}
 	});
 
-	return <DataTable table={table} columns={columns} />;
+	return <DataTable table={table} />;
 };

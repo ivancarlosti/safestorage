@@ -168,7 +168,8 @@ export function Pagination({
 								type="button"
 								size={'icon'}
 								variant={'outline'}
-								className="min-w-10 min-h-10"
+								className="min-w-10 min-h-10 shrink-0"
+								aria-label={showMasonryView ? 'Switch to list view' : 'Switch to thumbnail view'}
 								onClick={() => toggleViewMode()}
 							>
 								{showMasonryView ? (
@@ -183,23 +184,22 @@ export function Pagination({
 				) : (
 					<>
 						<div className="flex w-full sm:max-w-xs items-center gap-2">
-							<div className="hidden lg:block">
-								<Tooltip content={showMasonryView ? 'Switch to table view' : 'Switch to masonry view'}>
-									<Button
-										type="button"
-										size={'icon'}
-										variant={'outline'}
-										className="min-w-10 min-h-10"
-										onClick={() => toggleViewMode()}
-									>
-										{showMasonryView ? (
-											<TableIcon className="h-4 w-4" />
-										) : (
-											<LayoutDashboardIcon className="h-4 w-4" />
-										)}
-									</Button>
-								</Tooltip>
-							</div>
+							<Tooltip content={showMasonryView ? 'Switch to table view' : 'Switch to masonry view'}>
+								<Button
+									type="button"
+									size={'icon'}
+									variant={'outline'}
+									className="min-w-10 min-h-10 shrink-0"
+									aria-label={showMasonryView ? 'Switch to table view' : 'Switch to masonry view'}
+									onClick={() => toggleViewMode()}
+								>
+									{showMasonryView ? (
+										<TableIcon className="h-4 w-4" />
+									) : (
+										<LayoutDashboardIcon className="h-4 w-4" />
+									)}
+								</Button>
+							</Tooltip>
 							<Input
 								placeholder={`Search...`}
 								defaultValue={search}

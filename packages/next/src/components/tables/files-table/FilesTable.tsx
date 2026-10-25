@@ -84,12 +84,19 @@ const columns = [
 		id: 'original',
 		header: 'Original',
 		cell: props => (
-			<a
-				href={`/api/file/${props.row.original.uuid}/download`}
-				className="text-blue-500 underline inline-flex items-center break-all"
-			>
-				{props.row.original.original} <ArrowDownToLineIcon className="w-4 h-4 ml-1" />
-			</a>
+			<div className="flex flex-col gap-0.5">
+				<a
+					href={`/api/file/${props.row.original.uuid}/download`}
+					className="text-blue-500 underline inline-flex items-center break-all"
+				>
+					{props.row.original.original} <ArrowDownToLineIcon className="w-4 h-4 ml-1 shrink-0" />
+				</a>
+				{/* The size and creation date columns are hidden below `md`, so they are repeated here. */}
+				<span className="text-xs text-muted-foreground md:hidden">
+					{formatBytes(props.row.original.size)} ·{' '}
+					{new Date(props.row.original.createdAt).toLocaleDateString()}
+				</span>
+			</div>
 		)
 	}),
 	columnHelper.accessor(row => row.user, {
@@ -228,5 +235,13 @@ export const FilesTable = ({
 		}
 	});
 
-	return <DataTable table={table} columns={columns} />;
+	return (
+		<DataTable
+			table={table}
+			// On phones the raw link, the size and the creation date are redundant:
+			// the drawer behind the Actions button exposes the link, and both values
+			// are shown under the file name (see the `original` column).
+			mobileHiddenColumns={['link', 'size', 'created']}
+		/>
+	);
 };

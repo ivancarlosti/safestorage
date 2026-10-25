@@ -33,7 +33,7 @@ export const PublicAlbumUploader = ({
 	return (
 		<>
 			<GlobalDropZone albumLink={identifier} />
-			<div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center">
+			<div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-4 sm:p-8 text-center">
 				<UploadCloud className="h-8 w-8 text-muted-foreground" />
 				<div>
 					<p className="font-medium">Drop files here to upload them</p>

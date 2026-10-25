@@ -78,5 +78,5 @@ export const TagsTable = ({ data = [] }: PropsWithChildren<{ readonly data?: any
 		}
 	});
 
-	return <DataTable table={table} columns={columns} />;
+	return <DataTable table={table} />;
 };

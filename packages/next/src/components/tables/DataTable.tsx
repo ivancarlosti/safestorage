@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { RowData, Table as TableType } from '@tanstack/react-table';
 import { flexRender } from '@tanstack/react-table';
+import { cn } from '@/lib/utils';
 
 declare module '@tanstack/table-core' {
 	interface ColumnMeta<TData extends RowData, TValue> {
@@ -21,13 +22,22 @@ declare module '@tanstack/table-core' {
 
 export const DataTable = ({
 	table,
-	columns,
-	showColumnSelector = false
+	showColumnSelector = false,
+	mobileHiddenColumns = []
 }: PropsWithChildren<{
-	readonly columns: any[];
+	/**
+	 * Column ids dropped below the `md` breakpoint. They are hidden with
+	 * `hidden md:table-cell` instead of TanStack's `columnVisibility` so the
+	 * rendered markup does not depend on a media query being resolved first.
+	 */
+	readonly mobileHiddenColumns?: readonly string[];
 	readonly showColumnSelector?: boolean;
 	readonly table: TableType<any>;
 }>) => {
+	const isHiddenOnMobile = (columnId: string) => mobileHiddenColumns.includes(columnId);
+	// Columns hidden by the media query are still part of the table model.
+	const visibleColumnCount = table.getVisibleLeafColumns().filter(column => !isHiddenOnMobile(column.id)).length;
+
 	return (
 		<>
 			{showColumnSelector ? (
@@ -65,7 +75,10 @@ export const DataTable = ({
 							<TableRow key={headerGroup.id}>
 								{headerGroup.headers.map(header => {
 									return (
-										<TableHead key={header.id}>
+										<TableHead
+											key={header.id}
+											className={cn(isHiddenOnMobile(header.column.id) && 'hidden md:table-cell')}
+										>
 											{header.isPlaceholder
 												? null
 												: flexRender(header.column.columnDef.header, header.getContext())}
@@ -80,7 +93,13 @@ export const DataTable = ({
 							table.getRowModel().rows.map(row => (
 								<TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
 									{row.getVisibleCells().map(cell => (
-										<TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+										<TableCell
+											key={cell.id}
+											className={cn(
+												cell.column.columnDef.meta?.className,
+												isHiddenOnMobile(cell.column.id) && 'hidden md:table-cell'
+											)}
+										>
 											{flexRender(cell.column.columnDef.cell, cell.getContext())}
 										</TableCell>
 									))}
@@ -88,7 +107,7 @@ export const DataTable = ({
 							))
 						) : (
 							<TableRow>
-								<TableCell colSpan={columns.length} className="h-24 text-center">
+								<TableCell colSpan={visibleColumnCount} className="h-24 text-center">
 									No results.
 								</TableCell>
 							</TableRow>

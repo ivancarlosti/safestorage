@@ -107,5 +107,5 @@ export const LinksTable = ({
 		}
 	});
 
-	return <DataTable table={table} columns={columns} />;
+	return <DataTable table={table} />;
 };
