@@ -77,7 +77,7 @@ const columns = [
 		cell: props => (
 			<a
 				href={props.row.original.url}
-				className="text-blue-500 underline inline-flex max-w-56 items-center wrap-anywhere"
+				className="text-blue-500 underline inline-flex max-w-56 items-center break-all"
 			>
 				{props.row.original.name} <ArrowUpRightFromSquare className="w-3 h-3 ml-1 shrink-0" />
 			</a>
