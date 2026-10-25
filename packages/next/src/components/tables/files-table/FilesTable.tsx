@@ -77,7 +77,7 @@ const columns = [
 		cell: props => (
 			<a
 				href={props.row.original.url}
-				className="text-blue-500 underline inline-flex max-w-56 items-center break-all"
+				className="text-blue-500 underline inline-flex max-w-48 items-center wrap-anywhere"
 			>
 				{props.row.original.name} <ArrowUpRightFromSquare className="w-3 h-3 ml-1 shrink-0" />
 			</a>
@@ -87,10 +87,10 @@ const columns = [
 		id: 'original',
 		header: 'Original',
 		cell: props => (
-			<div className="flex max-w-72 flex-col gap-0.5">
+			<div className="flex max-w-48 flex-col gap-0.5">
 				<a
 					href={`/api/file/${props.row.original.uuid}/download`}
-					className="text-blue-500 underline inline-flex items-center break-all"
+					className="text-blue-500 underline inline-flex items-center wrap-anywhere"
 				>
 					{props.row.original.original} <ArrowDownToLineIcon className="w-4 h-4 ml-1 shrink-0" />
 				</a>
@@ -127,7 +127,7 @@ const columns = [
 			}
 
 			return (
-				<div className="flex max-w-64 flex-col gap-0.5">
+				<div className="flex max-w-48 flex-col gap-0.5 wrap-anywhere">
 					{albums.map(album => (
 						<span key={album.uuid} className="wrap-anywhere">
 							{album.name}
