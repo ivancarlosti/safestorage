@@ -56,7 +56,7 @@ const columns = [
 			return (
 				<Link
 					href={`/dashboard/admin/users/${props.row.original.user?.uuid}`}
-					className="text-blue-500 underline inline-flex items-center"
+					className="text-blue-500 underline inline-flex max-w-48 items-center wrap-anywhere"
 				>
 					{props.row.original.user?.username}
 				</Link>

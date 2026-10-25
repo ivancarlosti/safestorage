@@ -26,7 +26,7 @@ const columns = [
 		cell: props => (
 			<Link
 				href={`/dashboard/admin/users/${props.row.original.uuid}`}
-				className="link inline-flex items-center ml-2"
+				className="link inline-flex max-w-48 items-center wrap-anywhere ml-2"
 			>
 				{props.row.original.username}
 			</Link>
