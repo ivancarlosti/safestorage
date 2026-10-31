@@ -60,6 +60,14 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			},
 			select: {
 				files: {
+					/*
+						Albums can be shared: only the files uploaded by the owner are
+						purged. The files of the members stay in their account, they
+						just lose the connection to the album that is being deleted.
+					*/
+					where: {
+						userId: req.user.id
+					},
 					select: {
 						id: true,
 						isS3: true,

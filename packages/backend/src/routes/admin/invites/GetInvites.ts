@@ -31,7 +31,20 @@ export const schema = {
 							.optional()
 							.describe('The user who used the invite.'),
 						createdAt: z.date().describe('The date the invite was created.'),
-						editedAt: z.date().nullable().describe('The date the invite was edited.')
+						editedAt: z.date().nullable().describe('The date the invite was edited.'),
+						email: z
+							.string()
+							.nullable()
+							.optional()
+							.describe('The email the invite is reserved for, on invites created from an album.'),
+						album: z
+							.object({
+								uuid: z.string().describe('The uuid of the album.'),
+								name: z.string().describe('The name of the album.')
+							})
+							.nullable()
+							.optional()
+							.describe('The album the invite gives access to, on invites created from an album.')
 					})
 				)
 				.describe('The list of invites.')
@@ -48,7 +61,16 @@ export const options = {
 };
 
 export const run = async (_: RequestWithUser, res: FastifyReply) => {
-	const invites = await prisma.invites.findMany();
+	const invites = await prisma.invites.findMany({
+		include: {
+			album: {
+				select: {
+					uuid: true,
+					name: true
+				}
+			}
+		}
+	});
 
 	const response = [];
 	for (const invite of invites) {
@@ -58,7 +80,10 @@ export const run = async (_: RequestWithUser, res: FastifyReply) => {
 			used: invite.used,
 			usedBy: {} as any,
 			createdAt: invite.createdAt,
-			editedAt: invite.editedAt
+			editedAt: invite.editedAt,
+			email: invite.email,
+			// Only album invites carry an album, admin invites keep it empty
+			album: invite.album
 		};
 
 		const createdBy = await prisma.users.findUnique({

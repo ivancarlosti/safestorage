@@ -2,6 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FormWrapper } from './FormWrapper';
+import { SendTestEmailButton } from './SendTestEmailButton';
 import { Form } from '@/components/ui/form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,7 +81,16 @@ const formSchema = z.object({
 	// Legal
 	privacyPolicyPageContent: z.string().optional(),
 	termsOfServicePageContent: z.string().optional(),
-	rulesPageContent: z.string().optional()
+	rulesPageContent: z.string().optional(),
+	// Email
+	instanceUrl: z.string().optional(),
+	smtpEnabled: z.boolean().optional(),
+	smtpHost: z.string().optional(),
+	smtpPort: z.coerce.number().int().min(1).max(65535),
+	smtpSecure: z.boolean().optional(),
+	smtpUser: z.string().optional(),
+	smtpPassword: z.string().optional(),
+	smtpFrom: z.string().optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -141,6 +151,7 @@ export const SettingsForm = ({
 					<TabsTrigger value="users">Users</TabsTrigger>
 					<TabsTrigger value="other">Other</TabsTrigger>
 					<TabsTrigger value="customization">Customization</TabsTrigger>
+					<TabsTrigger value="email">Email</TabsTrigger>
 					<TabsTrigger value="legal">Legal</TabsTrigger>
 				</TabsList>
 
@@ -182,6 +193,19 @@ export const SettingsForm = ({
 						</TabsContent>
 						<TabsContent value="customization">
 							<FormWrapper form={form} meta={categorizedSettings.customization} />
+						</TabsContent>
+						<TabsContent value="email">
+							<div className="mb-6 grid gap-2 border rounded-sm p-4">
+								<p className="text-sm text-muted-foreground">
+									Save the settings below first, then send yourself a test email to check that the SMTP server accepts
+									the credentials. The album sharing feature works without email: the invite link is always returned so it
+									can be copied by hand.
+								</p>
+								<div>
+									<SendTestEmailButton />
+								</div>
+							</div>
+							<FormWrapper form={form} meta={categorizedSettings.email} />
 						</TabsContent>
 						<TabsContent value="legal">
 							<FormWrapper form={form} meta={categorizedSettings.legal} />

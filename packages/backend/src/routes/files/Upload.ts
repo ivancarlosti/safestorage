@@ -253,6 +253,18 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 	}
 };
 
+/*
+	The status descriptions the upload validation can answer with, so the error
+	body matches `http4xxErrorSchema` instead of failing the serializer.
+*/
+const uploadErrorNames: Record<number, string> = {
+	400: 'Bad Request',
+	401: 'Unauthorized',
+	403: 'Forbidden',
+	404: 'Not Found',
+	413: 'Payload Too Large'
+};
+
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const validation = await validateUploadTarget({
 		albumUuid: req.headers.albumuuid as string,
@@ -261,7 +273,15 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	});
 
 	if ('error' in validation) {
-		void res.code(validation.status).send({ message: validation.error });
+		/*
+			The body has to match `http4xxErrorSchema`, otherwise the serializer
+			refuses it and the client sees a 500 instead of the real reason.
+		*/
+		void res.code(validation.status).send({
+			statusCode: validation.status,
+			error: uploadErrorNames[validation.status] ?? 'Bad Request',
+			message: validation.error
+		});
 		return;
 	}
 

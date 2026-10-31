@@ -92,6 +92,12 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		return;
 	}
 
+	// Album invites are bound to the email they were created for
+	if (foundInvite?.email && foundInvite.email !== email) {
+		void res.badRequest('This invite was created for a different email address');
+		return;
+	}
+
 	if (password.length < 6 || password.length > 64) {
 		void res.badRequest('Password must have 6-64 characters');
 		return;
@@ -119,7 +125,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 
 	// Create the user in the database
 	const userUuid = uuidv4();
-	await prisma.users.create({
+	const user = await prisma.users.create({
 		data: {
 			uuid: userUuid,
 			username: email,
@@ -129,8 +135,28 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 					name: 'user'
 				}
 			}
+		},
+		select: {
+			id: true
 		}
 	});
+
+	// Album invites also give the new account access to the album they were invited to
+	if (foundInvite?.albumId) {
+		await prisma.albumMembers.upsert({
+			where: {
+				albumId_userId: {
+					albumId: foundInvite.albumId,
+					userId: user.id
+				}
+			},
+			create: {
+				albumId: foundInvite.albumId,
+				userId: user.id
+			},
+			update: {}
+		});
+	}
 
 	// Update the invite to mark it as used
 	if (foundInvite) {

@@ -5,6 +5,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { getAlbumAccess } from '@/utils/AlbumAccess.js';
 
 export const schema = {
 	summary: 'Delete file from album',
@@ -46,15 +47,11 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
-	const albumExists = await prisma.albums.findFirst({
-		where: {
-			uuid: albumUuid,
-			userId: req.user.id
-		}
-	});
+	// The album can be shared, so the user only needs access to it, not ownership
+	const albumExists = await getAlbumAccess(req.user.id, albumUuid);
 
 	if (!albumExists) {
-		void res.notFound("Album doesn't exist or doesn't belong to the user");
+		void res.notFound("Album doesn't exist or the user has no access to it");
 		return;
 	}
 

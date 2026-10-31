@@ -18,6 +18,21 @@ export default async function DashboardAdminInvitesPage() {
 	const token = cookiesStore.get('token')?.value;
 	if (!token) redirect('/');
 
+	/*
+		Registration is refused under keycloak, so an invite can never be redeemed.
+		Creating one would only produce dead codes, so the page is not reachable.
+	*/
+	const { data: settings } = await request.get({
+		url: `settings`,
+		options: {
+			next: {
+				tags: ['settings']
+			}
+		}
+	});
+
+	if (settings?.authMethod === 'keycloak') redirect('/dashboard');
+
 	const authorization = {
 		authorization: `Bearer ${token}`
 	};

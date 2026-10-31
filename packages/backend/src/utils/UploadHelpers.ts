@@ -2,6 +2,7 @@ import JWT from 'jsonwebtoken';
 import prisma from '@/structures/database.js';
 import type { RequestUser } from '@/structures/interfaces.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { albumAccessWhere } from '@/utils/AlbumAccess.js';
 
 export const authUser = async (authorization?: string | null) => {
 	if (!authorization) return null;
@@ -121,16 +122,13 @@ export const validateUploadTarget = async ({
 	if (!user) return { error: 'Only registered users can upload files to an album.', status: 401 };
 
 	const album = await prisma.albums.findFirst({
-		where: {
-			uuid: albumUuid,
-			userId: user.id
-		},
+		where: albumAccessWhere(user.id, albumUuid),
 		select: {
 			id: true
 		}
 	});
 
-	if (!album) return { error: "Album doesn't exist or it doesn't belong to the user.", status: 400 };
+	if (!album) return { error: "Album doesn't exist or the user has no access to it.", status: 400 };
 
 	return { target: { albumId: album.id, type: 'album' } };
 };

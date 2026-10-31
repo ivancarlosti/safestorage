@@ -3502,6 +3502,7 @@ __metadata:
     jsonwebtoken: "npm:^9.0.3"
     lookpath: "npm:^1.2.3"
     node-schedule: "npm:^2.1.1"
+    nodemailer: "npm:^10.3.1"
     openapi-types: "npm:^12.1.3"
     pino: "npm:^10.4.0"
     pino-pretty: "npm:^13.2.0"
@@ -10688,6 +10689,13 @@ __metadata:
     long-timeout: "npm:0.1.1"
     sorted-array-functions: "npm:^1.3.0"
   checksum: 10c0/6ec51b34b9e676740ac25298e4ced5ee46053379f0d3aad533e51d7e083bc24ced045df1772a95bf9d9cfdb81299340bbf551549a7c5eb6e4d2dc6468c85c70e
+  languageName: node
+  linkType: hard
+
+"nodemailer@npm:^10.3.1":
+  version: 10.3.1
+  resolution: "nodemailer@npm:10.3.1"
+  checksum: 10c0/a960ba9e7cb8f7135b828fb72bcdfd061bb914c6357578ed6613dd5303e8461710a1151210e95a92542461128e900038dd0794fc27bd74b297bd822013cfe8e8
   languageName: node
   linkType: hard
 

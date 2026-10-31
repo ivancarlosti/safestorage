@@ -4,6 +4,7 @@ import prisma from '@/structures/database.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
+import { albumAccessWhere } from '@/utils/AlbumAccess.js';
 import { logError } from '@/utils/Logger.js';
 import { createZipFromFiles, getZipContentDisposition } from '@/utils/Zip.js';
 
@@ -42,11 +43,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
+	// Members of the album can download its content as well
 	const album = await prisma.albums.findFirst({
-		where: {
-			uuid,
-			userId: req.user.id
-		},
+		where: albumAccessWhere(req.user.id, uuid),
 		select: {
 			name: true,
 			files: {

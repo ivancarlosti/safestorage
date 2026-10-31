@@ -22,6 +22,7 @@ model users {
 	files files[]
 	roles roles[]
 	links shortenedLinks []
+	albumMembers albumMembers[]
 }
 
 model roles {
@@ -97,6 +98,20 @@ model albums {
 	sortOrder String?
 	viewMode String @default("thumbs")
 	files files[]
+	members albumMembers[]
+	invites invites[]
+}
+
+model albumMembers {
+	id Int @id @default(autoincrement())
+	albumId Int
+	userId Int
+	createdAt DateTime @default(now())
+	album albums @relation(fields: [albumId], references: [id], onDelete: Cascade)
+	user users @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	@@unique([albumId, userId])
+	@@index([userId])
 }
 
 model bans {
@@ -176,6 +191,14 @@ model settings {
 	showGuidesMenu Boolean @default(true)
 	showFaqMenu Boolean @default(true)
 	showGithubIcon Boolean @default(true)
+	instanceUrl String @db.VarChar(1024) @default("")
+	smtpEnabled Boolean @default(false)
+	smtpHost String @default("")
+	smtpPort Int @default(587)
+	smtpSecure Boolean @default(false)
+	smtpUser String @default("")
+	smtpPassword String @default("")
+	smtpFrom String @default("")
 }
 
 model statistics {
@@ -202,6 +225,9 @@ model invites {
 	usedBy String?
 	code String @unique
 	used Boolean @default(false)
+	email String? @db.VarChar(255)
+	albumId Int?
+	album albums? @relation(fields: [albumId], references: [id], onDelete: Cascade)
 	createdAt DateTime @default(now())
 	editedAt DateTime?
 }

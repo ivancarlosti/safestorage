@@ -145,6 +145,7 @@ export interface Settings {
 	generatedAlbumLength: number;
 	generatedFilenameLength: number;
 	generatedLinksLength: number;
+	instanceUrl: string;
 	logoURL: string;
 	maxSize: number;
 	metaDescription: string;
@@ -166,6 +167,13 @@ export interface Settings {
 	showFooter: boolean;
 	showGithubIcon: boolean;
 	showGuidesMenu: boolean;
+	smtpEnabled: boolean;
+	smtpFrom: string;
+	smtpHost: string;
+	smtpPassword: string;
+	smtpPort: number;
+	smtpSecure: boolean;
+	smtpUser: string;
 	statisticsCron: string;
 	termsOfServicePageContent: string;
 	updateCheckCron: string;

@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 import prisma from '@/structures/database.js';
@@ -6,7 +7,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import type { SETTINGS } from '@/structures/settings.js';
-import { loadSettings } from '@/structures/settings.js';
+import { SETTINGS as INSTANCE_SETTINGS, loadSettings } from '@/structures/settings.js';
 import { logError } from '@/utils/Logger.js';
 import { isValidSortOrder } from '@/utils/SortOrder.js';
 import { updateCheck, startUpdateCheckSchedule, stopUpdateCheckSchedule } from '@/utils/UpdateCheck.js';
@@ -114,6 +115,40 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 				Number(parsedSettings.anonymousUploadsMaxSize) < 0)
 		) {
 			void res.badRequest('The anonymous uploads max size can not be negative');
+			return;
+		}
+
+		if (
+			parsedSettings.smtpPort !== undefined &&
+			(!Number.isInteger(Number(parsedSettings.smtpPort)) ||
+				Number(parsedSettings.smtpPort) < 1 ||
+				Number(parsedSettings.smtpPort) > 65535)
+		) {
+			void res.badRequest('The SMTP port has to be a number between 1 and 65535');
+			return;
+		}
+
+		if (parsedSettings.instanceUrl) {
+			try {
+				new URL(String(parsedSettings.instanceUrl));
+			} catch {
+				void res.badRequest('The instance URL has to be a full URL, including the https:// part');
+				return;
+			}
+		}
+
+		/*
+			The settings form always sends every field, but the API also accepts
+			partial saves, so the untouched keys keep their stored value when
+			checking that the mail transport is usable.
+		*/
+		const nextSmtpEnabled = (parsedSettings.smtpEnabled as boolean | undefined) ?? INSTANCE_SETTINGS.smtpEnabled;
+		const nextSmtpHost = ((parsedSettings.smtpHost as string | undefined) ?? INSTANCE_SETTINGS.smtpHost).trim();
+		const nextSmtpFrom = ((parsedSettings.smtpFrom as string | undefined) ?? INSTANCE_SETTINGS.smtpFrom).trim();
+		const nextSmtpUser = ((parsedSettings.smtpUser as string | undefined) ?? INSTANCE_SETTINGS.smtpUser).trim();
+
+		if (nextSmtpEnabled && (!nextSmtpHost || !(nextSmtpFrom || nextSmtpUser))) {
+			void res.badRequest('An SMTP host and a from address (or an SMTP username) are required to send emails');
 			return;
 		}
 

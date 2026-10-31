@@ -9,6 +9,7 @@ import { queryLimitSchema } from '@/structures/schemas/QueryLimit.js';
 import { queryPageSchema } from '@/structures/schemas/QueryPage.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { albumAccessWhere } from '@/utils/AlbumAccess.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 import { parseSortOrder, resolveSortOrder } from '@/utils/SortOrder.js';
 
@@ -30,6 +31,8 @@ export const schema = {
 			sortOrder: z.string().nullable().describe('The sort order for files in this album.'),
 			viewMode: z.enum(['list', 'thumbs']).describe('The default view mode for this album.'),
 			count: z.number().describe('The number of files in the album.'),
+			isOwner: z.boolean().describe('Whether the requesting user owns the album.'),
+			ownerUsername: z.string().describe('The email of the user that owns the album.'),
 			files: z.array(fileAsUserSchema)
 		}),
 		'4xx': http4xxErrorSchema,
@@ -79,12 +82,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			}
 		: {};
 
-	// First get the album to check ownership and get sortOrder
+	// First get the album to check access and get sortOrder
 	const albumMeta = await prisma.albums.findFirst({
-		where: {
-			uuid,
-			userId: req.user.id
-		},
+		where: albumAccessWhere(req.user.id, uuid),
 		select: {
 			sortOrder: true
 		}
@@ -99,15 +99,13 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const effectiveSortOrder = resolveSortOrder(albumMeta.sortOrder, SETTINGS.defaultSortOrder);
 	const orderBy = parseSortOrder(effectiveSortOrder);
 
-	// Make sure the uuid exists and it belongs to the user
+	// Make sure the uuid exists and the user can access it (owner or member)
 	const album = await prisma.albums.findFirst({
-		where: {
-			uuid,
-			userId: req.user.id
-		},
+		where: albumAccessWhere(req.user.id, uuid),
 		select: {
 			name: true,
 			description: true,
+			userId: true,
 			nsfw: true,
 			sortOrder: true,
 			viewMode: true,
@@ -137,6 +135,16 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
+	// `albums.userId` has no relation in the schema, so the owner is looked up on its own
+	const owner = await prisma.users.findFirst({
+		where: {
+			id: album.userId
+		},
+		select: {
+			username: true
+		}
+	});
+
 	// Construct the public links
 	const files = [] as File[];
 	for (const file of album.files) {
@@ -155,6 +163,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		isNsfw: album.nsfw,
 		sortOrder: album.sortOrder,
 		viewMode: album.viewMode,
-		count: album._count.files
+		count: album._count.files,
+		isOwner: album.userId === req.user.id,
+		ownerUsername: owner?.username ?? ''
 	});
 };

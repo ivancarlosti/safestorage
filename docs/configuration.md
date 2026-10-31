@@ -157,6 +157,23 @@ _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` ar
 | `generatedLinksLength` | number  | `8`              | Length of generated short-link identifiers (≥ 8 recommended).                                             |
 | `defaultSortOrder`     | select  | `createdAt:desc` | Default sort order inside albums (`createdAt:desc`, `createdAt:asc`, `name:asc`, `name:desc`, `id:desc`). |
 
+### Email
+
+Album sharing works without email — the invite link is always returned by the UI so it can be copied by hand. Fill these in to have safestorage send the notifications itself. They are stored in the database (never in `.env`), so a change takes effect on the next message, with no restart.
+
+| Setting        | Type    | Default   | Description                                                                                                  |
+| -------------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------ |
+| `instanceUrl`  | string  | _(empty)_ | Public base URL used to build the links inside emails, e.g. `https://files.example.com`. When empty the origin of the browser request that triggered the email is used. |
+| `smtpEnabled`  | boolean | `false`   | Master switch: when off no email is sent and the UI falls back to copyable links.                            |
+| `smtpHost`     | string  | _(empty)_ | Hostname of the SMTP server.                                                                                 |
+| `smtpPort`     | number  | `587`     | SMTP port. `587` uses STARTTLS, `465` an implicit TLS connection.                                            |
+| `smtpSecure`   | boolean | `false`   | Use an implicit TLS connection (port 465 style). Leave off for STARTTLS on 587.                              |
+| `smtpUser`     | string  | _(empty)_ | Username for SMTP authentication. Leave empty for an unauthenticated relay.                                  |
+| `smtpPassword` | string  | _(empty)_ | Password for SMTP authentication.                                                                            |
+| `smtpFrom`     | string  | _(empty)_ | Sender shown on the emails, e.g. `safestorage <no-reply@example.com>`. Defaults to `smtpUser` when empty.    |
+
+After saving, use **Send test email to my account** in the same tab: it sends a message to the email of the logged-in admin (`POST /api/admin/service/settings/test-email`) and reports the SMTP error when the server refuses the credentials. Sending is best-effort: a broken mail server never fails the share request, the invite link is still created and listed in the sharing dialog.
+
 ### Legal
 
 These three accept **Markdown** and are shown as standalone pages. Leave a value empty to disable the page.

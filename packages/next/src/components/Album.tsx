@@ -58,6 +58,11 @@ export const Album = ({ album }: { readonly album: AlbumType }) => {
 					</div>
 					<div className="mb-4 transform-gpu text-lg font-normal text-white delay-0 duration-200 group-hover:-translate-y-14 group-hover:delay-100">
 						{album.count} files
+						{album.isOwner === false ? (
+							<span className="block truncate text-xs text-white/80" title={album.owner}>
+								shared by {album.owner}
+							</span>
+						) : null}
 					</div>
 				</div>
 				<Link
@@ -73,12 +78,14 @@ export const Album = ({ album }: { readonly album: AlbumType }) => {
 				>
 					View files
 				</Link>
-				<Button
-					className="absolute bottom-2 md:-bottom-10 left-4 right-4 transition-all opacity-0 duration-100 group-hover:-translate-y-14 transform-gpu group-hover:opacity-100 group-hover:delay-100"
-					onClick={() => setSelectedAlbum(album)}
-				>
-					Settings
-				</Button>
+				{album.isOwner === false ? null : (
+					<Button
+						className="absolute bottom-2 md:-bottom-10 left-4 right-4 transition-all opacity-0 duration-100 group-hover:-translate-y-14 transform-gpu group-hover:opacity-100 group-hover:delay-100"
+						onClick={() => setSelectedAlbum(album)}
+					>
+						Settings
+					</Button>
+				)}
 			</div>
 		</div>
 	);

@@ -133,6 +133,22 @@ Paths below are relative to `/api`.
 | DELETE | `/album/:uuid/link/:linkUuid`      | Auth   | Delete an album link.                  |
 | GET    | `/album/:identifier/view`          | Public | Get a public album by its identifier.  |
 | GET    | `/album/:identifier/view/count`    | Public | Increment a public album's views.      |
+| POST   | `/album/:uuid/share`               | Auth   | Share an album with an email (album owner).    |
+| GET    | `/album/:uuid/members`             | Auth   | List members and pending invites (album owner).|
+| DELETE | `/album/:uuid/member/:userUuid`    | Auth   | Remove a member (album owner).                 |
+| DELETE | `/album/:uuid/invite/:code`        | Auth   | Revoke a pending invite (album owner).         |
+
+#### Album sharing
+
+Albums belong to the user that created them and can be shared with other people by email:
+
+- `POST /album/:uuid/share` takes `{ "email": "person@example.com" }` and only the album owner can call it.
+  - If an account already exists for that email it is added to the album as a member (`type: "member"`).
+  - With `AUTH_METHOD=account`, an unknown email gets an invite (`type: "invite"`, plus `code` and the relative `inviteUrl`, `/invite/<code>`). Redeeming it creates the account, joins the album and marks the invite as used. Such invites are bound to that email address.
+  - With `AUTH_METHOD=keycloak` the account is provisioned on the spot: the email is the identity, so the next single sign-on login picks the row up. The email has to pass `KEYCLOAK_RESTRICT`, otherwise the call answers `400`.
+  - The response always carries `emailSent`. Emails are only sent when the SMTP settings are configured; the invite link is returned either way so it can be copied by hand.
+- Members can read the album, upload files into it and add or remove **their own** files. Only the album owner can rename, delete or purge the album and manage its public links. Purging an album deletes only the files the owner uploaded.
+- Deleting the album ends every membership; removing a member leaves the files they uploaded in the album.
 
 > `GET /album/:identifier/zip` exists in the source but its URL is **commented out**, so it is not registered and cannot be called.
 
@@ -251,6 +267,7 @@ All routes below require the **admin** role, except the two marked **Owner**. Pa
 | ------ | ---------------------- | ------------------------------------------- |
 | GET    | `/service/settings`    | Get all settings (including non-public).    |
 | POST   | `/service/settings`    | Save settings.                              |
+| POST   | `/service/settings/test-email` | Send a test email to the logged in admin (checks the SMTP settings). |
 | GET    | `/service/statistics`  | Get server statistics.                      |
 | GET    | `/service/diagnostic`  | Get a diagnostic report about the instance. |
 | GET    | `/service/updateCheck` | Check whether a newer release exists.       |

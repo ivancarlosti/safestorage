@@ -47,6 +47,18 @@ A page from the provider itself ("Invalid redirect URI") means `KEYCLOAK_REDIREC
 
 **`403` on an admin call.** Your account does not hold the `admin` role. Promote/demote requires the `owner` role.
 
+## Albums & sharing
+
+**A shared album is missing from someone's dashboard.** The album shows up for the owner and for every member. Under `AUTH_METHOD=keycloak` the account is created by the share itself and matched on the email, so the person has to sign in with **that** address — a different spelling of the same mailbox produces a different account. Under `AUTH_METHOD=account` the person only gets access once the invite is redeemed; check **Admin → Invites** (the invite is listed with the album and the reserved email) or open the album's **Share** dialog, which lists the pending invites with a copy button.
+
+**"This instance only accepts accounts from: …" when sharing.** The email's domain is not covered by `KEYCLOAK_RESTRICT`. Add the domain there, or share with an email that is allowed.
+
+**No email arrives after sharing an album.** Emails are optional and off by default: configure the SMTP settings in **Admin → Settings → Email** and press **Send test email to my account**. If emails are disabled the sharing dialog still lists the invite link — copy it and send it yourself. A rejected SMTP connection is logged by the backend and never fails the share request, so the invite link keeps working regardless.
+
+**A member can't remove a file from a shared album.** Only the uploader can add or remove their own files; every member sees the whole album but the owner's files stay under the owner's control. Renaming, deleting, purging the album and its public links are owner-only, and the **Settings** button on the album tile is hidden for members.
+
+**Purging a shared album deleted fewer files than expected.** On purpose: a purge removes only the files the album owner uploaded. The files the members uploaded stay in their accounts, they just lose the connection to the album that was deleted.
+
 ## Uploads
 
 **The upload panel reports failed uploads but the network tab is empty.** Files refused before they are sent (bigger than **Max Size**, blocked extension, instance settings still loading, network storage refusing to sign the request) never reach the backend, so nothing appears in the devtools and nothing shows up in `docker logs`. The reason is printed under the file name in the panel and as a toast — raise **Max Size** in `Admin → Settings` or fix the reported cause.

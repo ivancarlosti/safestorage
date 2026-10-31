@@ -147,13 +147,38 @@ export interface Album {
 	description: string;
 	editedAt: string;
 	files?: FileWithAdditionalData[];
+	isOwner?: boolean;
 	name: string;
 	nsfw: boolean;
+	// The email of the album owner, only different from the current user on shared albums
+	owner?: string;
 	sortOrder?: string | null;
 	viewMode?: ViewMode;
 	uuid: string;
 	zippedAt: string;
 }
+
+export interface AlbumMember {
+	createdAt: string;
+	isOwner: boolean;
+	username: string;
+	uuid: string;
+}
+
+export interface AlbumInvite {
+	code: string;
+	createdAt: string;
+	email: string | null;
+}
+
+export interface AlbumShareResponse {
+	code?: string;
+	emailSent: boolean;
+	inviteUrl?: string;
+	message: string;
+	type: 'invite' | 'member';
+}
+
 
 export type ViewMode = 'list' | 'thumbs';
 
@@ -194,6 +219,11 @@ export interface UserWithCount extends ApiUser {
 }
 
 export interface Invite {
+	// Set on invites created by the album sharing dialog
+	album?: {
+		name: string;
+		uuid: string;
+	} | null;
 	code: string;
 	createdAt: string;
 	createdBy: {
@@ -201,6 +231,7 @@ export interface Invite {
 		uuid: string;
 	};
 	editedAt: string;
+	email?: string | null;
 	used: boolean;
 	usedBy: {
 		username: string;

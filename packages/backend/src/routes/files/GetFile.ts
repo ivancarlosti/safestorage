@@ -6,6 +6,7 @@ import { fileAsUserWithAlbumsSchema } from '@/structures/schemas/FileAsUserWithA
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { fileAccessWhere } from '@/utils/AlbumAccess.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 
 export const schema = {
@@ -36,12 +37,9 @@ export const options = {
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { uuid } = req.params as { uuid: string };
 
-	// Make sure the file exists and belongs to the user
+	// Make sure the file exists and the user can see it (own file or a shared album)
 	const file = (await prisma.files.findFirst({
-		where: {
-			uuid,
-			userId: req.user.id
-		},
+		where: fileAccessWhere(req.user.id, uuid),
 		include: {
 			albums: {
 				select: {

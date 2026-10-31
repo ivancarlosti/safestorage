@@ -88,6 +88,14 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.anonymousUploadsPerIpLimit = settingsTable.anonymousUploadsPerIpLimit;
 		SETTINGS.anonymousUploadsWindowMinutes = settingsTable.anonymousUploadsWindowMinutes;
 		SETTINGS.anonymousUploadsMaxSize = Number(settingsTable.anonymousUploadsMaxSize);
+		SETTINGS.instanceUrl = settingsTable.instanceUrl || '';
+		SETTINGS.smtpEnabled = settingsTable.smtpEnabled;
+		SETTINGS.smtpHost = settingsTable.smtpHost;
+		SETTINGS.smtpPort = settingsTable.smtpPort;
+		SETTINGS.smtpSecure = settingsTable.smtpSecure;
+		SETTINGS.smtpUser = settingsTable.smtpUser;
+		SETTINGS.smtpPassword = settingsTable.smtpPassword;
+		SETTINGS.smtpFrom = settingsTable.smtpFrom;
 		return;
 	}
 
@@ -144,7 +152,15 @@ export const loadSettings = async (force = false) => {
 		anonymousUploadsEnabled: true,
 		anonymousUploadsPerIpLimit: 100,
 		anonymousUploadsWindowMinutes: 60,
-		anonymousUploadsMaxSize: 0
+		anonymousUploadsMaxSize: 0,
+		instanceUrl: '',
+		smtpEnabled: false,
+		smtpHost: '',
+		smtpPort: 587,
+		smtpSecure: false,
+		smtpUser: '',
+		smtpPassword: '',
+		smtpFrom: ''
 	};
 
 	await prisma.settings.create({
@@ -504,6 +520,63 @@ const SETTINGS_META = {
 		description: 'The markdown content for the rules page. Leave empty to disable.',
 		name: 'Rules Page',
 		category: 'legal'
+	},
+	instanceUrl: {
+		type: 'string',
+		description:
+			'The public URL of this instance, used to build the links inside outgoing emails. Leave empty to fall back to the meta domain.',
+		name: 'Instance URL',
+		example: 'https://files.example.com',
+		category: 'email'
+	},
+	smtpEnabled: {
+		type: 'boolean',
+		description:
+			'Whether or not safestorage sends emails. When disabled, album invites still work but the invite link has to be copied by hand.',
+		name: 'Send Emails',
+		category: 'email'
+	},
+	smtpHost: {
+		type: 'string',
+		description: 'The hostname of the SMTP server used to send emails.',
+		name: 'SMTP Host',
+		example: 'smtp.example.com',
+		category: 'email'
+	},
+	smtpPort: {
+		type: 'number',
+		description: 'The port of the SMTP server.',
+		name: 'SMTP Port',
+		notice: 'Use 587 for STARTTLS, 465 for an implicit TLS connection.',
+		example: '587',
+		category: 'email'
+	},
+	smtpSecure: {
+		type: 'boolean',
+		description: 'Whether or not to use an implicit TLS connection to the SMTP server.',
+		name: 'SMTP Secure',
+		notice: 'Only enable this for port 465 style servers. Port 587 uses STARTTLS and needs this off.',
+		category: 'email'
+	},
+	smtpUser: {
+		type: 'string',
+		description:
+			'The username used to authenticate against the SMTP server. Leave empty for an unauthenticated relay.',
+		name: 'SMTP Username',
+		category: 'email'
+	},
+	smtpPassword: {
+		type: 'string',
+		description: 'The password used to authenticate against the SMTP server.',
+		name: 'SMTP Password',
+		category: 'email'
+	},
+	smtpFrom: {
+		type: 'string',
+		description: 'The sender shown on the emails. Defaults to the SMTP username when empty.',
+		name: 'From Address',
+		example: 'safestorage <no-reply@example.com>',
+		category: 'email'
 	},
 	defaultSortOrder: {
 		type: 'select',

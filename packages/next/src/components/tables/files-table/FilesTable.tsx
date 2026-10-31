@@ -79,7 +79,8 @@ const columns = [
 				href={props.row.original.url}
 				className="text-blue-500 underline inline-flex max-w-48 items-center wrap-anywhere"
 			>
-				{props.row.original.name} <ArrowUpRightFromSquare className="w-3 h-3 ml-1 shrink-0" />
+				<span className="min-w-0 break-all">{props.row.original.name}</span>
+				<ArrowUpRightFromSquare className="w-3 h-3 ml-1 shrink-0" />
 			</a>
 		)
 	}),
@@ -92,7 +93,8 @@ const columns = [
 					href={`/api/file/${props.row.original.uuid}/download`}
 					className="text-blue-500 underline inline-flex items-center wrap-anywhere"
 				>
-					{props.row.original.original} <ArrowDownToLineIcon className="w-4 h-4 ml-1 shrink-0" />
+					<span className="min-w-0 break-all">{props.row.original.original}</span>
+					<ArrowDownToLineIcon className="w-4 h-4 ml-1 shrink-0" />
 				</a>
 				{/* The size and creation date columns are hidden below `md`, so they are repeated here. */}
 				<span className="text-xs text-muted-foreground md:hidden">
@@ -129,7 +131,7 @@ const columns = [
 			return (
 				<div className="flex max-w-48 flex-col gap-0.5 wrap-anywhere">
 					{albums.map(album => (
-						<span key={album.uuid} className="wrap-anywhere">
+						<span key={album.uuid} className="min-w-0 break-all">
 							{album.name}
 							{album.user ? (
 								<Link

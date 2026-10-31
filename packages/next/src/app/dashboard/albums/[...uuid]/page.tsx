@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/react-aria-button';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { GlobalDropZone } from '@/components/Dropzone';
 import { UploadTrigger } from '@/components/UploadTrigger';
+import { AlbumShareDialog } from '@/components/dialogs/AlbumShareDialog';
 import { buttonVariants } from '@/styles/button';
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
@@ -66,6 +67,10 @@ export default async function AlbumPage({
 					{ name: response.name, url: `/dashboard/albums/${uuid}` }
 				]}
 			>
+				{response.isOwner === false ? (
+					<span className="hidden text-sm text-muted-foreground md:inline">Shared by {response.ownerUsername}</span>
+				) : null}
+				{response.isOwner === false ? null : <AlbumShareDialog albumName={response.name} albumUuid={uuid} />}
 				<UploadTrigger allowsMultiple albumUuid={uuid}>
 					<Button className={buttonVariants()}>
 						<Plus className="mr-2 h-4 w-4" />

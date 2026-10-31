@@ -28,6 +28,26 @@ const columns = [
 			);
 		}
 	}),
+	columnHelper.accessor(row => row.album?.name ?? '', {
+		id: 'album',
+		header: 'Album / Email',
+		cell(props) {
+			const { album, email } = props.row.original;
+
+			if (!album && !email) return <span className="text-muted-foreground">—</span>;
+
+			return (
+				<div className="flex max-w-48 flex-col gap-0.5">
+					{album ? (
+						<Link href={`/dashboard/albums/${album.uuid}`} className="link inline-block min-w-0 break-all">
+							{album.name}
+						</Link>
+					) : null}
+					{email ? <span className="text-xs text-muted-foreground break-all">{email}</span> : null}
+				</div>
+			);
+		}
+	}),
 	columnHelper.accessor(row => (row.used ? 'Used' : 'Available'), {
 		id: 'status',
 		header: 'Status'

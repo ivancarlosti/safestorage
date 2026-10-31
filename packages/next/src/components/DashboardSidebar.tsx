@@ -100,7 +100,10 @@ export function DashboardSidebar({ onClick }: { onClick?(): void }) {
 					<DashboardSidebarItem href="/dashboard/admin/links" name="All short URLs" Icon={Link} />
 					<DashboardSidebarItem href="/dashboard/admin/quarantine" name="Quarantined files" Icon={Files} />
 					<DashboardSidebarItem href="/dashboard/admin/ip" name="Banned IPs" Icon={Network} />
-					<DashboardSidebarItem href="/dashboard/admin/invites" name="Invites" Icon={UserPlus} />
+					{/* Invites only make sense for local accounts: keycloak provisions users on first sign-in */}
+					{currentSettings?.authMethod === 'account' ? (
+						<DashboardSidebarItem href="/dashboard/admin/invites" name="Invites" Icon={UserPlus} />
+					) : null}
 					<DashboardSidebarItem href="/dashboard/admin/statistics" name="Statistics" Icon={BarChart3} />
 				</nav>
 			) : null}

@@ -5,6 +5,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { getAlbumAccess } from '@/utils/AlbumAccess.js';
 import { logError } from '@/utils/Logger.js';
 
 export const schema = {
@@ -60,8 +61,47 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	// });
 
 	try {
+		// Albums can be shared, so the access check happens once per album instead of on every file.
+		const albumIds = new Map<string, number>();
+
 		for (const { album, files } of data) {
-			for (const file of files) {
+			let albumId = albumIds.get(album);
+
+			if (!albumId) {
+				const access = await getAlbumAccess(req.user.id, album);
+				if (!access) {
+					void res.notFound("One of the albums doesn't exist or the user has no access to it");
+					return;
+				}
+
+				albumId = access.id;
+				albumIds.set(album, albumId);
+			}
+
+			/*
+				Only the files uploaded by the caller can be put in an album. Members of
+				a shared album see the files of the owner, so the check happens up front
+				instead of letting the update blow up with a 500.
+			*/
+			const uniqueFiles = [...new Set(files)];
+			const ownedFiles = await prisma.files.findMany({
+				where: {
+					uuid: {
+						in: uniqueFiles
+					},
+					userId: req.user.id
+				},
+				select: {
+					uuid: true
+				}
+			});
+
+			if (ownedFiles.length !== uniqueFiles.length) {
+				void res.badRequest('You can only add files you uploaded to an album');
+				return;
+			}
+
+			for (const file of uniqueFiles) {
 				await prisma.files.update({
 					where: {
 						uuid: file,
@@ -70,7 +110,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 					data: {
 						albums: {
 							connect: {
-								uuid: album
+								id: albumId
 							}
 						}
 					}
@@ -79,7 +119,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 
 			await prisma.albums.update({
 				where: {
-					uuid: album
+					id: albumId
 				},
 				data: {
 					editedAt: now

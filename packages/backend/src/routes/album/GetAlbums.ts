@@ -8,6 +8,7 @@ import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { queryLimitSchema } from '@/structures/schemas/QueryLimit.js';
 import { queryPageSchema } from '@/structures/schemas/QueryPage.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { albumAccessWhere } from '@/utils/AlbumAccess.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 
 export const schema = {
@@ -34,7 +35,9 @@ export const schema = {
 					createdAt: z.date().describe('The date and time the album was created.'),
 					editedAt: z.date().describe('The date and time the album was last edited.'),
 					cover: z.string().describe('The cover image of the album.'),
-					count: z.number().describe('The amount of images in the album.')
+					count: z.number().describe('The amount of images in the album.'),
+					isOwner: z.boolean().describe('Whether the requesting user owns the album.'),
+					owner: z.string().describe('The email of the user that created the album.')
 				})
 			),
 			count: z.number().describe('The amount of albums that exist.')
@@ -53,9 +56,7 @@ export const options = {
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { page = 1, limit = 50, search = '' } = req.query as { limit?: number; page?: number; search?: string };
 
-	let dbSearchObject: Prisma.albumsCountArgs['where'] = {
-		userId: req.user.id
-	};
+	let dbSearchObject: Prisma.albumsCountArgs['where'] = albumAccessWhere(req.user.id);
 
 	if (search) {
 		dbSearchObject = {
@@ -75,6 +76,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			uuid: true,
 			name: true,
 			description: true,
+			userId: true,
 			nsfw: true,
 			sortOrder: true,
 			viewMode: true,
@@ -94,6 +96,20 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		}
 	});
 
+	// `albums.userId` has no relation in the schema, so the owners are looked up in one go
+	const owners = await prisma.users.findMany({
+		where: {
+			id: {
+				in: [...new Set(albums.map(album => album.userId))]
+			}
+		},
+		select: {
+			id: true,
+			username: true
+		}
+	});
+	const ownerNames = new Map(owners.map(owner => [owner.id, owner.username]));
+
 	// TODO: Instead of the first, being able to select a cover picture for an album would
 	// be a neat feature
 
@@ -102,7 +118,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		const newObject = {
 			...album,
 			cover: undefined,
-			count: album._count.files
+			count: album._count.files,
+			isOwner: album.userId === req.user.id,
+			owner: ownerNames.get(album.userId) ?? ''
 			// file.size is BigInt because of prisma, so we need to convert it to a number
 		} as unknown as Partial<Album>;
 
