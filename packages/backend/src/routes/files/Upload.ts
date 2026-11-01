@@ -15,7 +15,9 @@ import { consumeAnonymousUploadSlot, getAnonymousUploadMaxSize } from '@/utils/A
 import { getUniqueFileIdentifier, constructFilePublicLink, deleteTmpFile, handleUploadFile } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
 import { type UploadTarget, normalizeContentType, validateUploadTarget } from '@/utils/UploadHelpers.js';
+import { notifyUpload } from '@/utils/UploadNotifications.js';
 import { getUsedQuota } from '@/utils/User.js';
+import { getHost } from '@/utils/Util.js';
 
 /*
 	Files bigger than this are uploaded with a S3 multipart upload instead of a
@@ -396,6 +398,18 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		};
 
 		await res.code(200).send(fileWithLink);
+
+		/*
+			Sent after the response on purpose: notifications are best-effort and
+			must never delay or fail an upload.
+		*/
+		void notifyUpload({
+			file: uploadedFile,
+			links: linkData,
+			origin: (req.headers.origin as string | undefined) ?? getHost(req),
+			target,
+			uploader: req.user?.username
+		});
 	} catch (error: any) {
 		switch (error.message) {
 			case 'Chunked upload is above size limit':

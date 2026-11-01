@@ -88,6 +88,7 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.anonymousUploadsPerIpLimit = settingsTable.anonymousUploadsPerIpLimit;
 		SETTINGS.anonymousUploadsWindowMinutes = settingsTable.anonymousUploadsWindowMinutes;
 		SETTINGS.anonymousUploadsMaxSize = Number(settingsTable.anonymousUploadsMaxSize);
+		SETTINGS.anonymousUploadNotificationsEnabled = settingsTable.anonymousUploadNotificationsEnabled;
 		SETTINGS.instanceUrl = settingsTable.instanceUrl || '';
 		SETTINGS.smtpEnabled = settingsTable.smtpEnabled;
 		SETTINGS.smtpHost = settingsTable.smtpHost;
@@ -153,6 +154,7 @@ export const loadSettings = async (force = false) => {
 		anonymousUploadsPerIpLimit: 100,
 		anonymousUploadsWindowMinutes: 60,
 		anonymousUploadsMaxSize: 0,
+		anonymousUploadNotificationsEnabled: false,
 		instanceUrl: '',
 		smtpEnabled: false,
 		smtpHost: '',
@@ -279,6 +281,13 @@ const SETTINGS_META = {
 			'The maximum size of an anonymous upload in bytes. 0 uses the instance Max Size instead. It can only lower the Max Size, never raise it.',
 		name: 'Anonymous Uploads Max Size',
 		example: '0',
+		category: 'uploads'
+	},
+	anonymousUploadNotificationsEnabled: {
+		type: 'boolean',
+		description: 'Whether to email the instance owner whenever a visitor uploads a file without signing in.',
+		name: 'Anonymous Upload Notifications',
+		notice: 'Requires the email settings to be configured. Uploads through an album public link notify the album owners instead.',
 		category: 'uploads'
 	},
 	generateZips: {

@@ -65,6 +65,7 @@ const formSchema = z.object({
 	anonymousUploadsPerIpLimit: z.coerce.number().int().min(0),
 	anonymousUploadsWindowMinutes: z.coerce.number().int().min(1),
 	anonymousUploadsMaxSize: z.coerce.number().int().min(0),
+	anonymousUploadNotificationsEnabled: z.boolean().optional(),
 	S3Region: z.string().optional(),
 	S3Bucket: z.string().optional(),
 	S3AccessKey: z.string().optional(),

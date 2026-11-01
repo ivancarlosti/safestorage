@@ -114,6 +114,7 @@ _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` ar
 | `blockedExtensions`                      | string  | `.jar,.exe,.msi,.com,.bat,.cmd,.scr,.ps1,.sh` | Comma-separated list of blocked upload extensions.                                |
 | `blockNoExtension`                       | boolean | `true`                                        | Block files without an extension.                                                 |
 | `saveDuplicatesToAlbum`                  | boolean | `false`                                       | When a duplicate is uploaded into an album, add the existing file to it.          |
+| `anonymousUploadNotificationsEnabled`    | boolean | `false`                                       | Email the instance owner when a visitor uploads without signing in.               |
 | `useNetworkStorage`                      | boolean | `false`                                       | Upload to S3-compatible storage instead of local disk. See [Storage](storage.md). |
 | `S3Region`                               | string  | _(empty)_                                     | Region of the S3 bucket.                                                          |
 | `S3Bucket`                               | string  | _(empty)_                                     | Bucket name.                                                                      |
@@ -172,7 +173,9 @@ Album sharing works without email — the invite link is always returned by the 
 | `smtpPassword` | string  | _(empty)_ | Password for SMTP authentication.                                                                            |
 | `smtpFrom`     | string  | _(empty)_ | Sender shown on the emails, e.g. `safestorage <no-reply@example.com>`. Defaults to `smtpUser` when empty.    |
 
-After saving, use **Send test email to my account** in the same tab: it sends a message to the email of the logged-in admin (`POST /api/admin/service/settings/test-email`) and reports the SMTP error when the server refuses the credentials. Sending is best-effort: a broken mail server never fails the share request, the invite link is still created and listed in the sharing dialog.
+After saving, use **Send test email to my account** in the same tab: it sends a message to the email of the logged-in admin (`POST /api/admin/service/settings/test-email`) and reports the SMTP error when the server refuses the credentials. Sending is best-effort: a broken mail server never fails the share request, the invite link is still created and listed in the sharing dialog. The same rule applies to the upload notifications: a failed message is only logged, the upload always succeeds.
+
+Upload notifications are off by default. **Admin → Settings → Uploads → Anonymous Upload Notifications** mails the instance owner when a visitor uploads without signing in. Per album, **Album settings → Notify on public uploads** mails the album owner and its members whenever somebody uploads through one of the album's public links; the email carries the file details, a link to the file and a link to the album. Both require `smtpEnabled`.
 
 ### Legal
 

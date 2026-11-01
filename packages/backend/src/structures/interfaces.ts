@@ -127,6 +127,7 @@ export interface Settings {
 	S3SecretKey: string;
 	anonymousUploadsEnabled: boolean;
 	anonymousUploadsMaxSize: number;
+	anonymousUploadNotificationsEnabled: boolean;
 	anonymousUploadsPerIpLimit: number;
 	anonymousUploadsWindowMinutes: number;
 	backgroundImageURL: string;

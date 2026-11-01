@@ -15,6 +15,8 @@ import { logError } from '@/utils/Logger.js';
 import { fetchNetworkStorageFile, getNetworkStorageTmpPath, isValidFileIdentifier } from '@/utils/NetworkStorage.js';
 import { generateThumbnails, imageExtensions, videoExtensions } from '@/utils/Thumbnails.js';
 import { normalizeContentType, validateUploadTarget } from '@/utils/UploadHelpers.js';
+import { notifyUpload } from '@/utils/UploadNotifications.js';
+import { getHost } from '@/utils/Util.js';
 
 export const schema = {
 	summary: 'Process uploaded file',
@@ -204,4 +206,16 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	};
 
 	await res.code(200).send(fileWithLink);
+
+	/*
+	Sent after the response on purpose: notifications are best-effort and must
+	never delay or fail an upload.
+*/
+	void notifyUpload({
+		file: uploadedFile,
+		links: linkData,
+		origin: (req.headers.origin as string | undefined) ?? getHost(req),
+		target,
+		uploader: req.user?.username
+	});
 };

@@ -150,6 +150,8 @@ export interface Album {
 	isOwner?: boolean;
 	name: string;
 	nsfw: boolean;
+	// Email the album owner and members when someone uploads through a public link
+	notifyOnPublicUpload?: boolean;
 	// The email of the album owner, only different from the current user on shared albums
 	owner?: string;
 	sortOrder?: string | null;

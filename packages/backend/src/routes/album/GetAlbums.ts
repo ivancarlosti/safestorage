@@ -31,6 +31,9 @@ export const schema = {
 					nsfw: z.boolean().describe('Whether or not the album is NSFW.'),
 					sortOrder: z.string().nullable().describe('The sort order for files in this album.'),
 					viewMode: z.enum(['list', 'thumbs']).describe('The default view mode for this album.'),
+					notifyOnPublicUpload: z
+						.boolean()
+						.describe('Whether the album owners get an email on public link uploads.'),
 					zippedAt: z.date().nullable().describe('The date and time the album was last zipped.'),
 					createdAt: z.date().describe('The date and time the album was created.'),
 					editedAt: z.date().describe('The date and time the album was last edited.'),
@@ -80,6 +83,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			nsfw: true,
 			sortOrder: true,
 			viewMode: true,
+			notifyOnPublicUpload: true,
 			zippedAt: true,
 			createdAt: true,
 			editedAt: true,

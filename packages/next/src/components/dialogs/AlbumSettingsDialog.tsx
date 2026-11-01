@@ -148,6 +148,25 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 								</div>
 								<Switch id="nsfw" name="nsfw" defaultChecked={album?.nsfw ?? false} />
 							</div>
+							<div className="space-y-2 flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+								<div className="space-y-0.5">
+									<Label
+										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+										htmlFor="notifyOnPublicUpload"
+									>
+										Notify on public uploads
+									</Label>
+									<p className="text-[0.8rem] text-muted-foreground">
+										Email you and the album co-owners when someone uploads through a public link.
+										Requires email to be configured.
+									</p>
+								</div>
+								<Switch
+									id="notifyOnPublicUpload"
+									name="notifyOnPublicUpload"
+									defaultChecked={album?.notifyOnPublicUpload ?? false}
+								/>
+							</div>
 							<div>
 								<Label htmlFor="sortOrder">Sort Order</Label>
 								<input type="hidden" name="sortOrder" value={sortOrder} />

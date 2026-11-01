@@ -14,6 +14,7 @@ export const updateAlbumSettings = async (_: any, form: FormData) => {
 
 	const description = form.get('description') as string;
 	const nsfw = form.get('nsfw') === 'on';
+	const notifyOnPublicUpload = form.get('notifyOnPublicUpload') === 'on';
 	const sortOrder = (form.get('sortOrder') as string) || null;
 	const viewMode = (form.get('viewMode') as ViewMode) || 'thumbs';
 
@@ -24,6 +25,7 @@ export const updateAlbumSettings = async (_: any, form: FormData) => {
 				name,
 				description,
 				nsfw,
+				notifyOnPublicUpload,
 				sortOrder,
 				viewMode
 			},

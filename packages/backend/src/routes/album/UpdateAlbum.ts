@@ -22,7 +22,11 @@ export const schema = {
 		description: z.string().optional().describe('The description of the album.'),
 		nsfw: z.boolean().optional().describe('Whether the album is nsfw or not.'),
 		sortOrder: z.string().optional().nullable().describe('The sort order for files in this album.'),
-		viewMode: z.enum(['list', 'thumbs']).optional().describe('The default view mode for this album.')
+		viewMode: z.enum(['list', 'thumbs']).optional().describe('The default view mode for this album.'),
+		notifyOnPublicUpload: z
+			.boolean()
+			.optional()
+			.describe('Whether to email the album owners when someone uploads through a public link.')
 	}),
 	response: {
 		200: z.object({
@@ -42,14 +46,22 @@ export const options = {
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { uuid } = req.params as { uuid: string };
 
-	const { name, nsfw, description, sortOrder, viewMode } = req.body as {
+	const { name, nsfw, description, sortOrder, viewMode, notifyOnPublicUpload } = req.body as {
 		description?: string;
 		name?: string;
 		nsfw?: boolean;
+		notifyOnPublicUpload?: boolean;
 		sortOrder?: string | null;
 		viewMode?: string;
 	};
-	if (!name && nsfw === undefined && !description && sortOrder === undefined && viewMode === undefined) {
+	if (
+		!name &&
+		nsfw === undefined &&
+		!description &&
+		sortOrder === undefined &&
+		viewMode === undefined &&
+		notifyOnPublicUpload === undefined
+	) {
 		void res.badRequest('No data supplied');
 		return;
 	}
@@ -84,7 +96,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		nsfw: nsfw === true ? true : nsfw === false ? false : album.nsfw,
 		description: description ?? album.description,
 		sortOrder: sortOrder === undefined ? album.sortOrder : sortOrder,
-		viewMode: viewMode ?? album.viewMode
+		viewMode: viewMode ?? album.viewMode,
+		notifyOnPublicUpload: notifyOnPublicUpload ?? album.notifyOnPublicUpload
 	};
 
 	await prisma.albums.update({

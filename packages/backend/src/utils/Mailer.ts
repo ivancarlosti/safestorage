@@ -171,3 +171,78 @@ export const sendAlbumShareMail = async ({
 		html: htmlParts.join('\n')
 	});
 };
+
+type UploadNotificationMail = {
+	albumName?: string | undefined;
+	albumUrl?: string | undefined;
+	fileName: string;
+	fileSize: number;
+	fileType: string;
+	fileUrl: string;
+	/*
+		`anonymous` is an upload without an account on the main dashboard, `album`
+		is an upload through a public link of an album. The album owners are the
+		recipients of the second one, the instance owner of the first.
+	*/
+	kind: 'album' | 'anonymous';
+	previewUrl?: string | undefined;
+	to: string;
+};
+
+const formatFileSize = (bytes: number) => {
+	if (!Number.isFinite(bytes) || bytes < 0) return 'unknown size';
+	if (bytes === 0) return '0 B';
+
+	const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+	const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+	const value = bytes / 1024 ** exponent;
+
+	return `${exponent === 0 ? value : value.toFixed(1)} ${units[exponent]}`;
+};
+
+export const sendUploadNotificationMail = async ({
+	albumName,
+	albumUrl,
+	fileName,
+	fileSize,
+	fileType,
+	fileUrl,
+	kind,
+	previewUrl,
+	to
+}: UploadNotificationMail): Promise<MailResult> => {
+	const serviceName = SETTINGS.serviceName;
+	const size = formatFileSize(fileSize);
+	const type = fileType || 'unknown';
+
+	const intro =
+		kind === 'anonymous'
+			? `A visitor uploaded a file without signing in on ${serviceName}.`
+			: `Someone uploaded a file to the album "${albumName}" through a public link on ${serviceName}.`;
+
+	const subject =
+		kind === 'anonymous'
+			? `New anonymous upload: ${fileName} on ${serviceName}`
+			: `New upload in "${albumName}" on ${serviceName}`;
+
+	const lines = [intro, '', `File: ${fileName}`, `Size: ${size}`, `Type: ${type}`, `Open file: ${fileUrl}`];
+	if (previewUrl && previewUrl !== fileUrl) lines.push(`Preview: ${previewUrl}`);
+	if (albumUrl) lines.push(`Album: ${albumUrl}`);
+	lines.push('', `- ${serviceName}`);
+
+	const htmlParts = [
+		`<p>${escapeHtml(intro)}</p>`,
+		`<p>File: ${escapeHtml(fileName)}<br>Size: ${escapeHtml(size)}<br>Type: ${escapeHtml(type)}</p>`,
+		`<p><a href="${escapeHtml(fileUrl)}">Open file</a></p>`
+	];
+	if (previewUrl && previewUrl !== fileUrl) htmlParts.push(`<p><a href="${escapeHtml(previewUrl)}">Preview</a></p>`);
+	if (albumUrl) htmlParts.push(`<p><a href="${escapeHtml(albumUrl)}">Album</a></p>`);
+	htmlParts.push(`<p>- ${escapeHtml(serviceName)}</p>`);
+
+	return sendMail({
+		to,
+		subject,
+		text: lines.join('\n'),
+		html: htmlParts.join('\n')
+	});
+};
