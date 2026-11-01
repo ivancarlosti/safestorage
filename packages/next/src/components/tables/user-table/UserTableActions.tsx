@@ -97,7 +97,7 @@ export function UserTableActions({ user }: PropsWithChildren<{ readonly user: Us
 						<UserActionsButton
 							uuid={user.uuid}
 							type="purge"
-							description="This action will delete ALL files, albums, tags and snippets created by the user. This action is not reversible."
+							description="This action will delete ALL files, albums and tags created by the user. This action is not reversible."
 						>
 							Purge
 						</UserActionsButton>

@@ -3,7 +3,6 @@
 import { useAtomValue } from 'jotai';
 import {
 	BarChart3,
-	Code,
 	FileUp,
 	Files,
 	Key,
@@ -82,7 +81,6 @@ export function DashboardSidebar({ onClick }: { onClick?(): void }) {
 				<DashboardSidebarItem href="/dashboard" name="Uploads" Icon={FileUp} />
 				<DashboardSidebarItem href="/dashboard/albums" name="Albums" Icon={Library} />
 				<DashboardSidebarItem href="/dashboard/tags" name="Tags" Icon={Tags} />
-				<DashboardSidebarItem href="/dashboard/snippets" name="Snippets" Icon={Code} />
 				{currentSettings?.useUrlShortener ? (
 					<DashboardSidebarItem href="/dashboard/links" name="Short URLs" Icon={Link} />
 				) : null}

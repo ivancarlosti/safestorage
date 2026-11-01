@@ -193,17 +193,6 @@ Short URLs are created on the YOURLS instance configured in **Admin → Settings
 
 The body is `{ "url": "https://example.com", "vanity": "optional-keyword" }` and the answer carries `link.link` (the short URL), `link.identifier` (the YOURLS keyword) and `link.destination`. Failures: `400` when the destination is not an http(s) URL, `409` when the keyword is taken, `501` while the shortener is disabled or unconfigured, `502`/`504` when YOURLS refuses the link or does not answer.
 
-### Snippets
-
-| Method | Path                          | Access        | Description                      |
-| ------ | ----------------------------- | ------------- | -------------------------------- |
-| GET    | `/snippets`                   | Auth          | List the user's snippets.        |
-| POST   | `/snippet/create`             | Public / Auth | Create a snippet.                |
-| GET    | `/snippet/:uuid`              | Auth          | Get a snippet.                   |
-| DELETE | `/snippet/:uuid`              | Auth          | Delete a snippet.                |
-| GET    | `/snippet/public/:identifier` | Public        | Get a public snippet (rendered). |
-| GET    | `/snippet/:identifier/raw`    | Public        | Get a snippet's raw content.     |
-
 ### Admin
 
 All routes below require the **admin** role, except the two marked **Owner**. Paths are under `/api/admin`.

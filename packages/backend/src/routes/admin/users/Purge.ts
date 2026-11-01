@@ -62,13 +62,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		}
 	});
 
-	await prisma.snippets.deleteMany({
-		where: {
-			userId: user.id
-		}
-	});
-
 	return res.send({
-		message: "Successfully purged user's files, albums, tags and snippets"
+		message: "Successfully purged user's files, albums and tags"
 	});
 };

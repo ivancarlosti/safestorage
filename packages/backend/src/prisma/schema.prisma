@@ -59,20 +59,6 @@ model quarantineFiles {
 	reason String? @db.Text
 }
 
-model snippets {
-	id Int @id @default(autoincrement())
-	uuid String @unique
-	userId Int?
-	identifier String @unique
-	name String @db.VarChar(255)
-	description String? @db.Text
-	content String @db.LongText
-	language String
-	parentUuid String?
-	createdAt DateTime @default(now())
-	editedAt DateTime?
-}
-
 model albums {
 	id Int @id @default(autoincrement())
 	uuid String @unique

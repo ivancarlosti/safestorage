@@ -14,8 +14,6 @@ SafeStorage instance and photographs its pages.
 | `album.png`            | A single album (`/dashboard/albums/<uuid>`)               |
 | `public-album.png`     | Shared album view (`/a/<identifier>`)                     |
 | `tags.png`             | Tag list (`/dashboard/tags`)                              |
-| `snippets.png`         | Snippet list (`/dashboard/snippets`)                      |
-| `snippet.png`          | A single snippet (`/dashboard/snippets/<uuid>`)           |
 | `short-urls.png`       | Short URL manager (`/dashboard/links`)                    |
 | `admin-settings.png`   | Admin → Settings (`/dashboard/admin/settings`)            |
 | `admin-statistics.png` | Admin → Statistics (`/dashboard/admin/statistics`)        |
@@ -109,7 +107,7 @@ docker run --rm --network host -v "$PWD:/shots" -w /shots \
 ### What the demo data contains
 
 Everything is synthetic and disposable: albums named _Team offsite_,
-_Wallpapers_ and _Design references_; a handful of tags; two code snippets; a
-few example short links; and nine abstract gradient images generated on the fly
-by [`placeholders.mjs`](placeholders.mjs) and uploaded through the real
-dashboard uploader. No user, file, IP or URL from any real instance is included.
+_Wallpapers_ and _Design references_; a handful of tags; a few example short
+links; and nine abstract gradient images generated on the fly by
+[`placeholders.mjs`](placeholders.mjs) and uploaded through the real dashboard
+uploader. No user, file, IP or URL from any real instance is included.

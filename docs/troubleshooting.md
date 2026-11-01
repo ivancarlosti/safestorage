@@ -125,7 +125,7 @@ Note that when network storage is enabled **all** uploads go to the bucket, so a
 
 **The `/docs` API reference is blank or 404s.** nginx routes `/docs` to the backend — verify the backend is up (`/api/health`) and that your external proxy forwards `/docs` too.
 
-**Public album or snippet returns 404.** The identifier is wrong or the resource was deleted. Generated links use the configured `serveUploadsFrom` / `metaDomain`, so make sure those point at the real domain.
+**Public album returns 404.** The identifier is wrong or the resource was deleted. Generated links use the configured `serveUploadsFrom` / `metaDomain`, so make sure those point at the real domain.
 
 **Creating a short URL fails.** The shortener is delegated to YOURLS, so the instance needs its API URL and signature token under **Admin → Settings → Shortener**. A `501` means the shortener is disabled or not configured, `409` that the requested keyword is already taken, and `502`/`504` that YOURLS refused the request or did not answer.
 

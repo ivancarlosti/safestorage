@@ -1,6 +1,6 @@
 # SafeStorage documentation
 
-**SafeStorage** is a self-hosted, blazing-fast file uploader and "bunker" written in Node.js. It stores your files on your own hardware — or in your own S3-compatible bucket — and gives you short links, albums, tags, snippets and a full admin panel.
+**SafeStorage** is a self-hosted, blazing-fast file uploader and "bunker" written in Node.js. It stores your files on your own hardware — or in your own S3-compatible bucket — and gives you short links, albums, tags and a full admin panel.
 
 ## Where do I start?
 

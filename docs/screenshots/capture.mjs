@@ -2,7 +2,7 @@
  * SafeStorage screenshot generator.
  *
  * Logs into a running SafeStorage instance with the configured account, seeds it
- * synthetic demo content (albums, tags, snippets, short links and generated
+ * synthetic demo content (albums, tags, short links and generated
  * images uploaded through the real UI uploader) and then captures the pages
  * referenced from the root README into `docs/screenshots`.
  *
@@ -184,59 +184,6 @@ const seedDemoContent = async () => {
 		await api('/tag/create', { method: 'POST', body: { name } });
 	}
 
-	const composeSnippet = await api('/snippet/create', {
-		method: 'POST',
-		body: {
-			name: 'docker-compose.yml',
-			language: 'yaml',
-			content: [
-				'services:',
-				'  safestorage:',
-				'    image: ghcr.io/ivancarlosti/safestorage:latest',
-				'    restart: unless-stopped',
-				'    ports:',
-				"      - '24424:80'",
-				'    environment:',
-				'      ACCOUNT_LOGIN: ${ACCOUNT_LOGIN:-owner@example.com}',
-				'      ACCOUNT_PASSWORD: ${ACCOUNT_PASSWORD:-change-me}',
-				'      DATABASE_URL: mysql://safestorage:secret@mariadb:3306/safestorage',
-				'    volumes:',
-				'      - ./uploads:/app/uploads',
-				'      - ./logs:/app/logs',
-				'',
-				'  mariadb:',
-				'    image: mariadb:11.4',
-				'    environment:',
-				'      MARIADB_DATABASE: safestorage',
-				'      MARIADB_USER: safestorage',
-				'      MARIADB_PASSWORD: secret',
-				'      MARIADB_ROOT_PASSWORD: secret-root',
-				'    volumes:',
-				'      - mariadb:/var/lib/mysql'
-			].join('\n')
-		}
-	});
-
-	const uploadSnippet = await api('/snippet/create', {
-		method: 'POST',
-		body: {
-			name: 'upload.ts',
-			language: 'typescript',
-			content: [
-				"import { safeStorageUploader } from '@safestorage/uploader-client';",
-				'',
-				'// Files are split into chunks, so multi-gigabyte uploads',
-				'// stream straight through nginx without buffering.',
-				'await safeStorageUploader({',
-				"\tendpoint: '/api/upload',",
-				'\tfile,',
-				'\tonProgress: (_uuid, progress) => console.log(progress),',
-				'\tonFinish: (_uuid, response) => console.log(response.url)',
-				'});'
-			].join('\n')
-		}
-	});
-
 	// Short URLs are not stored locally any more: they are created on the YOURLS
 	// instance from the settings, so there is nothing to seed for the screenshot.
 
@@ -245,7 +192,6 @@ const seedDemoContent = async () => {
 
 	return {
 		albums,
-		snippets: [composeSnippet.snippet, uploadSnippet.snippet],
 		albumIdentifier: albumLink.data.identifier
 	};
 };
@@ -409,8 +355,6 @@ const main = async () => {
 	await shot('albums', '/dashboard/albums');
 	await shot('album', `/dashboard/albums/${album.uuid}`, { waitFor: 'img' });
 	await shot('tags', '/dashboard/tags');
-	await shot('snippets', '/dashboard/snippets');
-	await shot('snippet', `/dashboard/snippets/${seed.snippets[0].uuid}`);
 	await shot('public-album', `/a/${seed.albumIdentifier}`, { waitFor: 'img', target: anonymousPage });
 	await shot('short-urls', '/dashboard/links');
 	await shot('admin-settings', '/dashboard/admin/settings');
