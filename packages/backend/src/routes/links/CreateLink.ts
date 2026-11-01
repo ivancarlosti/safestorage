@@ -1,18 +1,15 @@
 import slugify from '@sindresorhus/slugify';
 import type { FastifyReply } from 'fastify';
-import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-import prisma from '@/structures/database.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
-import { SETTINGS } from '@/structures/settings.js';
-import { constructShortLink, getUniqueShortLinkIdentifier } from '@/utils/Link.js';
+import { shortenUrl } from '@/utils/Shortener.js';
 
 export const schema = {
 	summary: 'Create link',
-	description: 'Create a new shortened link',
+	description: 'Create a new shortened link on the YOURLS instance configured in the settings',
 	tags: ['Links'],
 	body: z.object({
 		url: z.string().describe('The destination url.'),
@@ -22,8 +19,8 @@ export const schema = {
 		200: z.object({
 			message: responseMessageSchema,
 			link: z.object({
-				uuid: z.string().describe('The uuid of the link.'),
-				identifier: z.string().describe('The identifier of the link.'),
+				destination: z.string().describe('The destination of the link.'),
+				identifier: z.string().describe('The keyword of the link on the YOURLS instance.'),
 				link: z.string().describe('The shortened link.')
 			})
 		}),
@@ -46,63 +43,51 @@ export const options = {
 };
 
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
-	if (!SETTINGS.useUrlShortener) {
-		void res.notImplemented('URL shortener is disabled');
+	const { url, vanity } = req.body as { url: string; vanity?: string | undefined };
+
+	// YOURLS only takes alphanumeric keywords, so the vanity is normalized the
+	// same way the built-in shortener used to do it. When nothing usable is left
+	// the parameter is dropped and YOURLS generates the keyword itself.
+	const keyword = vanity ? slugify(vanity, { separator: '_', decamelize: false, lowercase: false }) : undefined;
+
+	const result = await shortenUrl({ destination: url, keyword: keyword || undefined });
+
+	if (!result.ok) {
+		switch (result.status) {
+			case 400: {
+				void res.badRequest(result.message);
+				break;
+			}
+
+			case 409: {
+				void res.conflict(result.message);
+				break;
+			}
+
+			case 501: {
+				void res.notImplemented(result.message);
+				break;
+			}
+
+			case 504: {
+				void res.gatewayTimeout(result.message);
+				break;
+			}
+
+			default: {
+				void res.badGateway(result.message);
+			}
+		}
+
 		return;
 	}
-
-	const { url, vanity } = req.body as { url: string; vanity?: string | undefined };
-	const now = new Date();
-
-	let linkToUse;
-
-	if (vanity) {
-		const tempFullUrl = constructShortLink(req, vanity);
-		if (tempFullUrl === url) {
-			void res.badRequest('Custom URL cannot be the same as the destination URL');
-			return;
-		}
-
-		const sluggifiedVanity = slugify(vanity, { separator: '_', decamelize: false, lowercase: false });
-		const existingLink = await prisma.shortenedLinks.findFirst({
-			where: {
-				identifier: sluggifiedVanity
-			}
-		});
-
-		// If the vanity url doesn't exist, we'll use it
-		if (!existingLink) {
-			linkToUse = sluggifiedVanity;
-		}
-	}
-
-	// If linkToUse is still undefined, we'll generate a unique identifier
-	if (!linkToUse) {
-		const uniqueIdentifier = await getUniqueShortLinkIdentifier();
-		if (!uniqueIdentifier) {
-			void res.internalServerError('Couldnt allocate identifier for link');
-			return;
-		}
-
-		linkToUse = uniqueIdentifier;
-	}
-
-	const link = await prisma.shortenedLinks.create({
-		data: {
-			destination: url,
-			identifier: linkToUse,
-			userId: req.user.id,
-			uuid: uuidv4(),
-			createdAt: now
-		}
-	});
 
 	return res.send({
 		message: 'Successfully created link',
 		link: {
-			uuid: link.uuid,
-			identifier: link.identifier,
-			link: constructShortLink(req, link.identifier)
+			destination: result.destination,
+			identifier: result.identifier,
+			link: result.link
 		}
 	});
 };

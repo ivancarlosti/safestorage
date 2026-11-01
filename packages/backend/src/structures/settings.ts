@@ -14,6 +14,31 @@ export const getSettingsMeta = (key: string) => {
 	}
 };
 
+/*
+	The timezone lives in the database instead of the container environment: Node
+	reads `process.env.TZ` on every date operation, so assigning it here moves the
+	log timestamps, the log file rotation and the cron schedules to the configured
+	zone without a restart. `Intl` throws on an unknown zone, hence the check.
+*/
+export const isValidTimezone = (timezone: string) => {
+	try {
+		new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+		return true;
+	} catch {
+		return false;
+	}
+};
+
+const applyTimezone = (timezone: string) => {
+	if (timezone && isValidTimezone(timezone)) {
+		process.env.TZ = timezone;
+		return;
+	}
+
+	process.env.TZ = 'UTC';
+	if (timezone) log.warn(`Unknown timezone "${timezone}", falling back to UTC.`);
+};
+
 // @ts-ignore
 export const loadSettings = async (force = false) => {
 	log.debug('Loading settings...');
@@ -50,7 +75,6 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.enableMixedCaseFilenames = settingsTable.enableMixedCaseFilenames;
 		SETTINGS.generatedFilenameLength = settingsTable.generatedFilenameLength;
 		SETTINGS.generatedAlbumLength = settingsTable.generatedAlbumLength;
-		SETTINGS.generatedLinksLength = settingsTable.generatedLinksLength;
 		SETTINGS.saveDuplicatesToAlbum = settingsTable.saveDuplicatesToAlbum;
 		SETTINGS.blockedExtensions = settingsTable.blockedExtensions.split(',');
 		SETTINGS.blockNoExtension = settingsTable.blockNoExtension;
@@ -72,6 +96,9 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.usersStorageQuota = Number(settingsTable.usersStorageQuota);
 		SETTINGS.useNetworkStorage = settingsTable.useNetworkStorage;
 		SETTINGS.useUrlShortener = settingsTable.useUrlShortener;
+		SETTINGS.yourlsApiUrl = settingsTable.yourlsApiUrl;
+		SETTINGS.yourlsSignature = settingsTable.yourlsSignature;
+		SETTINGS.timezone = settingsTable.timezone;
 		SETTINGS.generateThumbnails = settingsTable.generateThumbnails;
 		SETTINGS.S3Region = settingsTable.S3Region;
 		SETTINGS.S3Bucket = settingsTable.S3Bucket;
@@ -97,6 +124,10 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.smtpUser = settingsTable.smtpUser;
 		SETTINGS.smtpPassword = settingsTable.smtpPassword;
 		SETTINGS.smtpFrom = settingsTable.smtpFrom;
+		SETTINGS.recaptchaSiteKey = settingsTable.recaptchaSiteKey;
+		SETTINGS.recaptchaSecretKey = settingsTable.recaptchaSecretKey;
+
+		applyTimezone(SETTINGS.timezone);
 		return;
 	}
 
@@ -116,7 +147,6 @@ export const loadSettings = async (force = false) => {
 		enableMixedCaseFilenames: true,
 		generatedFilenameLength: 12,
 		generatedAlbumLength: 6,
-		generatedLinksLength: 8,
 		saveDuplicatesToAlbum: false,
 		blockedExtensions: ['.jar', '.exe', '.msi', '.com', '.bat', '.cmd', '.scr', '.ps1', '.sh'].join(','),
 		blockNoExtension: true,
@@ -138,6 +168,9 @@ export const loadSettings = async (force = false) => {
 		usersStorageQuota: 0,
 		useNetworkStorage: false,
 		useUrlShortener: false,
+		yourlsApiUrl: '',
+		yourlsSignature: '',
+		timezone: 'UTC',
 		generateThumbnails: true,
 		S3Region: '',
 		S3Bucket: '',
@@ -162,7 +195,9 @@ export const loadSettings = async (force = false) => {
 		smtpSecure: false,
 		smtpUser: '',
 		smtpPassword: '',
-		smtpFrom: ''
+		smtpFrom: '',
+		recaptchaSiteKey: '',
+		recaptchaSecretKey: ''
 	};
 
 	await prisma.settings.create({
@@ -322,13 +357,6 @@ const SETTINGS_META = {
 		notice: 'This setting should at least be 4 characters long to avoid collisions.',
 		category: 'other'
 	},
-	generatedLinksLength: {
-		type: 'number',
-		description: 'The length of the generated short URL links.',
-		name: 'Generated short URL Length',
-		notice: 'This setting should at least be 8 characters long to avoid collisions.',
-		category: 'other'
-	},
 	saveDuplicatesToAlbum: {
 		type: 'boolean',
 		description: 'Whether or not to add a file that was already uploaded to the album you tried uploading it to.',
@@ -361,6 +389,22 @@ const SETTINGS_META = {
 		name: 'User Accounts',
 		category: 'users'
 	},
+	recaptchaSiteKey: {
+		type: 'string',
+		description: 'The reCAPTCHA v2 site key embedded by the login form.',
+		name: 'reCAPTCHA Site Key',
+		example: '6Lc...',
+		notice: 'Both reCAPTCHA keys are needed for the checkbox to appear on the login form.',
+		category: 'users'
+	},
+	recaptchaSecretKey: {
+		type: 'string',
+		description: 'The reCAPTCHA v2 secret used by the backend to verify the token of the login form.',
+		name: 'reCAPTCHA Secret Key',
+		example: '6Lc...',
+		notice: 'Keep this one secret: it must never be exposed to the browser.',
+		category: 'users'
+	},
 	disableStatisticsCron: {
 		type: 'boolean',
 		description: 'Whether or not to disable the statistics cron.',
@@ -371,6 +415,15 @@ const SETTINGS_META = {
 		type: 'boolean',
 		description: 'Whether or not to disable the update check.',
 		name: 'Disable Update Check',
+		category: 'service'
+	},
+	timezone: {
+		type: 'string',
+		description:
+			'The IANA timezone of the instance, used for the log timestamps, the log file rotation and the cron schedules.',
+		name: 'Timezone',
+		example: 'Europe/Berlin',
+		notice: 'Use a name from the IANA database, for example `UTC`, `Europe/Berlin` or `America/Sao_Paulo`. The web interface keeps using the timezone of the browser.',
 		category: 'service'
 	},
 	backgroundImageURL: {
@@ -452,9 +505,27 @@ const SETTINGS_META = {
 	},
 	useUrlShortener: {
 		type: 'boolean',
-		description: 'Whether or not to use the built-in URL shortener.',
+		description:
+			'Whether or not to offer short URLs. Links are created on the YOURLS instance configured below and are managed there.',
 		name: 'Use URL Shortener',
-		category: 'other'
+		notice: 'Requires the YOURLS API URL and signature below.',
+		category: 'shortener'
+	},
+	yourlsApiUrl: {
+		type: 'string',
+		description: 'The full URL of the YOURLS API endpoint of your instance.',
+		name: 'YOURLS API URL',
+		example: 'https://sho.rt/yourls-api.php',
+		notice: 'This is the `yourls-api.php` file of your YOURLS installation, not the base URL of the site.',
+		category: 'shortener'
+	},
+	yourlsSignature: {
+		type: 'string',
+		description:
+			'The signature token used to authenticate against the YOURLS API without sending a username and password.',
+		name: 'YOURLS Signature Token',
+		notice: 'Found in the YOURLS admin area under Tools → Secure passwordless API call. Keep it secret: anyone with the token can create links on your instance.',
+		category: 'shortener'
 	},
 	useNetworkStorage: {
 		type: 'boolean',

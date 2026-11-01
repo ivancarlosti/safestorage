@@ -1,5 +1,4 @@
 import JWT from 'jsonwebtoken';
-import { RECAPTCHA_SECRET_KEY, recaptchaEnabled } from '@/structures/auth.js';
 import { SETTINGS } from '@/structures/settings.js';
 
 // The lifetime the cookie, the `expiresAt` of the login response and the
@@ -17,17 +16,20 @@ export const signAuthToken = (userId: number) =>
 
 /*
 	reCAPTCHA is optional and off unless both the site key (shown on the form,
-	exposed through `GET /api/settings`) and the secret (used here) are set, so an
-	instance without them behaves exactly like it always has.
+	exposed through `GET /api/settings`) and the secret (used here) are stored in
+	the instance settings, so an instance without them behaves exactly like it
+	always has.
 */
 export const verifyRecaptcha = async (token: string | undefined): Promise<boolean> => {
-	if (!recaptchaEnabled) return true;
+	const { recaptchaSiteKey, recaptchaSecretKey } = SETTINGS;
+
+	if (!recaptchaSiteKey || !recaptchaSecretKey) return true;
 	if (!token) return false;
 
 	const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		body: new URLSearchParams({ secret: RECAPTCHA_SECRET_KEY, response: token })
+		body: new URLSearchParams({ secret: recaptchaSecretKey, response: token })
 	});
 
 	if (!response.ok) return false;

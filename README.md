@@ -32,7 +32,7 @@ It runs as **one container** (nginx + Fastify backend + Next.js frontend) and ke
 ## Features
 
 -   📤 **Chunked & huge uploads** — multi-gigabyte files, straight through nginx without buffering.
--   🔗 **Short links** — shareable URLs, plus a built-in URL shortener.
+-   🔗 **Short links** — shareable URLs, plus short URLs through your own YOURLS instance.
 -   🖼️ **Albums & tags** — organise, sort (custom default order) and share public albums.
 -   📝 **Snippets** — paste and share code with syntax highlighting.
 -   🖱️ **Thumbnails** — automatic image thumbnails and video previews (bundled `ffmpeg`).
@@ -53,7 +53,7 @@ Every image below comes from a real SafeStorage instance, seeded with synthetic 
 | **Landing page**<br>![The public landing page](docs/screenshots/home.png)                     | **Albums**<br>![The album list](docs/screenshots/albums.png)                                          |
 | **Album**<br>![A single album with its files](docs/screenshots/album.png)                     | **Public album**<br>![A shared album page](docs/screenshots/public-album.png)                         |
 | **Tags**<br>![The tag list](docs/screenshots/tags.png)                                        | **Snippets**<br>![The snippet list](docs/screenshots/snippets.png)                                    |
-| **Snippet**<br>![A single code snippet](docs/screenshots/snippet.png)                         | **Short URLs**<br>![The short URL manager](docs/screenshots/short-urls.png)                           |
+| **Snippet**<br>![A single code snippet](docs/screenshots/snippet.png)                         | **Short URLs**<br>![The short URL creation page](docs/screenshots/short-urls.png)                     |
 | **Admin · Settings**<br>![The admin settings page](docs/screenshots/admin-settings.png)       | **Admin · Statistics**<br>![The admin statistics page](docs/screenshots/admin-statistics.png)         |
 | **API reference**<br>![The generated API reference at /docs](docs/screenshots/api-docs.png)   |                                                                                                       |
 

@@ -1,6 +1,6 @@
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
-import { AUTH_METHOD, RECAPTCHA_SITE_KEY } from '@/structures/auth.js';
+import { AUTH_METHOD } from '@/structures/auth.js';
 import type { RequestWithUser } from '@/structures/interfaces.js';
 import { SETTINGS } from '@/structures/settings.js';
 
@@ -94,6 +94,9 @@ export const run = (_: RequestWithUser, res: FastifyReply) => {
 		anonymousUploadsEnabled: Boolean(SETTINGS.anonymousUploadsEnabled),
 		anonymousUploadsMaxSize: SETTINGS.anonymousUploadsMaxSize,
 		authMethod: AUTH_METHOD,
-		recaptchaSiteKey: RECAPTCHA_SITE_KEY || undefined
+		// The key is only useful (and only exposed) when the secret can verify the
+		// token, which is exactly when the login form has to render the widget.
+		recaptchaSiteKey:
+			SETTINGS.recaptchaSiteKey && SETTINGS.recaptchaSecretKey ? SETTINGS.recaptchaSiteKey : undefined
 	});
 };

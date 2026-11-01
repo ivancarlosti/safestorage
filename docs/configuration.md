@@ -2,8 +2,8 @@
 
 SafeStorage is configured in two places:
 
-1. **Environment variables** — read at process start; good for deployment-level values (port, accounts, authentication method, timezone).
-2. **Admin settings** — stored in the database and edited from **Admin → Settings** in the web UI (`GET`/`POST /api/admin/service/settings`). These survive restarts and upgrades.
+1. **Environment variables** — read at process start; good for deployment-level values (port, accounts, authentication method).
+2. **Admin settings** — stored in the database and edited from **Admin → Settings** in the web UI (`GET`/`POST /api/admin/service/settings`). These survive restarts and upgrades, and include the timezone, the reCAPTCHA keys and the shortener.
 
 ## Environment variables
 
@@ -13,7 +13,6 @@ SafeStorage is configured in two places:
 | `HOST`                    | backend              | `localhost`             | Interface the API binds to. The container sets `0.0.0.0`.                               |
 | `DATABASE_URL`            | backend / container  | _(none — required)_     | MariaDB/MySQL connection string, e.g. `mysql://user:password@host:3306/safestorage`.     |
 | `SHADOW_DATABASE_URL`     | Prisma CLI (dev)     | _(none)_                | Optional throwaway database for `prisma migrate dev`. Never used by `migrate deploy`.    |
-| `TZ`                      | backend / container  | `UTC`                   | Timezone used for log timestamps, e.g. `America/Sao_Paulo`.                             |
 | `SKIP_MIGRATIONS`         | container entrypoint | _(unset)_               | If set to any non-empty value, the entrypoint skips `prisma migrate deploy` on start.   |
 | `DB_WAIT_ATTEMPTS`        | container entrypoint | `60`                    | How many times (every 2 s) the entrypoint retries the migrations while the database boots. |
 | `SAFESTORAGE_VERSION`     | backend / frontend   | `dev`                   | Release version stamp, shown in `/api/version`, the admin panel and the startup banner. |
@@ -25,12 +24,10 @@ SafeStorage is configured in two places:
 | `ACCOUNT_LOGIN`           | backend              | _(none)_                | Comma-separated emails that may use the password form; the **first** one becomes the `owner`. |
 | `ACCOUNT_PASSWORD`        | backend              | _(none)_                | Comma-separated passwords matched to `ACCOUNT_LOGIN` (a bcrypt hash is accepted).       |
 | `KEYCLOAK_BASE_URL` … `KEYCLOAK_RESTRICT` | backend  | _(none)_                | OIDC provider settings, required by `AUTH_METHOD=keycloak` — see [Authentication](#authentication). |
-| `RECAPTCHA_CLIENTID`      | backend / frontend   | _(none)_                | reCAPTCHA v2 site key; with the secret below, the login form shows the checkbox.        |
-| `RECAPTCHA_CLIENTSECRET`  | backend              | _(none)_                | reCAPTCHA v2 secret, verified by the backend against `siteverify`.                      |
 
 > **A note on migrations:** the container runs `prisma migrate deploy` automatically on every start (unless `SKIP_MIGRATIONS` is set), retrying while the database is still booting. You normally never need to run migrations by hand; set `SKIP_MIGRATIONS` only if you apply the SQL yourself. If the target database does not exist yet, `migrate deploy` creates it as long as the user in `DATABASE_URL` is allowed to.
 
-The Docker Compose stacks read a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `DATABASE_URL`, `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ACCOUNT_LOGIN`, `ACCOUNT_PASSWORD`, `TZ` and the authentication variables below.
+The Docker Compose stacks read a `.env` file — see [`docker/.env.example`](../docker/.env.example) for the deployment-flavoured view of `DATABASE_URL`, `SAFESTORAGE_PORT`, `SAFESTORAGE_TAG`, `ACCOUNT_LOGIN`, `ACCOUNT_PASSWORD` and the authentication variables below.
 
 ## Authentication
 
@@ -75,12 +72,7 @@ Signing out (`GET /api/auth/keycloak/logout` — the **Sign out** item in the us
 
 ### reCAPTCHA on the login form
 
-| Variable                 | Default  | Description                                                                       |
-| ------------------------ | -------- | --------------------------------------------------------------------------------- |
-| `RECAPTCHA_CLIENTID`     | _(none)_ | reCAPTCHA **v2** site key, rendered by the login form.                             |
-| `RECAPTCHA_CLIENTSECRET` | _(none)_ | reCAPTCHA **v2** secret, sent by the backend to `siteverify`.                      |
-
-Both are required for the widget to appear: the site key is exposed as `recaptchaSiteKey` in `GET /api/settings`, and the form only renders the checkbox and demands a token when it is present — the backend rejects a login whose token is missing or invalid. Only the login form is protected, not the registration form.
+reCAPTCHA is configured in **Admin → Settings → Users**, not in the environment: `recaptchaSiteKey` and `recaptchaSecretKey` (see [Settings](#users)). Both are required for the widget to appear: the site key is exposed as `recaptchaSiteKey` in `GET /api/settings` and only then does the form render the checkbox and demand a token — the backend rejects a login whose token is missing or invalid. Only the login form is protected, not the registration form.
 
 ## Admin settings
 
@@ -97,6 +89,7 @@ All of the following live in **Admin → Settings**. Values are grouped by categ
 | `secret`                | string  | random (64 chars) | JWT signing secret. Changing it logs everyone out.                                                  |
 | `disableStatisticsCron` | boolean | `false`           | Disable the nightly statistics collection job.                                                      |
 | `disableUpdateCheck`    | boolean | `false`           | Disable the daily update check against GitHub releases.                                             |
+| `timezone`              | string  | `UTC`             | IANA timezone of the instance (e.g. `Europe/Berlin`) for log timestamps, log rotation and cron jobs. Applied as soon as it is saved; the web UI keeps using the timezone of the browser. |
 
 _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` are read-only/derived and not editable in the UI.)_
 
@@ -131,6 +124,8 @@ _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` ar
 | `publicMode`        | boolean | `false` | Allow uploads without being logged in.                                            |
 | `userAccounts`      | boolean | `false` | When disabled, no one can register without an invite.                             |
 | `usersStorageQuota` | number  | `0`     | Default storage quota per user, in bytes (`0` = unlimited). Overridable per user. |
+| `recaptchaSiteKey`  | string  | _(empty)_ | reCAPTCHA **v2** site key embedded by the login form.                           |
+| `recaptchaSecretKey` | string | _(empty)_ | reCAPTCHA **v2** secret, sent by the backend to `siteverify`.                   |
 
 ### Customization
 
@@ -153,10 +148,20 @@ _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` ar
 | Setting                | Type    | Default          | Description                                                                                               |
 | ---------------------- | ------- | ---------------- | --------------------------------------------------------------------------------------------------------- |
 | `generateZips`         | boolean | `true`           | Allow generating ZIP archives from public albums.                                                         |
-| `useUrlShortener`      | boolean | `false`          | Enable the built-in URL shortener.                                                                        |
 | `generatedAlbumLength` | number  | `6`              | Length of generated album identifiers (≥ 4 recommended).                                                  |
-| `generatedLinksLength` | number  | `8`              | Length of generated short-link identifiers (≥ 8 recommended).                                             |
 | `defaultSortOrder`     | select  | `createdAt:desc` | Default sort order inside albums (`createdAt:desc`, `createdAt:asc`, `name:asc`, `name:desc`, `id:desc`). |
+
+### Shortener
+
+Short URLs are not stored by SafeStorage: they are created on a [YOURLS](https://yourls.org) instance you run yourself, so the links keep working while this service is down and are managed (clicks, edit, delete) in the YOURLS admin area. The dashboard page at `/dashboard/links` therefore only creates links and shows the result once.
+
+| Setting           | Type    | Default   | Description                                                                                              |
+| ----------------- | ------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `useUrlShortener` | boolean | `false`   | Show the short-URL page and accept `POST /api/link/create`. Requires the two values below.                |
+| `yourlsApiUrl`    | string  | _(empty)_ | Full URL of the YOURLS API endpoint, e.g. `https://sho.rt/yourls-api.php` (the `.php` file, not the site). |
+| `yourlsSignature` | string  | _(empty)_ | Signature token from YOURLS (**Tools → Secure passwordless API call**), used instead of a username and password. Keep it secret. |
+
+Saving the settings refuses to enable the shortener while either value is missing, and `POST /api/link/create` answers `501` until it is enabled and configured. The instance only creates links: listing and deleting them is left to YOURLS. The legacy `generatedLinksLength` setting and the `shortenedLinks` table are gone; the migration that removes them also drops the links created by the old built-in shortener.
 
 ### Email
 

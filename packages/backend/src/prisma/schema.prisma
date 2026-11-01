@@ -21,7 +21,6 @@ model users {
 	editedAt DateTime?
 	files files[]
 	roles roles[]
-	links shortenedLinks []
 	albumMembers albumMembers[]
 }
 
@@ -72,17 +71,6 @@ model snippets {
 	parentUuid String?
 	createdAt DateTime @default(now())
 	editedAt DateTime?
-}
-
-model shortenedLinks {
-	id Int @id @default(autoincrement())
-	uuid String @unique
-	user users? @relation(fields: [userId], references: [id])
-	userId Int?
-	identifier String @unique
-	destination String @db.VarChar(2048)
-	views Int @default(0)
-	createdAt DateTime @default(now())
 }
 
 model albums {
@@ -152,7 +140,6 @@ model settings {
 	generateOriginalFileNameWithIdentifier Boolean @default(false)
 	generatedFilenameLength Int
 	generatedAlbumLength Int
-	generatedLinksLength Int @default(8)
 	saveDuplicatesToAlbum Boolean @default(false)
 	blockedExtensions String @db.Text
 	blockNoExtension Boolean
@@ -171,6 +158,9 @@ model settings {
 	usersStorageQuota String @default("0")
 	useNetworkStorage Boolean @default(false)
 	useUrlShortener Boolean @default(false)
+	yourlsApiUrl String @db.VarChar(1024) @default("")
+	yourlsSignature String @default("")
+	timezone String @default("UTC")
 	generateThumbnails Boolean @default(true)
 	privacyPolicyPageContent String @db.LongText
 	termsOfServicePageContent String @db.LongText
@@ -201,6 +191,8 @@ model settings {
 	smtpUser String @default("")
 	smtpPassword String @default("")
 	smtpFrom String @default("")
+	recaptchaSiteKey String @default("")
+	recaptchaSecretKey String @default("")
 }
 
 model statistics {

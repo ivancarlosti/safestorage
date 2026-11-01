@@ -14,6 +14,19 @@ import { useQueryClient } from '@tanstack/react-query';
 import { saveSettings } from '@/actions/SaveSettingsAction';
 import { useLocalStorage } from 'usehooks-ts';
 
+/*
+	The browser has the same ICU data as the backend, so an unknown timezone is
+	caught here instead of after a round trip. The backend re-validates it.
+*/
+const isValidTimezone = (timezone: string) => {
+	try {
+		new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+		return true;
+	} catch {
+		return false;
+	}
+};
+
 const formSchema = z.object({
 	// Users
 	publicMode: z.boolean().optional(),
@@ -76,8 +89,38 @@ const formSchema = z.object({
 	// Other
 	generateZips: z.boolean().optional(),
 	generatedAlbumLength: z.coerce.number(),
-	generatedLinksLength: z.coerce.number(),
+	// Shortener
 	useUrlShortener: z.boolean().optional(),
+	yourlsApiUrl: z
+		.string()
+		.optional()
+		.refine(
+			value => {
+				if (!value) return true;
+
+				try {
+					const { protocol } = new URL(value);
+					return protocol === 'http:' || protocol === 'https:';
+				} catch {
+					return false;
+				}
+			},
+			{
+				message: 'Please enter a valid URL'
+			}
+		),
+	yourlsSignature: z.string().optional(),
+	// Service timezone
+	timezone: z
+		.string()
+		.trim()
+		.min(1, { message: 'Required' })
+		.refine(value => isValidTimezone(value), {
+			message: 'Please enter a valid IANA timezone, e.g. Europe/Berlin'
+		}),
+	// Users reCAPTCHA
+	recaptchaSiteKey: z.string().optional(),
+	recaptchaSecretKey: z.string().optional(),
 	defaultSortOrder: z.string().optional(),
 	// Legal
 	privacyPolicyPageContent: z.string().optional(),
@@ -151,6 +194,7 @@ export const SettingsForm = ({
 					<TabsTrigger value="uploads">Uploads</TabsTrigger>
 					<TabsTrigger value="users">Users</TabsTrigger>
 					<TabsTrigger value="other">Other</TabsTrigger>
+					<TabsTrigger value="shortener">Shortener</TabsTrigger>
 					<TabsTrigger value="customization">Customization</TabsTrigger>
 					<TabsTrigger value="email">Email</TabsTrigger>
 					<TabsTrigger value="legal">Legal</TabsTrigger>
@@ -192,15 +236,26 @@ export const SettingsForm = ({
 						<TabsContent value="other">
 							<FormWrapper form={form} meta={categorizedSettings.other} />
 						</TabsContent>
+						<TabsContent value="shortener">
+							<div className="mb-6 grid gap-2 border rounded-sm p-4">
+								<p className="text-sm text-muted-foreground">
+									Short URLs are created on an existing YOURLS instance instead of this database.
+									Enter the URL of its API endpoint and the signature token from{' '}
+									<span className="font-medium">Tools → Secure passwordless API call</span>; the links
+									are then managed in the YOURLS admin area.
+								</p>
+							</div>
+							<FormWrapper form={form} meta={categorizedSettings.shortener} />
+						</TabsContent>
 						<TabsContent value="customization">
 							<FormWrapper form={form} meta={categorizedSettings.customization} />
 						</TabsContent>
 						<TabsContent value="email">
 							<div className="mb-6 grid gap-2 border rounded-sm p-4">
 								<p className="text-sm text-muted-foreground">
-									Save the settings below first, then send yourself a test email to check that the SMTP server accepts
-									the credentials. The album sharing feature works without email: the invite link is always returned so it
-									can be copied by hand.
+									Save the settings below first, then send yourself a test email to check that the
+									SMTP server accepts the credentials. The album sharing feature works without email:
+									the invite link is always returned so it can be copied by hand.
 								</p>
 								<div>
 									<SendTestEmailButton />

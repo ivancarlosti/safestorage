@@ -7,7 +7,7 @@ import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import type { SETTINGS } from '@/structures/settings.js';
-import { SETTINGS as INSTANCE_SETTINGS, loadSettings } from '@/structures/settings.js';
+import { SETTINGS as INSTANCE_SETTINGS, isValidTimezone, loadSettings } from '@/structures/settings.js';
 import { logError } from '@/utils/Logger.js';
 import { isValidSortOrder } from '@/utils/SortOrder.js';
 import { updateCheck, startUpdateCheckSchedule, stopUpdateCheckSchedule } from '@/utils/UpdateCheck.js';
@@ -137,6 +137,37 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			}
 		}
 
+		if (parsedSettings.timezone !== undefined) {
+			parsedSettings.timezone = String(parsedSettings.timezone).trim();
+
+			if (!isValidTimezone(parsedSettings.timezone)) {
+				void res.badRequest('The timezone has to be a valid IANA timezone, for example Europe/Berlin');
+				return;
+			}
+		}
+
+		if (parsedSettings.yourlsApiUrl !== undefined) {
+			parsedSettings.yourlsApiUrl = String(parsedSettings.yourlsApiUrl).trim();
+		}
+
+		if (parsedSettings.yourlsSignature !== undefined) {
+			parsedSettings.yourlsSignature = String(parsedSettings.yourlsSignature).trim();
+		}
+
+		if (parsedSettings.yourlsApiUrl) {
+			try {
+				const { protocol } = new URL(parsedSettings.yourlsApiUrl);
+
+				if (protocol !== 'http:' && protocol !== 'https:') {
+					void res.badRequest('The YOURLS API URL has to be a full URL, including the https:// part');
+					return;
+				}
+			} catch {
+				void res.badRequest('The YOURLS API URL has to be a full URL, including the https:// part');
+				return;
+			}
+		}
+
 		/*
 			The settings form always sends every field, but the API also accepts
 			partial saves, so the untouched keys keep their stored value when
@@ -149,6 +180,24 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 
 		if (nextSmtpEnabled && (!nextSmtpHost || !(nextSmtpFrom || nextSmtpUser))) {
 			void res.badRequest('An SMTP host and a from address (or an SMTP username) are required to send emails');
+			return;
+		}
+
+		/*
+			The shortener is delegated to YOURLS, so enabling it without an endpoint
+			and a token would only produce failing requests at upload time.
+		*/
+		const nextUseUrlShortener =
+			(parsedSettings.useUrlShortener as boolean | undefined) ?? INSTANCE_SETTINGS.useUrlShortener;
+		const nextYourlsApiUrl = (
+			(parsedSettings.yourlsApiUrl as string | undefined) ?? INSTANCE_SETTINGS.yourlsApiUrl
+		).trim();
+		const nextYourlsSignature = (
+			(parsedSettings.yourlsSignature as string | undefined) ?? INSTANCE_SETTINGS.yourlsSignature
+		).trim();
+
+		if (nextUseUrlShortener && (!nextYourlsApiUrl || !nextYourlsSignature)) {
+			void res.badRequest('A YOURLS API URL and a signature token are required to enable the URL shortener');
 			return;
 		}
 

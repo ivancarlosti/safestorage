@@ -48,9 +48,9 @@ container).
 The accounts declared in `ACCOUNT_LOGIN` (comma-separated emails; the first one
 becomes the `owner`) are created on the first boot. An instance that declares no
 account starts with no users at all and logs a warning; nothing is created
-implicitly (the old `ADMIN_PASSWORD` variable is gone). Setting
-`RECAPTCHA_CLIENTID` and `RECAPTCHA_CLIENTSECRET` adds a reCAPTCHA v2 checkbox to
-the login form.
+implicitly (the old `ADMIN_PASSWORD` variable is gone). The reCAPTCHA v2 checkbox
+of the login form is enabled in the web UI (**Admin → Settings → Users**) by
+setting the site key and the secret.
 
 For Keycloak, point `KEYCLOAK_BASE_URL` / `KEYCLOAK_REALM` at your realm,
 register `https://<your-domain>/api/auth/keycloak/callback` as the client's
@@ -117,11 +117,11 @@ docker compose down             # stop (data stays on disk)
 -   The container is healthy when `GET /api/health` (backend) and `/` (frontend)
     both answer through nginx; `docker compose ps` shows the status.
 -   Authentication is chosen by `AUTH_METHOD` in `.env` and applied at boot, so
-    changing it — or any of the `ACCOUNT_*`, `KEYCLOAK_*` and `RECAPTCHA_*`
-    variables — needs a restart (`docker compose up -d --force-recreate`). A
-    sign-in that is still in flight through Keycloak is tracked in the process
-    memory, so run a single replica.
--   `TZ` (default `UTC`) sets the timezone of the container logs. Use an IANA
-    name such as `America/Sao_Paulo`; it is read at boot and also drives the
-    nginx timestamps, so apply a change with
-    `docker compose up -d --force-recreate`.
+    changing it — or any of the `ACCOUNT_*` and `KEYCLOAK_*` variables — needs a
+    restart (`docker compose up -d --force-recreate`). A sign-in that is still in
+    flight through Keycloak is tracked in the process memory, so run a single
+    replica.
+-   The instance timezone is a setting, not a variable: pick an IANA name such as
+    `America/Sao_Paulo` under **Admin → Settings → Service** and it applies to the
+    backend immediately (no restart). nginx and supervisor keep logging in UTC,
+    because only the Node processes are moved.

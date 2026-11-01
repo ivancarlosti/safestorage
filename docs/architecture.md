@@ -44,10 +44,10 @@ The backend is a plain Fastify server built around a small, explicit structure:
     Because routes are discovered from the filesystem, **adding a route is just adding a file** under `src/routes`.
 
 -   **`middlewares/`** — `ban` (rejects banned IPs), `apiKey` (authenticates via `X-API-KEY`, optional), `auth` (JWT via cookie/header, supports `optional`), `admin` and `owner` (role checks).
--   **`structures/settings.ts`** — the `SETTINGS` singleton plus `SETTINGS_META` metadata; loaded from the database on boot.
--   **`structures/auth.ts`** — parses the authentication environment once (`AUTH_METHOD`, `ACCOUNT_*`, `KEYCLOAK_*`, `RECAPTCHA_*`), so the rest of the backend only needs the booleans/values it exports. `validateAuthConfiguration()` returns the errors and warnings `Requirements` prints before the boot is stopped, which is how a misconfigured Keycloak setup fails fast.
+-   **`structures/settings.ts`** — the `SETTINGS` singleton plus `SETTINGS_META` metadata; loaded from the database on boot. The stored `timezone` is applied to `process.env.TZ` on every (re)load, so log timestamps and the cron jobs follow the configured zone without a restart.
+-   **`structures/auth.ts`** — parses the authentication environment once (`AUTH_METHOD`, `ACCOUNT_*`, `KEYCLOAK_*`), so the rest of the backend only needs the booleans/values it exports. `validateAuthConfiguration()` returns the errors and warnings `Requirements` prints before the boot is stopped, which is how a misconfigured Keycloak setup fails fast.
 -   **`structures/schemas`** — reusable Zod schemas extended by route schemas.
--   **`utils/`** — file handling, thumbnails, S3/multipart helpers, snippet rendering, logging, docs/OpenAPI definition, update check, JWT signing/verification and the reCAPTCHA check (`utils/Auth.ts`), and the OIDC client (`utils/Keycloak.ts`: discovery-free endpoint assembly, PKCE + state, code exchange, JWKS cache and `id_token` verification).
+-   **`utils/`** — file handling, thumbnails, S3/multipart helpers, snippet rendering, logging, docs/OpenAPI definition, update check, JWT signing/verification and the reCAPTCHA check (`utils/Auth.ts`, which reads the keys stored in the settings), the YOURLS client (`utils/Shortener.ts`), and the OIDC client (`utils/Keycloak.ts`: discovery-free endpoint assembly, PKCE + state, code exchange, JWKS cache and `id_token` verification).
 -   **`routes/`** — one module per endpoint, grouped by domain (`auth`, `auth/keycloak`, `user`, `album`, `files`, `tag`, `links`, `snippet`, `admin/*`, `health`).
 
 ### Request lifecycle
@@ -61,7 +61,7 @@ Rate limiting is applied globally (`@fastify/rate-limit`) with per-route overrid
 
 ### Data model
 
-Prisma with **MariaDB/MySQL**. The connection string lives in `DATABASE_URL` and is shared by the runtime and the CLI: `PrismaClient` gets the pure-JS `@prisma/adapter-mariadb` driver adapter (so no native module is compiled), and `packages/backend/prisma.config.ts` gives the same URL to `prisma migrate`. Models: `users`, `roles`, `files`, `quarantineFiles`, `snippets`, `shortenedLinks`, `albums`, `bans`, `links`, `settings`, `statistics`, `tags`, `invites`. Migrations live in `packages/backend/src/prisma/migrations` and are applied on container start. Tables are created as `utf8mb4` with the case-insensitive `utf8mb4_unicode_ci` collation, so `LIKE` keeps behaving the way it did on SQLite.
+Prisma with **MariaDB/MySQL**. The connection string lives in `DATABASE_URL` and is shared by the runtime and the CLI: `PrismaClient` gets the pure-JS `@prisma/adapter-mariadb` driver adapter (so no native module is compiled), and `packages/backend/prisma.config.ts` gives the same URL to `prisma migrate`. Models: `users`, `roles`, `files`, `quarantineFiles`, `snippets`, `albums`, `bans`, `links`, `settings`, `statistics`, `tags`, `invites`. Short URLs used to have their own `shortenedLinks` table; they now live on the YOURLS instance configured in the settings. Migrations live in `packages/backend/src/prisma/migrations` and are applied on container start. Tables are created as `utf8mb4` with the case-insensitive `utf8mb4_unicode_ci` collation, so `LIKE` keeps behaving the way it did on SQLite.
 
 ### Scheduled jobs
 
@@ -71,7 +71,7 @@ Cron jobs run in-process (`node-schedule`): nightly **statistics** collection an
 
 A Next.js 14 **App Router** application (`output: 'standalone'`):
 
--   **`src/app`** — routes: home (`(home)`), auth (`(auth)`), dashboard, `s/[identifier]` (public snippets), `a/…` (public albums), `l/…` (links), `compare/…`, `og/…` (Open Graph image generation).
+-   **`src/app`** — routes: home (`(home)`), auth (`(auth)`), dashboard, `s/[identifier]` (public snippets), `a/…` (public albums), `compare/…`, `og/…` (Open Graph image generation).
 -   **`src/components`** — UI built on Tailwind CSS + Radix UI primitives for overlays and form controls, with `react-aria-components` supplying the accessible drag-and-drop dropzone and file-trigger primitives (which have no Radix equivalent), plus app-specific components (upload dropzone, image grid, file viewer).
 -   **`src/actions`** — server actions.
 -   **`src/lib`** — API client helpers and utilities.

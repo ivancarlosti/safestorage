@@ -145,7 +145,6 @@ export interface Settings {
 	generateZips: boolean;
 	generatedAlbumLength: number;
 	generatedFilenameLength: number;
-	generatedLinksLength: number;
 	instanceUrl: string;
 	logoURL: string;
 	maxSize: number;
@@ -158,6 +157,8 @@ export interface Settings {
 	publicMode: boolean;
 	rateLimitMax: number;
 	rateLimitWindow: number;
+	recaptchaSecretKey: string;
+	recaptchaSiteKey: string;
 	rulesPageContent: string;
 	saveDuplicatesToAlbum: boolean;
 	secret: string;
@@ -177,11 +178,14 @@ export interface Settings {
 	smtpUser: string;
 	statisticsCron: string;
 	termsOfServicePageContent: string;
+	timezone: string;
 	updateCheckCron: string;
 	useNetworkStorage: boolean;
 	useUrlShortener: boolean;
 	userAccounts: boolean;
 	usersStorageQuota: number;
+	yourlsApiUrl: string;
+	yourlsSignature: string;
 }
 
 export interface RouteOptions {

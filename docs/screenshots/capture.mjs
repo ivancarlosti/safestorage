@@ -159,14 +159,14 @@ const launchBrowser = async () => {
 const seedDemoContent = async () => {
 	log('seeding demo content through the API');
 
-	// - the shortener is off by default, and the "Short URLs" screen needs it on;
 	// - without `serveUploadsFrom` the backend builds thumbnail URLs from the Host
 	//   header nginx passes on, which has no port, so every thumbnail 404s.
+	// - short URLs are created on an external YOURLS instance, so nothing is
+	//   enabled here: the "Short URLs" screenshot shows the create-only page.
 	await api('/admin/service/settings', {
 		method: 'POST',
 		body: {
 			settings: [
-				{ key: 'useUrlShortener', value: 'true', type: 'boolean' },
 				{ key: 'serviceName', value: 'SafeStorage', type: 'string' },
 				{ key: 'serveUploadsFrom', value: BASE_URL, type: 'string' }
 			]
@@ -237,13 +237,8 @@ const seedDemoContent = async () => {
 		}
 	});
 
-	// Plain short links, so the "Short URLs" page is populated.
-	for (const url of [
-		'https://docs.safestorage.example.com/configuration',
-		'https://github.com/ivancarlosti/safestorage'
-	]) {
-		await api('/link/create', { method: 'POST', body: { url } });
-	}
+	// Short URLs are not stored locally any more: they are created on the YOURLS
+	// instance from the settings, so there is nothing to seed for the screenshot.
 
 	// A public link for the first album, so the shared album view can be captured.
 	const albumLink = await api(`/album/${albums[0].uuid}/link`, { method: 'POST', body: {} });

@@ -97,7 +97,6 @@ export function DashboardSidebar({ onClick }: { onClick?(): void }) {
 					<DashboardSidebarItem href="/dashboard/admin/settings" name="Settings" Icon={Settings2} />
 					<DashboardSidebarItem href="/dashboard/admin/users" name="Users" Icon={Users} />
 					<DashboardSidebarItem href="/dashboard/admin/files" name="All files" Icon={Files} />
-					<DashboardSidebarItem href="/dashboard/admin/links" name="All short URLs" Icon={Link} />
 					<DashboardSidebarItem href="/dashboard/admin/quarantine" name="Quarantined files" Icon={Files} />
 					<DashboardSidebarItem href="/dashboard/admin/ip" name="Banned IPs" Icon={Network} />
 					{/* Invites only make sense for local accounts: keycloak provisions users on first sign-in */}

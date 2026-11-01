@@ -46,15 +46,12 @@ services:
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
       KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-}
       KEYCLOAK_RESTRICT: ${KEYCLOAK_RESTRICT:-}
-      RECAPTCHA_CLIENTID: ${RECAPTCHA_CLIENTID:-}
-      RECAPTCHA_CLIENTSECRET: ${RECAPTCHA_CLIENTSECRET:-}
+      # The reCAPTCHA keys and the timezone are not environment variables any
+      # more: they live in the database and are edited in Admin → Settings.
       # MariaDB/MySQL connection string, shared by the backend and the migrations.
       # The `:?` makes `docker compose up` fail with a clear message instead of
       # starting a container that cannot reach its database.
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your .env file}
-      # Used for the timestamps in the container logs (IANA name, e.g.
-      # `America/Sao_Paulo`). Read at boot, so a change needs --force-recreate.
-      TZ: ${TZ:-UTC}
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs

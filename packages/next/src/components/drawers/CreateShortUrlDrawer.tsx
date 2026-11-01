@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useActionState } from 'react';
 import { MessageType } from '@/types';
-import { Plus } from 'lucide-react';
+import { Copy, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCopyToClipboard } from 'usehooks-ts';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,9 @@ import { Callout } from '../mdx/Callout';
 
 export function CreateShortUrlDrawer({ className }: { readonly className?: string }) {
 	const [open, setOpen] = useState(false);
-	const [state, formAction] = useActionState(createShortURL, {
+	const [createdLink, setCreatedLink] = useState<string>();
+	const [, copy] = useCopyToClipboard();
+	const [state, formAction, isPending] = useActionState(createShortURL, {
 		message: '',
 		type: MessageType.Uninitialized
 	});
@@ -23,19 +26,24 @@ export function CreateShortUrlDrawer({ className }: { readonly className?: strin
 		if (state.type === MessageType.Error) toast.error(state.message);
 		else if (state.type === MessageType.Success) {
 			toast.success(state.message);
-			setOpen(false);
+			setCreatedLink(state.link);
 		}
+	}, [state]);
 
-		return () => {
-			if (state.type === MessageType.Success) {
-				state.type = MessageType.Uninitialized;
-				state.message = '';
-			}
-		};
-	}, [state, state.message, state.type]);
+	const handleOpenChange = (value: boolean) => {
+		setOpen(value);
+		if (!value) setCreatedLink(undefined);
+	};
+
+	const copyLink = () => {
+		if (!createdLink) return;
+
+		void copy(createdLink);
+		toast.success('Short URL copied to the clipboard');
+	};
 
 	return (
-		<Drawer open={open} onOpenChange={setOpen}>
+		<Drawer open={open} onOpenChange={handleOpenChange}>
 			<DrawerTrigger asChild>
 				<Button className={className}>
 					<Plus className="mr-2 h-4 w-4" />
@@ -43,47 +51,79 @@ export function CreateShortUrlDrawer({ className }: { readonly className?: strin
 				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
-				<div className="grid gap-1.5 py-4 px-8 text-center sm:text-left">
-					<h2 className="text-lg font-semibold leading-none tracking-tight">New short URL</h2>
-					<p className="text-sm text-muted-foreground">
-						This will create a new short URL that will redirect to the specified destination.
-					</p>
-				</div>
-
-				<form action={formAction}>
-					<div className="grid gap-4 py-4 px-8">
-						<div className="grid gap-4">
-							<div>
-								<Label htmlFor="url">Destination</Label>
-								<Input
-									id="url"
-									name="url"
-									placeholder="https://example.com"
-									className="col-span-3"
-									required
-								/>
-							</div>
-							<div>
-								<Label htmlFor="vanity">Custom URL</Label>
-								<Input
-									id="vanity"
-									name="vanity"
-									placeholder="MySuperCustomUrl"
-									className="col-span-3"
-								/>
-								<Callout type="warning">
-									<p className="text-sm">
-										You can specify a custom URL for your short URL. If the custom URL is already
-										taken or you don't provide a value, a random one will be generated.
-									</p>
-								</Callout>
+				{createdLink ? (
+					<>
+						<div className="grid gap-1.5 py-4 px-8 text-center sm:text-left">
+							<h2 className="text-lg font-semibold leading-none tracking-tight">Short URL created</h2>
+							<p className="text-sm text-muted-foreground">
+								The link lives on the YOURLS instance of this service. Copy it from below - the URL is
+								not listed anywhere in this dashboard.
+							</p>
+						</div>
+						<div className="grid gap-2 py-4 px-8">
+							<Label htmlFor="created-short-url">Short URL</Label>
+							<div className="flex gap-2">
+								<Input id="created-short-url" className="flex-1" readOnly value={createdLink} />
+								<Button type="button" variant="outline" size="icon" onClick={copyLink}>
+									<Copy className="h-4 w-4" />
+								</Button>
 							</div>
 						</div>
-						<Button type="submit" className="mb-4 w-full">
-							Submit
-						</Button>
-					</div>
-				</form>
+						<div className="grid gap-2 pb-6 px-8 sm:flex sm:justify-end">
+							<Button type="button" variant="outline" onClick={() => setCreatedLink(undefined)}>
+								Create another
+							</Button>
+							<Button type="button" onClick={() => handleOpenChange(false)}>
+								Done
+							</Button>
+						</div>
+					</>
+				) : (
+					<>
+						<div className="grid gap-1.5 py-4 px-8 text-center sm:text-left">
+							<h2 className="text-lg font-semibold leading-none tracking-tight">New short URL</h2>
+							<p className="text-sm text-muted-foreground">
+								This will create a new short URL that will redirect to the specified destination.
+							</p>
+						</div>
+
+						<form action={formAction}>
+							<div className="grid gap-4 py-4 px-8">
+								<div className="grid gap-4">
+									<div>
+										<Label htmlFor="url">Destination</Label>
+										<Input
+											id="url"
+											name="url"
+											placeholder="https://example.com"
+											className="col-span-3"
+											required
+										/>
+									</div>
+									<div>
+										<Label htmlFor="vanity">Custom URL</Label>
+										<Input
+											id="vanity"
+											name="vanity"
+											placeholder="MySuperCustomUrl"
+											className="col-span-3"
+										/>
+										<Callout type="warning">
+											<p className="text-sm">
+												You can specify a custom URL for your short URL. If the custom URL is
+												already taken or you don't provide a value, a random one will be
+												generated.
+											</p>
+										</Callout>
+									</div>
+								</div>
+								<Button type="submit" className="mb-4 w-full" disabled={isPending}>
+									Submit
+								</Button>
+							</div>
+						</form>
+					</>
+				)}
 			</DrawerContent>
 		</Drawer>
 	);

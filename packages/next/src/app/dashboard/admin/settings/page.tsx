@@ -51,6 +51,7 @@ export default async function DashboardAdminSettingsServicePage() {
 		uploads: [] as Setting[],
 		users: [] as Setting[],
 		other: [] as Setting[],
+		shortener: [] as Setting[],
 		customization: [] as Setting[],
 		email: [] as Setting[],
 		legal: [] as Setting[]

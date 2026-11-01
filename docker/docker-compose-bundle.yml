@@ -34,7 +34,6 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE:-safestorage}
       MARIADB_USER: ${MARIADB_USER:-safestorage}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD:-safestorage}
-      TZ: ${TZ:-UTC}
     volumes:
       - mariadb:/var/lib/mysql
     healthcheck:
@@ -75,15 +74,12 @@ services:
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
       KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-}
       KEYCLOAK_RESTRICT: ${KEYCLOAK_RESTRICT:-}
-      RECAPTCHA_CLIENTID: ${RECAPTCHA_CLIENTID:-}
-      RECAPTCHA_CLIENTSECRET: ${RECAPTCHA_CLIENTSECRET:-}
+      # The reCAPTCHA keys and the timezone are not environment variables any
+      # more: they live in the database and are edited in Admin → Settings.
       # The single connection string the application and the migrations use. It is
       # assembled here from the MariaDB settings above; `DATABASE_URL` from the
       # `.env` file is intentionally not used by this stack.
       DATABASE_URL: mysql://${MARIADB_USER:-safestorage}:${MARIADB_PASSWORD:-safestorage}@mariadb:3306/${MARIADB_DATABASE:-safestorage}
-      # Used for the timestamps in the container logs (IANA name, e.g.
-      # `America/Sao_Paulo`). Read at boot, so a change needs --force-recreate.
-      TZ: ${TZ:-UTC}
     volumes:
       - uploads:/app/uploads
       - logs:/app/logs

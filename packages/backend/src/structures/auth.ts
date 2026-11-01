@@ -94,15 +94,6 @@ export const verifyAccountPassword = async (email: string, password: string): Pr
 	return constantTimeEquals(account.password, password);
 };
 
-// --- reCAPTCHA --------------------------------------------------------------
-
-export const RECAPTCHA_SITE_KEY = unquote(process.env.RECAPTCHA_CLIENTID ?? '');
-export const RECAPTCHA_SECRET_KEY = unquote(process.env.RECAPTCHA_CLIENTSECRET ?? '');
-
-// Both halves are required: the site key is what the form embeds, the secret is
-// what verifies the answer, and a half-configured captcha only breaks logins.
-export const recaptchaEnabled = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_SECRET_KEY);
-
 // --- Keycloak ---------------------------------------------------------------
 
 export const KEYCLOAK_BASE_URL = unquote(process.env.KEYCLOAK_BASE_URL ?? '').replace(/\/+$/, '');

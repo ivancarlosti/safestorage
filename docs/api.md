@@ -185,13 +185,13 @@ Albums belong to the user that created them and can be shared with other people 
 
 ### Links (URL shortener)
 
-| Method | Path                      | Access | Description                          |
-| ------ | ------------------------- | ------ | ------------------------------------ |
-| GET    | `/links`                  | Auth   | List the user's links.               |
-| POST   | `/link/create`            | Auth   | Create a short link.                 |
-| DELETE | `/link/:identifier`       | Auth   | Delete a short link.                 |
-| GET    | `/link/:identifier`       | Public | Resolve a short link.                |
-| GET    | `/link/:identifier/count` | Public | Increment a short link's view count. |
+Short URLs are created on the YOURLS instance configured in **Admin → Settings → Shortener**. SafeStorage does not store them, so there is no listing, resolution or deletion endpoint: those are handled in the YOURLS admin area.
+
+| Method | Path           | Access | Description                                            |
+| ------ | -------------- | ------ | ------------------------------------------------------ |
+| POST   | `/link/create` | Auth   | Create a short link on the configured YOURLS instance. |
+
+The body is `{ "url": "https://example.com", "vanity": "optional-keyword" }` and the answer carries `link.link` (the short URL), `link.identifier` (the YOURLS keyword) and `link.destination`. Failures: `400` when the destination is not an http(s) URL, `409` when the keyword is taken, `501` while the shortener is disabled or unconfigured, `502`/`504` when YOURLS refuses the link or does not answer.
 
 ### Snippets
 
@@ -253,13 +253,6 @@ All routes below require the **admin** role, except the two marked **Owner**. Pa
 | POST   | `/ip/unban`       | Unban an IP.                   |
 | POST   | `/ip/files`       | List files coming from an IP.  |
 | POST   | `/ip/files/purge` | Purge files coming from an IP. |
-
-**Links**
-
-| Method | Path                | Description      |
-| ------ | ------------------- | ---------------- |
-| GET    | `/links`            | List every link. |
-| DELETE | `/link/:identifier` | Delete any link. |
 
 **Service**
 

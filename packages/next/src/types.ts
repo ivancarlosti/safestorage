@@ -181,7 +181,6 @@ export interface AlbumShareResponse {
 	type: 'invite' | 'member';
 }
 
-
 export type ViewMode = 'list' | 'thumbs';
 
 export const enum MessageType {
@@ -262,19 +261,6 @@ export interface Snippet {
 	parentUuid: string;
 	raw: string;
 	uuid: string;
-}
-
-export interface Link {
-	createdAt: string;
-	destination: string;
-	identifier: string;
-	link: string;
-	user?: {
-		username: string;
-		uuid: string;
-	};
-	uuid: string;
-	views: number;
 }
 
 export interface StorageQuota {

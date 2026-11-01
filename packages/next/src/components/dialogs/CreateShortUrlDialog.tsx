@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useActionState } from 'react';
 import { MessageType } from '@/types';
-import { Plus } from 'lucide-react';
+import { Copy, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCopyToClipboard } from 'usehooks-ts';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +23,9 @@ import { Callout } from '../mdx/Callout';
 
 export function CreateShortUrlDialog({ className }: { readonly className?: string }) {
 	const [open, setOpen] = useState(false);
-	const [state, formAction] = useActionState(createShortURL, {
+	const [createdLink, setCreatedLink] = useState<string>();
+	const [, copy] = useCopyToClipboard();
+	const [state, formAction, isPending] = useActionState(createShortURL, {
 		message: '',
 		type: MessageType.Uninitialized
 	});
@@ -31,19 +34,24 @@ export function CreateShortUrlDialog({ className }: { readonly className?: strin
 		if (state.type === MessageType.Error) toast.error(state.message);
 		else if (state.type === MessageType.Success) {
 			toast.success(state.message);
-			setOpen(false);
+			setCreatedLink(state.link);
 		}
+	}, [state]);
 
-		return () => {
-			if (state.type === MessageType.Success) {
-				state.type = MessageType.Uninitialized;
-				state.message = '';
-			}
-		};
-	}, [state, state.message, state.type]);
+	const handleOpenChange = (value: boolean) => {
+		setOpen(value);
+		if (!value) setCreatedLink(undefined);
+	};
+
+	const copyLink = () => {
+		if (!createdLink) return;
+
+		void copy(createdLink);
+		toast.success('Short URL copied to the clipboard');
+	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>
 				<Button className={className}>
 					<Plus className="mr-2 h-4 w-4" />
@@ -51,46 +59,77 @@ export function CreateShortUrlDialog({ className }: { readonly className?: strin
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="w-11/12">
-				<form action={formAction}>
-					<DialogHeader>
-						<DialogTitle>New short URL</DialogTitle>
-						<DialogDescription>
-							This will create a new short URL that will redirect to the specified destination.
-						</DialogDescription>
-					</DialogHeader>
-					<div className="grid gap-4 mb-4">
-						<div className="grid gap-4 mt-4">
-							<div>
-								<Label htmlFor="url">Destination</Label>
-								<Input
-									id="url"
-									name="url"
-									placeholder="https://example.com"
-									className="col-span-3"
-									required
-								/>
-							</div>
-							<div>
-								<Label htmlFor="vanity">Custom URL</Label>
-								<Input
-									id="vanity"
-									name="vanity"
-									placeholder="MySuperCustomUrl"
-									className="col-span-3"
-								/>
-								<Callout type="warning">
-									<p className="text-sm">
-										You can specify a custom URL for your short URL. If the custom URL is already
-										taken or you don't provide a value, a random one will be generated.
-									</p>
-								</Callout>
+				{createdLink ? (
+					<>
+						<DialogHeader>
+							<DialogTitle>Short URL created</DialogTitle>
+							<DialogDescription>
+								The link lives on the YOURLS instance of this service. Copy it from below - the URL is
+								not listed anywhere in this dashboard.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="grid gap-2 mb-4">
+							<Label htmlFor="created-short-url">Short URL</Label>
+							<div className="flex gap-2">
+								<Input id="created-short-url" className="flex-1" readOnly value={createdLink} />
+								<Button type="button" variant="outline" size="icon" onClick={copyLink}>
+									<Copy className="h-4 w-4" />
+								</Button>
 							</div>
 						</div>
-					</div>
-					<DialogFooter>
-						<Button type="submit">Submit</Button>
-					</DialogFooter>
-				</form>
+						<DialogFooter>
+							<Button type="button" variant="outline" onClick={() => setCreatedLink(undefined)}>
+								Create another
+							</Button>
+							<Button type="button" onClick={() => handleOpenChange(false)}>
+								Done
+							</Button>
+						</DialogFooter>
+					</>
+				) : (
+					<form action={formAction}>
+						<DialogHeader>
+							<DialogTitle>New short URL</DialogTitle>
+							<DialogDescription>
+								This will create a new short URL that will redirect to the specified destination.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="grid gap-4 mb-4">
+							<div className="grid gap-4 mt-4">
+								<div>
+									<Label htmlFor="url">Destination</Label>
+									<Input
+										id="url"
+										name="url"
+										placeholder="https://example.com"
+										className="col-span-3"
+										required
+									/>
+								</div>
+								<div>
+									<Label htmlFor="vanity">Custom URL</Label>
+									<Input
+										id="vanity"
+										name="vanity"
+										placeholder="MySuperCustomUrl"
+										className="col-span-3"
+									/>
+									<Callout type="warning">
+										<p className="text-sm">
+											You can specify a custom URL for your short URL. If the custom URL is
+											already taken or you don't provide a value, a random one will be generated.
+										</p>
+									</Callout>
+								</div>
+							</div>
+						</div>
+						<DialogFooter>
+							<Button type="submit" disabled={isPending}>
+								Submit
+							</Button>
+						</DialogFooter>
+					</form>
+				)}
 			</DialogContent>
 		</Dialog>
 	);
