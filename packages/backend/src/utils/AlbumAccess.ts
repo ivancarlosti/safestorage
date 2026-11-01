@@ -58,3 +58,18 @@ export const fileAccessWhere = (userId: number, uuid?: string): Prisma.filesWher
 	if (uuid) where.uuid = uuid;
 	return where;
 };
+
+/*
+	A file uploaded through a public album link has no uploader (files.userId is
+	null), so it belongs to the owner of the album it was uploaded to. Files with an
+	uploader stay tied to that user, which keeps members of a shared album from
+	managing the files of others.
+*/
+export const fileOwnerWhere = (userId: number, uuid?: string): Prisma.filesWhereInput => {
+	const where: Prisma.filesWhereInput = {
+		OR: [{ userId }, { userId: null, albums: { some: { userId } } }]
+	};
+
+	if (uuid) where.uuid = uuid;
+	return where;
+};

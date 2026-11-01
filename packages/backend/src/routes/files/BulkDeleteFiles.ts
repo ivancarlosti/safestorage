@@ -5,6 +5,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { fileOwnerWhere } from '@/utils/AlbumAccess.js';
 import { deleteFiles } from '@/utils/File.js';
 
 export const schema = {
@@ -42,7 +43,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			uuid: {
 				in: files
 			},
-			userId: req.user.id
+			...fileOwnerWhere(req.user.id)
 		},
 		select: {
 			uuid: true,
@@ -54,17 +55,18 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		}
 	});
 
-	if (!files.length) {
+	if (!dbFiles.length) {
 		void res.notFound('No files found to delete');
 		return;
 	}
 
-	// Delete files from the DB
+	// Delete files from the DB, restricted to the files that were just resolved as deletable
 	await prisma.files.deleteMany({
 		where: {
 			uuid: {
-				in: files
-			}
+				in: dbFiles.map(file => file.uuid)
+			},
+			...fileOwnerWhere(req.user.id)
 		}
 	});
 

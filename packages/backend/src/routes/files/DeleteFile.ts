@@ -5,6 +5,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { fileOwnerWhere } from '@/utils/AlbumAccess.js';
 import { deleteFiles } from '@/utils/File.js';
 
 export const schema = {
@@ -35,10 +36,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { uuid } = req.params as { uuid: string };
 
 	const file = await prisma.files.findFirst({
-		where: {
-			userId: req.user.id,
-			uuid
-		},
+		where: fileOwnerWhere(req.user.id, uuid),
 		select: {
 			uuid: true,
 			name: true,

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useMemo } from 'react';
 import type { File, FilePropsType } from '@/types';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useSearchParams } from 'next/navigation';
+import { useIsClient } from 'usehooks-ts';
 import { currentTypeAtom, allFilesAtom } from '@/lib/atoms/fileDialog';
 import { useUploadsQuery } from '@/hooks/useUploadsQuery';
 import { FilesTable } from './tables/files-table/FilesTable';
@@ -180,7 +181,16 @@ export function FilesWrapper({
 	const setCurrentType = useSetAtom(currentTypeAtom);
 	const showMasonry = useAtomValue(isMasonryViewAtom);
 	const albumViewMode = useAtomValue(albumViewModeAtom);
-	const showMasonryFiles = albumViewMode ? albumViewMode === 'thumbs' : showMasonry;
+	/*
+		The album view mode is published by AlbumViewModeSync from an effect, and this
+		component lives in a streamed boundary that can hydrate after that effect ran.
+		The server always renders the masonry branch (the column count is measured in
+		the browser), so honouring the album mode before this boundary has mounted
+		would replace server-rendered markup with a table and break hydration. The
+		mode is therefore only applied once the component is mounted on the client.
+	*/
+	const isClient = useIsClient();
+	const showMasonryFiles = isClient && albumViewMode ? albumViewMode === 'thumbs' : showMasonry;
 
 	const filesToUse = useMemo(() => {
 		return (files?.length ? files : isUploads || isAlbumUploads ? (data?.files ?? []) : []).map((file, index) => ({

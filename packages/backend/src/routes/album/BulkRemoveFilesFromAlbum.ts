@@ -5,7 +5,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
-import { getAlbumAccess } from '@/utils/AlbumAccess.js';
+import { getAlbumAccess, fileOwnerWhere } from '@/utils/AlbumAccess.js';
 import { logError } from '@/utils/Logger.js';
 
 export const schema = {
@@ -79,9 +79,11 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			}
 
 			/*
-				Only the files uploaded by the caller can be taken out of an album. Members
-				of a shared album see the files of the owner, so the check happens up front
-				instead of letting the update blow up with a 500.
+				Only files the caller can manage can be taken out of an album: the ones
+				they uploaded, plus anonymous uploads (files.userId is null) that belong
+				to an album they own. Members of a shared album see the files of the
+				owner, so the check happens up front instead of letting the update blow
+				up with a 500.
 			*/
 			const uniqueFiles = [...new Set(files)];
 			const ownedFiles = await prisma.files.findMany({
@@ -89,9 +91,10 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 					uuid: {
 						in: uniqueFiles
 					},
-					userId: req.user.id
+					...fileOwnerWhere(req.user.id)
 				},
 				select: {
+					id: true,
 					uuid: true
 				}
 			});
@@ -101,11 +104,10 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 				return;
 			}
 
-			for (const file of uniqueFiles) {
+			for (const file of ownedFiles) {
 				await prisma.files.update({
 					where: {
-						uuid: file,
-						userId: req.user.id
+						id: file.id
 					},
 					data: {
 						albums: {

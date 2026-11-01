@@ -100,11 +100,12 @@ export default async function PublicAlbumPage({
 			<div className="px-2 w-full flex h-full flex-grow flex-col">
 				<FilesListNsfwToggle nsfw={response.album.isNsfw}>
 					<div className="grid gap-4">
-						<AlbumViewModeSync viewMode={response.album.viewMode ?? 'thumbs'} />
 						{response.album.allowUploads ? (
 							<PublicAlbumUploader identifier={identifier} hideFiles={response.album.hideFiles} />
 						) : null}
 						<Suspense>
+							{/* Rendered inside the boundary so the file list is mounted before the mode is applied. */}
+							<AlbumViewModeSync viewMode={response.album.viewMode ?? 'thumbs'} />
 							<PublicAlbumFiles
 								identifier={identifier}
 								initialResponse={response}

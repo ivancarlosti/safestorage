@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, LayoutDashboardIcon, SearchIcon, TableIcon }
 import type { FilePropsType } from '@/types';
 import { useUploadsQuery } from '@/hooks/useUploadsQuery';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useIsClient } from 'usehooks-ts';
 import { isMasonryViewAtom, albumViewModeAtom } from '@/lib/atoms/settings';
 import { updateAlbumViewMode } from '@/actions/UpdateAlbumSettings';
 import { selectedAlbumAtom } from '@/lib/atoms/albumSettingsDialog';
@@ -44,7 +45,14 @@ export function Pagination({
 	const albumViewMode = useAtomValue(albumViewModeAtom);
 	const setAlbumViewMode = useSetAtom(albumViewModeAtom);
 	const setSelectedAlbum = useSetAtom(selectedAlbumAtom);
-	const showMasonryView = albumViewMode ? albumViewMode === 'thumbs' : showMasonry;
+	/*
+		Same reasoning as FilesWrapper: the toggle lives in a streamed boundary, so the
+		album mode is only known after AlbumViewModeSync's effect, which can run before
+		this boundary hydrates. Until the component is mounted it mirrors the server
+		markup (the global preference), then follows the album.
+	*/
+	const isClient = useIsClient();
+	const showMasonryView = isClient && albumViewMode ? albumViewMode === 'thumbs' : showMasonry;
 
 	const toggleViewMode = useCallback(() => {
 		const nextViewMode = showMasonryView ? 'list' : 'thumbs';

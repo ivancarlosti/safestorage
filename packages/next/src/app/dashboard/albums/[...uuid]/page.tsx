@@ -81,8 +81,9 @@ export default async function AlbumPage({
 			<div className="px-2 w-full">
 				<HydrationBoundary state={dehydrate(queryClient)}>
 					<div className="grid gap-4">
-						<AlbumViewModeSync viewMode={response.viewMode ?? 'thumbs'} />
 						<Suspense>
+							{/* Rendered inside the boundary so the file list is mounted before the mode is applied. */}
+							<AlbumViewModeSync viewMode={response.viewMode ?? 'thumbs'} />
 							<Pagination type="album" albumUuid={uuid} />
 							<FilesWrapper type="album" albumUuid={uuid} />
 							<Pagination type="album" albumUuid={uuid} />
