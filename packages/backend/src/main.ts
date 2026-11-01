@@ -5,7 +5,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import fstatic from '@fastify/static';
 import type { FastifyError } from 'fastify';
-import fastify from 'fastify';
+import fastify, { LogController } from 'fastify';
 import { jsonSchemaTransform } from 'fastify-type-provider-zod';
 import jetpack from 'fs-jetpack';
 import { cleanup } from 'unzipit';
@@ -26,7 +26,11 @@ const server = fastify({
 	// Fastify 5 no longer accepts a pre-built logger through `logger` (it only
 	// takes a configuration object); a ready-made pino instance goes here.
 	loggerInstance: log,
-	disableRequestLogging: true
+	// Request logging is disabled here too, but through the controller: the
+	// top-level `disableRequestLogging` option is deprecated (FSTDEP023) and is
+	// removed in fastify@6. The `onRequest`/`onResponse` hooks below write the
+	// request lines instead.
+	logController: new LogController({ disableRequestLogging: true })
 });
 
 const watcher = getFileWatcher();

@@ -144,11 +144,13 @@ The release pipeline ([`.github/workflows/build.yml`](../.github/workflows/build
 
 ### What runs inside
 
-| Process  | Command                        | Listens on       | Role                             |
-| -------- | ------------------------------ | ---------------- | -------------------------------- |
-| nginx    | `nginx -g "daemon off;"`       | `0.0.0.0:80`     | Reverse proxy + static uploads   |
-| backend  | `node dist/main.js`            | `127.0.0.1:8000` | Fastify API, uploads, thumbnails |
-| frontend | `node packages/next/server.js` | `127.0.0.1:8001` | Next.js standalone server        |
+| Process  | Command                         | Listens on       | Role                             |
+| -------- | ------------------------------- | ---------------- | -------------------------------- |
+| nginx    | `/usr/local/bin/start-nginx.sh` | `0.0.0.0:80`     | Reverse proxy + static uploads   |
+| backend  | `node dist/main.js`             | `127.0.0.1:8000` | Fastify API, uploads, thumbnails |
+| frontend | `node packages/next/server.js`  | `127.0.0.1:8001` | Next.js standalone server        |
+
+The nginx command is a wrapper: [`container/start-nginx.sh`](../container/start-nginx.sh) waits until `http://127.0.0.1:8000/api/health` (backend) and `http://127.0.0.1:8001/` (frontend) answer — up to `NGINX_WAIT_ATTEMPTS` × 2 s, 2 minutes by default — before `exec`ing nginx, so a cold boot does not fill the logs with `connect() failed (111: Connection refused)` upstream errors.
 
 Routing (from [`container/nginx.conf`](../container/nginx.conf)):
 

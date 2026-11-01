@@ -117,6 +117,8 @@ Note that when network storage is enabled **all** uploads go to the bucket, so a
 
 **The container is `unhealthy`.** The healthcheck requires both `GET /api/health` and `/` to answer through nginx. Check the logs — usually the backend failed to start (bad env, migration error) or the frontend build is missing. Give it up to 60s on first boot.
 
+**`connect() failed (111: Connection refused) ... upstream` in the logs.** nginx received a request before the backend (or the frontend) was listening. The image starts nginx through `container/start-nginx.sh`, which waits for both upstreams before binding port 80, so this should no longer appear on a normal boot; if it does, the target process is down — look for a Fastify crash (bad env, failed migration) or a missing frontend build in `docker compose logs`.
+
 **`Permission denied` writing uploads.** The bind-mounted folders are created by Docker as `root`. Either create `uploads/` and `logs/` yourself with the right ownership before `up`, or run the container as a user that can write them.
 
 **Migrations fail because another process is running them.** Only one party should own the schema: if you apply migrations yourself, set `SKIP_MIGRATIONS=1` so the entrypoint does not run them too.

@@ -15,6 +15,7 @@ SafeStorage is configured in two places:
 | `SHADOW_DATABASE_URL`     | Prisma CLI (dev)     | _(none)_                | Optional throwaway database for `prisma migrate dev`. Never used by `migrate deploy`.    |
 | `SKIP_MIGRATIONS`         | container entrypoint | _(unset)_               | If set to any non-empty value, the entrypoint skips `prisma migrate deploy` on start.   |
 | `DB_WAIT_ATTEMPTS`        | container entrypoint | `60`                    | How many times (every 2 s) the entrypoint retries the migrations while the database boots. |
+| `NGINX_WAIT_ATTEMPTS`     | container nginx      | `60`                    | How many times (every 2 s) `start-nginx.sh` waits for the backend and the frontend before starting nginx. |
 | `SAFESTORAGE_VERSION`     | backend / frontend   | `dev`                   | Release version stamp, shown in `/api/version`, the admin panel and the startup banner. |
 | `SAFESTORAGE_COMMIT`      | backend              | `unknown`               | Git commit stamp of the running build.                                                  |
 | `BASE_API_URL`            | frontend (dev)       | `http://localhost:8000` | Target of the development `/api` rewrite. Not used in production.                       |

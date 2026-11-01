@@ -130,9 +130,12 @@ COPY --from=builder /app/packages/next/public ./frontend/packages/next/public
 COPY container/nginx.conf /etc/nginx/nginx.conf
 COPY container/supervisord.conf /etc/supervisor/safestorage.conf
 COPY container/entrypoint.sh /usr/local/bin/entrypoint.sh
+# Wrapper that waits for the backend and the frontend before nginx binds :80,
+# so booting does not log "connect() failed" upstream errors.
+COPY container/start-nginx.sh /usr/local/bin/start-nginx.sh
 COPY --from=builder /app/.version /app/.commit ./version/
 
-RUN chmod +x /usr/local/bin/entrypoint.sh \
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/start-nginx.sh \
  && rm -f /etc/nginx/http.d/default.conf \
  && mkdir -p \
 	/app/uploads/live \

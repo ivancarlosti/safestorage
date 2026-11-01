@@ -150,8 +150,6 @@ Albums belong to the user that created them and can be shared with other people 
 - Members can read the album, upload files into it and add or remove **their own** files. Only the album owner can rename, delete or purge the album and manage its public links. Purging an album deletes only the files the owner uploaded.
 - Deleting the album ends every membership; removing a member leaves the files they uploaded in the album.
 
-> `GET /album/:identifier/zip` exists in the source but its URL is **commented out**, so it is not registered and cannot be called.
-
 ### Files
 
 | Method | Path                               | Access        | Description                                                   |
@@ -253,5 +251,3 @@ All routes below require the **admin** role, except the two marked **Owner**. Pa
 | GET    | `/service/statistics`  | Get server statistics.                      |
 | GET    | `/service/diagnostic`  | Get a diagnostic report about the instance. |
 | GET    | `/service/updateCheck` | Check whether a newer release exists.       |
-
-> `POST /admin/file/:uuid/unzip` exists in the source but its URL is **commented out**, so it is not registered.

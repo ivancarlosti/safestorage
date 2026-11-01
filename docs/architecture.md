@@ -24,7 +24,7 @@ SafeStorage is a TypeScript monorepo that ships as a single container. This page
 | `packages/next`     | Next.js 14 (App Router) frontend: pages, components, Jotai stores, TanStack Query, Tailwind. |
 | `packages/uploader-module` | Server-side chunked/busboy upload handler (vendored, first-party).                    |
 | `packages/uploader-client` | Browser-side chunked upload client (vendored, first-party).                           |
-| `container`         | `nginx.conf`, `supervisord.conf` and `entrypoint.sh` baked into the image.                   |
+| `container`         | `nginx.conf`, `supervisord.conf`, `entrypoint.sh` and the `start-nginx.sh` readiness wrapper baked into the image. |
 | `docker`            | `docker-compose.yml` (external database), `docker-compose-bundle.yml` (bundled MariaDB) and `.env.example` for operators. |
 | `docs`              | This documentation.                                                                          |
 | `.github/workflows` | Code review, release, image build, README sync, keepalive.                                   |
@@ -87,6 +87,7 @@ The frontend version is injected at build time (`NEXT_PUBLIC_VERSION`, read from
 
 -   **`container/nginx.conf`** — single server block: `/api/` and `/docs` → backend, existing files under `/app/uploads` → disk, everything else → frontend. Bodies are streamed (`client_max_body_size 0`, no request buffering) to support multi-gigabyte uploads.
 -   **`container/supervisord.conf`** — supervises `backend`, `frontend` and `nginx`, each logging to stdout/stderr.
+-   **`container/start-nginx.sh`** — starts nginx only after `127.0.0.1:8000/api/health` and `127.0.0.1:8001/` answer (bounded by `NGINX_WAIT_ATTEMPTS`, 2 minutes by default), so supervisord launching all three processes at once does not log `connect() failed` upstream errors while booting.
 -   **`container/entrypoint.sh`** — prints the version banner, creates the writable folders, requires `DATABASE_URL`, waits for MariaDB/MySQL to accept connections, applies Prisma migrations (unless `SKIP_MIGRATIONS` is set) and `exec`s supervisord.
 
 See [Deployment](deployment.md) for the full build/run details.
