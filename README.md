@@ -32,7 +32,7 @@ It runs as **one container** (nginx + Fastify backend + Next.js frontend) and ke
 ## Features
 
 -   📤 **Chunked & huge uploads** — multi-gigabyte files, straight through nginx without buffering.
--   🔗 **Short links** — shareable URLs, plus short URLs through your own YOURLS instance.
+-   🔗 **Short links** — shareable URLs, plus short URLs through your own YOURLS instance, straight from a file's Actions menu.
 -   🖼️ **Albums & tags** — organise, sort (custom default order) and share public albums.
 -   🖱️ **Thumbnails** — automatic image thumbnails and video previews (bundled `ffmpeg`).
 -   🌐 **S3-compatible storage** — AWS S3, Backblaze B2, Cloudflare R2, Wasabi, MinIO, …

@@ -98,6 +98,12 @@ export function FileDialog() {
 			return;
 		}
 
+		// The toolbar opens dialogs with forms (e.g. the destination of a short URL):
+		// do not flip files while the user is typing in one of them.
+		if (event.target instanceof HTMLElement && event.target.closest('form')) {
+			return;
+		}
+
 		if (event.key === 'ArrowLeft') {
 			findPreviousFile();
 		} else if (event.key === 'ArrowRight') {

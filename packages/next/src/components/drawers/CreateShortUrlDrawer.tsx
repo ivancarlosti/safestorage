@@ -13,8 +13,22 @@ import { createShortURL } from '@/actions/LinksActions';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { Callout } from '../mdx/Callout';
 
-export function CreateShortUrlDrawer({ className }: { readonly className?: string }) {
-	const [open, setOpen] = useState(false);
+export function CreateShortUrlDrawer({
+	className,
+	defaultUrl,
+	onOpenChange,
+	open: controlledOpen
+}: {
+	readonly className?: string | undefined;
+	readonly defaultUrl?: string | undefined;
+	readonly onOpenChange?: ((open: boolean) => void) | undefined;
+	readonly open?: boolean | undefined;
+}) {
+	// Callers that open this drawer from the Actions drawer own the open state,
+	// so the two vaul drawers do not stack their overlays on top of each other.
+	const isControlled = controlledOpen !== undefined;
+	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+	const open = controlledOpen ?? uncontrolledOpen;
 	const [createdLink, setCreatedLink] = useState<string>();
 	const [, copy] = useCopyToClipboard();
 	const [state, formAction, isPending] = useActionState(createShortURL, {
@@ -31,7 +45,8 @@ export function CreateShortUrlDrawer({ className }: { readonly className?: strin
 	}, [state]);
 
 	const handleOpenChange = (value: boolean) => {
-		setOpen(value);
+		if (!isControlled) setUncontrolledOpen(value);
+		onOpenChange?.(value);
 		if (!value) setCreatedLink(undefined);
 	};
 
@@ -44,12 +59,14 @@ export function CreateShortUrlDrawer({ className }: { readonly className?: strin
 
 	return (
 		<Drawer open={open} onOpenChange={handleOpenChange}>
-			<DrawerTrigger asChild>
-				<Button className={className}>
-					<Plus className="mr-2 h-4 w-4" />
-					Create short URL
-				</Button>
-			</DrawerTrigger>
+			{isControlled ? null : (
+				<DrawerTrigger asChild>
+					<Button className={className}>
+						<Plus className="mr-2 h-4 w-4" />
+						Create short URL
+					</Button>
+				</DrawerTrigger>
+			)}
 			<DrawerContent>
 				{createdLink ? (
 					<>
@@ -97,6 +114,7 @@ export function CreateShortUrlDrawer({ className }: { readonly className?: strin
 											name="url"
 											placeholder="https://example.com"
 											className="col-span-3"
+											defaultValue={defaultUrl}
 											required
 										/>
 									</div>

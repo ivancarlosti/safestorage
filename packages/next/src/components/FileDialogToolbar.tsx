@@ -3,13 +3,14 @@ import {
 	CircleSlashIcon,
 	DownloadIcon,
 	GalleryThumbnailsIcon,
+	Link2Icon,
 	LinkIcon,
 	SquareArrowOutUpRight,
 	Trash2Icon
 } from 'lucide-react';
 import { Tooltip } from './Tooltip';
 import { Button } from './ui/button';
-import { useEffect, type PropsWithChildren } from 'react';
+import { useEffect, useState, type PropsWithChildren } from 'react';
 import { MessageType, type FilePropsType, type FileWithAdditionalData } from '@/types';
 import { useCopyToClipboard, useMediaQuery } from 'usehooks-ts';
 import { buttonVariants } from '@/styles/button';
@@ -22,11 +23,13 @@ import {
 } from '@/actions/FileDialogActions';
 import { toast } from 'sonner';
 import { FileDialogInformation } from './FileDialogInformation';
-import { useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { confirmationDialogAtom } from '@/lib/atoms/dialogs/confirmationDialog';
 import { isDialogOpenAtom } from '@/lib/atoms/fileDialog';
+import { settingsAtom } from '@/lib/atoms/settings';
 import { useServerAction } from '@/hooks/useServerAction';
 import { useQueryClient } from '@tanstack/react-query';
+import { CreateShortUrlDialog } from './dialogs/CreateShortUrlDialog';
 
 export const FileDialogToolbar = ({
 	file,
@@ -35,6 +38,13 @@ export const FileDialogToolbar = ({
 	const [_, copy] = useCopyToClipboard();
 	const regenerateThumbailWithUuid = regenerateThumbnail.bind(null, file.uuid);
 	const isMobile = useMediaQuery('(max-width: 768px)');
+	const settings = useAtomValue(settingsAtom);
+	/*
+		Public album pages are unauthenticated and a quarantined file is only
+		reachable once it has been allowed, so a short URL cannot point at either.
+	*/
+	const canShorten = Boolean(settings?.useUrlShortener) && type !== 'publicAlbum' && type !== 'quarantine';
+	const [isShortenOpen, setIsShortenOpen] = useState(false);
 
 	return (
 		<div className="fixed md:-right-12 -top-12 h-10 z-[60] w-screen !pointer-events-auto bg-black flex flex-row justify-center items-center gap-4 md:gap-1 pr-2">
@@ -68,6 +78,14 @@ export const FileDialogToolbar = ({
 				</Button>
 			</Tooltip>
 
+			{canShorten ? (
+				<Tooltip content="Create short URL">
+					<Button size={'icon'} variant={'ghost'} onClick={() => setIsShortenOpen(true)}>
+						<Link2Icon className="h-5 w-5" />
+					</Button>
+				</Tooltip>
+			) : null}
+
 			{type === 'publicAlbum' ? null : (
 				<>
 					<Tooltip content="Regenerate thumbnail">
@@ -93,6 +111,10 @@ export const FileDialogToolbar = ({
 				) : (
 					<QuarantineFileButton uuid={file.uuid} />
 				)
+			) : null}
+
+			{canShorten ? (
+				<CreateShortUrlDialog defaultUrl={file.url} onOpenChange={setIsShortenOpen} open={isShortenOpen} />
 			) : null}
 		</div>
 	);
