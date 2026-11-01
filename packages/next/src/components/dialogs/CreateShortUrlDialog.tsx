@@ -135,7 +135,8 @@ export function CreateShortUrlDialog({
 									<Callout type="warning">
 										<p className="text-sm">
 											You can specify a custom URL for your short URL. If the custom URL is
-											already taken or you don't provide a value, a random one will be generated.
+											already taken, you will be asked to pick another one. If you don't provide a
+											value, a random one will be generated.
 										</p>
 									</Callout>
 								</div>

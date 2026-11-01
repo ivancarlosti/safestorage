@@ -189,7 +189,7 @@ Short URLs are created on the YOURLS instance configured in **Admin → Settings
 | ------ | -------------- | ------ | ------------------------------------------------------ |
 | POST   | `/link/create` | Auth   | Create a short link on the configured YOURLS instance. |
 
-The body is `{ "url": "https://example.com", "vanity": "optional-keyword" }` and the answer carries `link.link` (the short URL), `link.identifier` (the YOURLS keyword) and `link.destination`. Failures: `400` when the destination is not an http(s) URL, `409` when the keyword is taken, `501` while the shortener is disabled or unconfigured, `502`/`504` when YOURLS refuses the link or does not answer.
+The body is `{ "url": "https://example.com", "vanity": "optional-keyword" }` and the answer carries `link.link` (the short URL), `link.identifier` (the YOURLS keyword) and `link.destination`. Failures: `400` when the destination is not an http(s) URL or YOURLS rejects it, `409` when the destination has already been shortened or the custom URL is taken (the message says which one), `501` while the shortener is disabled or unconfigured, `502`/`504` when YOURLS refuses the link for any other reason or does not answer.
 
 ### Admin
 

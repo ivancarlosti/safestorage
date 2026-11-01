@@ -164,6 +164,8 @@ Short URLs are not stored by SafeStorage: they are created on a [YOURLS](https:/
 
 Saving the settings refuses to enable the shortener while either value is missing, and `POST /api/link/create` answers `501` until it is enabled and configured. The instance only creates links: listing and deleting them is left to YOURLS. The legacy `generatedLinksLength` setting and the `shortenedLinks` table are gone; the migration that removes them also drops the links created by the old built-in shortener.
 
+A custom URL is optional, but YOURLS refuses duplicates: when the destination has already been shortened, or when the custom URL is taken or reserved, the API answers `409` with a message naming the conflict (and, for a duplicate destination, the short URL that already redirects there). Leaving the custom URL empty always works, because YOURLS then generates the keyword itself.
+
 While the shortener is enabled, `/dashboard/links` is not the only entry point: the **Actions** menu of every file (dashboard, albums, tags and the admin file lists) and the file preview toolbar carry a **Create short URL** entry that opens the same form with the file's public link already filled in as the destination. It is hidden on public album pages (there is no session to create the link with) and on quarantined files (they are only reachable once allowed).
 
 ### Email
