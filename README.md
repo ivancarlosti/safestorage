@@ -51,9 +51,8 @@ Every image below comes from a real SafeStorage instance, seeded with synthetic 
 | **Login · Account**<br>![The email and password login form](docs/screenshots/login.png)       | **Login · Single sign-on**<br>![The single sign-on login screen](docs/screenshots/login-keycloak.png) |
 | **Landing page**<br>![The public landing page](docs/screenshots/home.png)                     | **Albums**<br>![The album list](docs/screenshots/albums.png)                                          |
 | **Album**<br>![A single album with its files](docs/screenshots/album.png)                     | **Public album**<br>![A shared album page](docs/screenshots/public-album.png)                         |
-| **Tags**<br>![The tag list](docs/screenshots/tags.png)                                        | **Short URLs**<br>![The short URL creation page](docs/screenshots/short-urls.png)                     |
-| **Admin · Settings**<br>![The admin settings page](docs/screenshots/admin-settings.png)       | **Admin · Statistics**<br>![The admin statistics page](docs/screenshots/admin-statistics.png)         |
-| **API reference**<br>![The generated API reference at /docs](docs/screenshots/api-docs.png)   |                                                                                                       |
+| **Tags**<br>![The tag list](docs/screenshots/tags.png)                                        | **Admin · Settings**<br>![The admin settings page](docs/screenshots/admin-settings.png)               |
+| **Admin · Statistics**<br>![The admin statistics page](docs/screenshots/admin-statistics.png) | **API reference**<br>![The generated API reference at /docs](docs/screenshots/api-docs.png)           |
 
 ## Quick start (Docker)
 

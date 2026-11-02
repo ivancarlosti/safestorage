@@ -11,8 +11,7 @@ import {
 	Settings2,
 	Tags,
 	UserPlus,
-	Users,
-	Link
+	Users
 } from 'lucide-react';
 
 import { currentUserAtom } from '@/lib/atoms/currentUser';
@@ -81,9 +80,6 @@ export function DashboardSidebar({ onClick }: { onClick?(): void }) {
 				<DashboardSidebarItem href="/dashboard" name="Uploads" Icon={FileUp} />
 				<DashboardSidebarItem href="/dashboard/albums" name="Albums" Icon={Library} />
 				<DashboardSidebarItem href="/dashboard/tags" name="Tags" Icon={Tags} />
-				{currentSettings?.useUrlShortener ? (
-					<DashboardSidebarItem href="/dashboard/links" name="Short URLs" Icon={Link} />
-				) : null}
 			</nav>
 			<nav className="grid items-start gap-1 mt-4" onClick={() => onClick?.()}>
 				<h3 className="text-muted-foreground text-sm pointer-events-none">Account</h3>

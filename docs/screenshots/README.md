@@ -14,7 +14,6 @@ SafeStorage instance and photographs its pages.
 | `album.png`            | A single album (`/dashboard/albums/<uuid>`)               |
 | `public-album.png`     | Shared album view (`/a/<identifier>`)                     |
 | `tags.png`             | Tag list (`/dashboard/tags`)                              |
-| `short-urls.png`       | Short URL manager (`/dashboard/links`)                    |
 | `admin-settings.png`   | Admin → Settings (`/dashboard/admin/settings`)            |
 | `admin-statistics.png` | Admin → Statistics (`/dashboard/admin/statistics`)        |
 | `api-docs.png`         | The Scalar/OpenAPI reference (`/docs`)                    |

@@ -2,9 +2,9 @@
  * SafeStorage screenshot generator.
  *
  * Logs into a running SafeStorage instance with the configured account, seeds it
- * synthetic demo content (albums, tags, short links and generated
- * images uploaded through the real UI uploader) and then captures the pages
- * referenced from the root README into `docs/screenshots`.
+ * synthetic demo content (albums, tags and generated images uploaded through the
+ * real UI uploader) and then captures the pages referenced from the root README
+ * into `docs/screenshots`.
  *
  * Configuration (all optional):
  *   BASE_URL        Base URL of the account instance (default http://localhost:24424)
@@ -161,8 +161,6 @@ const seedDemoContent = async () => {
 
 	// - without `serveUploadsFrom` the backend builds thumbnail URLs from the Host
 	//   header nginx passes on, which has no port, so every thumbnail 404s.
-	// - short URLs are created on an external YOURLS instance, so nothing is
-	//   enabled here: the "Short URLs" screenshot shows the create-only page.
 	await api('/admin/service/settings', {
 		method: 'POST',
 		body: {
@@ -183,9 +181,6 @@ const seedDemoContent = async () => {
 	for (const name of DEMO_TAGS) {
 		await api('/tag/create', { method: 'POST', body: { name } });
 	}
-
-	// Short URLs are not stored locally any more: they are created on the YOURLS
-	// instance from the settings, so there is nothing to seed for the screenshot.
 
 	// A public link for the first album, so the shared album view can be captured.
 	const albumLink = await api(`/album/${albums[0].uuid}/link`, { method: 'POST', body: {} });
@@ -356,7 +351,6 @@ const main = async () => {
 	await shot('album', `/dashboard/albums/${album.uuid}`, { waitFor: 'img' });
 	await shot('tags', '/dashboard/tags');
 	await shot('public-album', `/a/${seed.albumIdentifier}`, { waitFor: 'img', target: anonymousPage });
-	await shot('short-urls', '/dashboard/links');
 	await shot('admin-settings', '/dashboard/admin/settings');
 	await shot('admin-statistics', '/dashboard/admin/statistics', { fullPage: true });
 	await shot('api-docs', '/docs', { target: anonymousPage });

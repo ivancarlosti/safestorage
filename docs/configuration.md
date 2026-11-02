@@ -154,11 +154,11 @@ _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` ar
 
 ### Shortener
 
-Short URLs are not stored by SafeStorage: they are created on a [YOURLS](https://yourls.org) instance you run yourself, so the links keep working while this service is down and are managed (clicks, edit, delete) in the YOURLS admin area. The dashboard page at `/dashboard/links` therefore only creates links and shows the result once.
+Short URLs are not stored by SafeStorage: they are created on a [YOURLS](https://yourls.org) instance you run yourself, so the links keep working while this service is down and are managed (clicks, edit, delete) in the YOURLS admin area. SafeStorage only creates the link, from the **Create short URL** entry of a file's **Actions** menu, and shows the result once.
 
 | Setting           | Type    | Default   | Description                                                                                              |
 | ----------------- | ------- | --------- | -------------------------------------------------------------------------------------------------------- |
-| `useUrlShortener` | boolean | `false`   | Show the short-URL page and accept `POST /api/link/create`. Requires the two values below.                |
+| `useUrlShortener` | boolean | `false`   | Show the **Create short URL** file action and accept `POST /api/link/create`. Requires the two values below. |
 | `yourlsApiUrl`    | string  | _(empty)_ | Full URL of the YOURLS API endpoint, e.g. `https://sho.rt/yourls-api.php` (the `.php` file, not the site). |
 | `yourlsSignature` | string  | _(empty)_ | Signature token from YOURLS (**Tools → Secure passwordless API call**), used instead of a username and password. Keep it secret. |
 
@@ -166,7 +166,7 @@ Saving the settings refuses to enable the shortener while either value is missin
 
 A custom URL is optional, but YOURLS refuses duplicates: when the destination has already been shortened, or when the custom URL is taken or reserved, the API answers `409` with a message naming the conflict (and, for a duplicate destination, the short URL that already redirects there). Leaving the custom URL empty always works, because YOURLS then generates the keyword itself.
 
-While the shortener is enabled, `/dashboard/links` is not the only entry point: the **Actions** menu of every file (dashboard, albums, tags and the admin file lists) and the file preview toolbar carry a **Create short URL** entry that opens the same form with the file's public link already filled in as the destination. It is hidden on public album pages (there is no session to create the link with) and on quarantined files (they are only reachable once allowed).
+While the shortener is enabled, the **Actions** menu of every file (dashboard, albums, tags and the admin file lists) and the file preview toolbar carry a **Create short URL** entry that opens the form with the file's public link already filled in as the destination. It is hidden on public album pages (there is no session to create the link with) and on quarantined files (they are only reachable once allowed).
 
 ### Email
 
