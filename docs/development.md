@@ -76,6 +76,7 @@ The first time the backend starts it creates the accounts declared in `ACCOUNT_L
 | `yarn dev`                             | Run every workspace's dev server (Turborepo).                   |
 | `yarn build`                           | Build every workspace.                                          |
 | `yarn lint`                            | Lint every workspace (ESLint; the backend also runs a Prettier check). |
+| `yarn test`                            | Run every workspace's tests (Node's test runner through `tsx`; the backend is the only one with tests today). |
 | `yarn format`                          | Format every workspace.                                         |
 | `yarn start`                           | Start the backend (`migrate` + `node dist/main.js`).            |
 | `yarn generate`                        | Generate the Prisma client.                                     |
@@ -92,6 +93,7 @@ The first time the backend starts it creates the accounts declared in `ACCOUNT_L
 | `yarn build`       | `rimraf dist && tsc && node scripts/rewrite-path-aliases.mjs` — compile and rewrite the `@/`/`~/` aliases into relative specifiers. |
 | `yarn dev`         | `tsx watch src/main.ts`.                                |
 | `yarn lint`        | `prettier --check .` + `eslint src`.                    |
+| `yarn test`        | `tsx --test test/*.test.ts` — no database required.     |
 | `yarn format`      | `prettier --write .` + `eslint src --fix`.              |
 | `yarn studio`      | Open Prisma Studio.                                     |
 | `yarn migrate:dev` | Create/apply a dev migration and regenerate the client. |
@@ -117,6 +119,7 @@ Before opening a pull request, run:
 
 ```bash
 yarn lint
+yarn test
 yarn build
 ```
 

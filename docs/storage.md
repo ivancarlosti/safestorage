@@ -17,6 +17,8 @@ SafeStorage can keep uploads in two places, toggled with the **`useNetworkStorag
 
 nginx serves these straight off disk (Range requests included), so downloads do not go through Node. Back up `/app/uploads` along with the database; see [Deployment](deployment.md).
 
+Those files are untrusted content, so nginx answers them with a sandboxing `Content-Security-Policy` and `X-Content-Type-Options: nosniff`: an uploaded `.html`/`.svg` cannot run scripts on the application origin. If you front the folder with your own CDN or reverse proxy, keep those headers — see [Deployment → Uploaded files are untrusted](deployment.md#uploaded-files-are-untrusted).
+
 `serveUploadsFrom` (a full URL, e.g. `https://cdn.example.com`) tells SafeStorage which base URL to use when building public links to those files.
 
 ## Network (S3-compatible) storage

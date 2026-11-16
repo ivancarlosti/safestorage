@@ -16,6 +16,7 @@ import { log, logError } from './utils/Logger.js';
 import Requirements from './utils/Requirements.js';
 import { jumpstartStatistics } from './utils/StatsGenerator.js';
 import { startUpdateCheckSchedule } from './utils/UpdateCheck.js';
+import { applyUploadSecurityHeaders } from './utils/UploadSecurity.js';
 import { createConfiguredAccounts, VERSION } from './utils/Util.js';
 import { fileWatcher, getFileWatcher } from './utils/Watcher.js';
 
@@ -196,7 +197,10 @@ const start = async () => {
 	// Serve uploads only if the user is running in DEV mode
 	if (process.env.NODE_ENV !== 'production') {
 		await server.register(fstatic, {
-			root: fileURLToPath(new URL('../../../uploads', import.meta.url))
+			root: fileURLToPath(new URL('../../../uploads', import.meta.url)),
+			// Same protections nginx applies to /app/uploads in production: an
+			// uploaded file is served as a sandboxed document without scripts.
+			setHeaders: reply => applyUploadSecurityHeaders(reply)
 		});
 	}
 

@@ -15,6 +15,9 @@
 		"lint": {
 			"inputs": ["src/**/*.{ts,tsx}", "**/eslint.config.mjs", "**/.prettierignore", "**/.prettierrc.json"]
 		},
+		"test": {
+			"inputs": ["src/**/*.ts", "test/**/*.ts"]
+		},
 		"format": {
 			"inputs": ["src/**/*.{ts,tsx}", "**/eslint.config.mjs", "**/.prettierignore", "**/.prettierrc.json"]
 		}

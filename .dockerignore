@@ -27,4 +27,5 @@ insomnia.json
 # Documentation and planning notes (not needed to build)
 plans/
 docs/
+docker/
 *.md

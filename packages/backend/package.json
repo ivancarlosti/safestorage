@@ -14,6 +14,7 @@
 		"migrate:dev": "prisma migrate dev && prisma generate",
 		"setup": "yarn install && yarn migrate",
 		"lint": "prettier --check . && cross-env TIMING=1 eslint src",
+		"test": "cross-env NODE_ENV=test tsx --test test/*.test.ts",
 		"format": "prettier --write . && cross-env TIMING=1 eslint src --fix"
 	},
 	"type": "module",

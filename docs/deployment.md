@@ -158,6 +158,20 @@ Routing (from [`container/nginx.conf`](../container/nginx.conf)):
 -   existing files under `/app/uploads` → served straight off disk (nginx handles Range requests).
 -   everything else → frontend.
 
+### Uploaded files are untrusted
+
+Uploads keep the extension the uploader picked, so an uploaded `.html` or `.svg` opens as a **document** on the same origin as the application. The uploads location in [`container/nginx.conf`](../container/nginx.conf) therefore answers with:
+
+```http
+Content-Security-Policy: sandbox; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'
+X-Content-Type-Options: nosniff
+Access-Control-Allow-Origin: *
+```
+
+The `sandbox` directive moves the document to an opaque origin with scripts, plugins and forms disabled, so a script inside an uploaded file cannot call `/api` with the token cookie of whoever opens the link (GHSA-7hmq-gf2f-c9c9). `nosniff` stops a file from being re-interpreted as another type, and the CORS header lets native media viewers fetch the file from that opaque origin. The headers are added **only** to files served from `/app/uploads` — the Next.js fallback and the API are untouched. The dev server sends the same headers from [`packages/backend/src/utils/UploadSecurity.ts`](../packages/backend/src/utils/UploadSecurity.ts).
+
+If you serve `/app/uploads` from your own proxy, CDN or bucket instead of this image, replicate those headers there. Blocking extensions is not enough: files uploaded before the change stay in the folder, and the headers are what neutralise them.
+
 The entrypoint ([`container/entrypoint.sh`](../container/entrypoint.sh)) creates the writable folders, checks that `DATABASE_URL` is set, waits for the database to accept connections (up to `DB_WAIT_ATTEMPTS` × 2 s), applies the migrations and hands over to supervisord. All three processes log to stdout/stderr, so `docker logs` shows everything.
 
 ## Platform notes
