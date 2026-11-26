@@ -11,6 +11,18 @@ export const SITE_SEGMENT_MAX_LENGTH = 255;
 export const SITE_INDEX_FILE = 'index.html';
 export const SITE_NOT_FOUND_FILE = '404.html';
 
+/*
+	Files of a website album are stored inside a folder of their own
+	(`site/{albumIdentifier}/{sitePath}`) instead of next to the gallery uploads,
+	so the stored tree is exactly the tree the website serves: it can be synced
+	with `rsync`/`rclone`, browsed on S3 and every relative reference inside the
+	HTML keeps working.
+
+	SITE_STORAGE_KEY_MAX_LENGTH has to match `files.name` in the schema.
+*/
+export const SITE_STORAGE_PREFIX = 'site';
+export const SITE_STORAGE_KEY_MAX_LENGTH = 2048;
+
 // DNS label: lowercase, digits and dashes, no leading/trailing dash, max 63 chars.
 const DNS_SAFE_IDENTIFIER = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 // A bare FQDN: no scheme, no port, no path, at least one dot.
@@ -62,6 +74,94 @@ export const normalizeSitePath = (rawPath?: string | null): string | null => {
 	if (normalized.length > SITE_PATH_MAX_LENGTH) return null;
 
 	return normalized;
+};
+
+export interface SiteStorageLocation {
+	albumIdentifier: string;
+	sitePath: string;
+}
+
+/*
+	Builds the storage key (and, on local storage, the relative path below
+	`uploads/`) of a website file: `site/{albumIdentifier}/{sitePath}`.
+
+	Returns `null` when the album identifier or the path cannot be stored as is,
+	so the caller refuses the upload instead of silently renaming the file.
+*/
+export const getSiteStorageKey = (albumIdentifier: string, sitePath: string): string | null => {
+	if (!isDnsSafeIdentifier(albumIdentifier)) return null;
+
+	const normalized = normalizeSitePath(sitePath);
+	if (!normalized) return null;
+
+	const key = `${SITE_STORAGE_PREFIX}/${albumIdentifier}/${normalized}`;
+	if (key.length > SITE_STORAGE_KEY_MAX_LENGTH) return null;
+
+	return key;
+};
+
+/*
+	The folder a stored website file lives in (`site/{albumIdentifier}/{dir}`),
+	or an empty string when the key cannot name a folder.
+*/
+export const getSiteStorageDirectory = (key: string): string => {
+	const separator = key.lastIndexOf('/');
+	return separator === -1 ? '' : key.slice(0, separator);
+};
+
+export const isSiteStorageKey = (key: string) => key.startsWith(`${SITE_STORAGE_PREFIX}/`);
+
+/*
+	Splits `site/{albumIdentifier}/{sitePath}` back into its parts. Anything that
+	does not follow the layout (a gallery identifier, a traversal, a key without
+	a path) returns `null`, which is what the upload validation relies on.
+*/
+export const parseSiteStorageKey = (key: string): SiteStorageLocation | null => {
+	if (!isSiteStorageKey(key)) return null;
+
+	const rest = key.slice(SITE_STORAGE_PREFIX.length + 1);
+	const separator = rest.indexOf('/');
+	if (separator <= 0) return null;
+
+	const albumIdentifier = rest.slice(0, separator);
+	if (!isDnsSafeIdentifier(albumIdentifier)) return null;
+
+	const sitePath = normalizeSitePath(rest.slice(separator + 1));
+	if (!sitePath) return null;
+
+	return { albumIdentifier, sitePath };
+};
+
+export const isValidSiteStorageKey = (key: string) => parseSiteStorageKey(key) !== null;
+
+/*
+	Dropping or picking a whole folder prefixes every path with the folder the
+	user selected (`dist/index.html`, `dist/css/app.css`). That folder is not
+	part of the site, so it is stripped from the whole batch at once: the files
+	land on the site root as long as every path shares the same top folder.
+
+	A single file, or a batch without a shared top folder, is returned unchanged.
+*/
+export const stripCommonRootPaths = (paths: string[]): string[] => {
+	if (paths.length === 0) return [...paths];
+
+	const normalized = paths.map(path => normalizeSitePath(path));
+	if (normalized.some(path => !path)) return [...paths];
+
+	const [root] = normalized[0]!.split('/');
+	if (!root) return [...paths];
+
+	const stripped: string[] = [];
+	for (const path of normalized as string[]) {
+		const separator = path.indexOf('/');
+		if (separator === -1 || path.slice(0, separator) !== root) return [...paths];
+
+		const rest = path.slice(separator + 1);
+		if (!rest) return [...paths];
+		stripped.push(rest);
+	}
+
+	return stripped;
 };
 
 export interface SiteFileEntry {

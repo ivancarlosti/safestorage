@@ -182,7 +182,8 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 										</Label>
 										<p className="text-[0.8rem] text-muted-foreground">
 											Serve this album as a website through a public link. Turning it off also
-											turns it off on every link of the album.
+											turns it off on every link of the album. Files uploaded while it is on keep
+											their name and folder.
 										</p>
 									</div>
 									<Switch

@@ -3,7 +3,7 @@
 import type { DropEvent } from '@react-types/shared';
 import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useRef } from 'react';
-import type { DropZoneProps } from 'react-aria-components';
+import type { DropItem, DropZoneProps } from 'react-aria-components';
 import { globalDropZoneOpenAtom } from '@/lib/atoms/dropzone';
 import { uploadAlbumUuidAtom } from '@/lib/atoms/selectedAlbum';
 import { currentUserAtom } from '@/lib/atoms/currentUser';
@@ -11,9 +11,9 @@ import { DropZone } from '@/components/ui/dropzone';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { settingsAtom } from '@/lib/atoms/settings';
-import { getSignedUrl, processDropItem } from '@/lib/dropzone';
+import { processDropItems } from '@/lib/dropzone';
+import { uploadEntries } from '@/lib/uploadEntries';
 import { useUploadFile } from '@/hooks/useUploadFile';
-import { uploadQueue } from '@/lib/uploadQueue';
 
 interface DropZonePropsWithAlbumUuid extends DropZoneProps {
 	readonly albumLink?: string;
@@ -34,48 +34,26 @@ export const GlobalDropZone = (props: DropZonePropsWithAlbumUuid) => {
 	const albumUuid = props.albumUuid ?? (currentUser?.uuid ? uploadAlbumUuid : null) ?? undefined;
 	const { failUpload, uploadFile } = useUploadFile({ albumUuid, albumLink: props.albumLink });
 
-	const onDrop = useCallback(
-		async (ev: DropEvent) => {
-			for (const item of ev.items) {
-				const files = await processDropItem(item, settings);
-				if (!files.length) continue;
-
-				if (!settings?.useNetworkStorage) {
-					void files.map(
-						async file =>
-							void uploadQueue.add(async () =>
-								uploadFile({
-									file: file instanceof File ? file : await file.getFile(),
-									endpoint: '/api/upload',
-									isNetworkStored: false,
-									method: 'POST'
-								})
-							)
-					);
-
-					continue;
-				}
-
-				void files.map(async file => {
-					void uploadQueue.add(async () => {
-						const actualFile = file instanceof File ? file : await file.getFile();
-						const target = await getSignedUrl(actualFile, props.albumLink, albumUuid);
-						if ('error' in target) {
-							failUpload(actualFile, target.error);
-							return;
-						}
-
-						await uploadFile({
-							file: actualFile,
-							isNetworkStored: true,
-							method: 'PUT',
-							...target
-						});
-					});
-				});
-			}
+	const startUploads = useCallback(
+		async (items: Iterable<DropItem | File>) => {
+			const entries = await processDropItems(items, settings);
+			await uploadEntries({
+				entries,
+				albumLink: props.albumLink,
+				albumUuid,
+				failUpload,
+				uploadFile,
+				useNetworkStorage: Boolean(settings?.useNetworkStorage)
+			});
 		},
 		[albumUuid, failUpload, props.albumLink, settings, uploadFile]
+	);
+
+	const onDrop = useCallback(
+		async (ev: DropEvent) => {
+			await startUploads(ev.items);
+		},
+		[startUploads]
 	);
 
 	const onPaste = useCallback(
@@ -83,49 +61,10 @@ export const GlobalDropZone = (props: DropZonePropsWithAlbumUuid) => {
 			const items = ev.clipboardData?.items;
 			if (!items) return;
 
-			for (const item of items) {
-				const file = item.getAsFile();
-				if (!file) continue;
-
-				const files = await processDropItem(file, settings);
-				if (!files.length) continue;
-
-				if (!settings?.useNetworkStorage) {
-					void files.map(
-						async file =>
-							void uploadQueue.add(async () =>
-								uploadFile({
-									file: file instanceof File ? file : await file.getFile(),
-									endpoint: '/api/upload',
-									isNetworkStored: false,
-									method: 'POST'
-								})
-							)
-					);
-
-					continue;
-				}
-
-				void files.map(async file => {
-					void uploadQueue.add(async () => {
-						const actualFile = file instanceof File ? file : await file.getFile();
-						const target = await getSignedUrl(actualFile, props.albumLink, albumUuid);
-						if ('error' in target) {
-							failUpload(actualFile, target.error);
-							return;
-						}
-
-						await uploadFile({
-							file: actualFile,
-							isNetworkStored: true,
-							method: 'PUT',
-							...target
-						});
-					});
-				});
-			}
+			const files = [...items].map(item => item.getAsFile()).filter(Boolean) as File[];
+			await startUploads(files);
 		},
-		[albumUuid, failUpload, props.albumLink, settings, uploadFile]
+		[startUploads]
 	);
 
 	useEffect(() => {

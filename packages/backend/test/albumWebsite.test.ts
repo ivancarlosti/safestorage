@@ -5,13 +5,19 @@ import { fileURLToPath } from 'node:url';
 import {
 	buildSiteIndex,
 	decodeSiteRequestPath,
+	getSiteStorageDirectory,
+	getSiteStorageKey,
 	isDnsSafeIdentifier,
 	isForbiddenCorsOrigin,
+	isSiteStorageKey,
 	isValidHostingDomain,
+	isValidSiteStorageKey,
 	normalizeHostingDomain,
 	normalizeSitePath,
 	parseSiteHost,
+	parseSiteStorageKey,
 	resolveSiteRequest,
+	stripCommonRootPaths,
 	type SiteFileEntry
 } from '../src/utils/AlbumWebsite.js';
 import { WEBSITE_PATH_CONTENT_SECURITY_POLICY, applyWebsiteSecurityHeaders } from '../src/utils/WebsiteSecurity.js';
@@ -90,6 +96,83 @@ describe('buildSiteIndex maps site paths to files', () => {
 
 		assert.equal(index.files.size, 0);
 		assert.equal(index.warnings.length, 1);
+	});
+});
+
+describe('a website file lives in the folder of its album', () => {
+	it('builds site/{albumIdentifier}/{sitePath} and keeps the file name as it is', () => {
+		assert.equal(getSiteStorageKey('abc123', 'index.html'), 'site/abc123/index.html');
+		assert.equal(getSiteStorageKey('abc123', 'css/app.css'), 'site/abc123/css/app.css');
+		assert.equal(
+			getSiteStorageKey('abc123', 'Café Menu/index.html'),
+			'site/abc123/Café Menu/index.html',
+			'case and unicode are part of the path and must not be normalised'
+		);
+		assert.equal(getSiteStorageKey('abc123', 'CNAME'), 'site/abc123/CNAME');
+	});
+
+	it('refuses an album folder that is not a DNS-safe identifier', () => {
+		assert.equal(getSiteStorageKey('ABC123', 'index.html'), null);
+		assert.equal(getSiteStorageKey('../etc', 'index.html'), null);
+		assert.equal(getSiteStorageKey('abc/def', 'index.html'), null);
+		assert.equal(getSiteStorageKey('', 'index.html'), null);
+	});
+
+	it('refuses paths that would escape the folder', () => {
+		assert.equal(getSiteStorageKey('abc123', '../index.html'), null);
+		assert.equal(getSiteStorageKey('abc123', '/etc/passwd'), null);
+		assert.equal(getSiteStorageKey('abc123', 'a'.repeat(300)), null);
+		assert.equal(getSiteStorageKey('abc123', `${'a/'.repeat(1000)}index.html`), null);
+	});
+
+	it('parses its own keys back into the album and the path', () => {
+		assert.deepEqual(parseSiteStorageKey('site/abc123/css/app.css'), {
+			albumIdentifier: 'abc123',
+			sitePath: 'css/app.css'
+		});
+		assert.deepEqual(parseSiteStorageKey('site/abc123/Café Menu/index.html'), {
+			albumIdentifier: 'abc123',
+			sitePath: 'Café Menu/index.html'
+		});
+	});
+
+	it('refuses anything that is not a website key', () => {
+		assert.equal(parseSiteStorageKey('abcd1234.png'), null);
+		assert.equal(parseSiteStorageKey('site/abc123'), null);
+		assert.equal(parseSiteStorageKey('site/abc123/'), null);
+		assert.equal(parseSiteStorageKey('site/ABC123/index.html'), null);
+		assert.equal(parseSiteStorageKey('site/abc123/../index.html'), null);
+		assert.equal(parseSiteStorageKey('sites/abc123/index.html'), null);
+
+		assert.equal(isSiteStorageKey('site/abc123/index.html'), true);
+		assert.equal(isSiteStorageKey('abcd1234.png'), false);
+		assert.equal(isValidSiteStorageKey('site/abc123/index.html'), true);
+		assert.equal(isValidSiteStorageKey('abcd1234.png'), false);
+	});
+
+	it('knows the folder a key lives in', () => {
+		assert.equal(getSiteStorageDirectory('site/abc123/css/app.css'), 'site/abc123/css');
+		assert.equal(getSiteStorageDirectory('site/abc123/index.html'), 'site/abc123');
+		assert.equal(getSiteStorageDirectory('abcd1234.png'), '');
+	});
+});
+
+describe('stripCommonRootPaths removes the folder that was picked, not the site', () => {
+	it('strips a root every path shares', () => {
+		assert.deepEqual(stripCommonRootPaths(['dist/index.html', 'dist/css/app.css']), ['index.html', 'css/app.css']);
+	});
+
+	it('keeps the paths when they do not share a root', () => {
+		assert.deepEqual(stripCommonRootPaths(['index.html', 'css/app.css']), ['index.html', 'css/app.css']);
+		assert.deepEqual(stripCommonRootPaths(['dist/index.html', 'other/app.css']), [
+			'dist/index.html',
+			'other/app.css'
+		]);
+	});
+
+	it('keeps the name of a single loose file', () => {
+		assert.deepEqual(stripCommonRootPaths(['index.html']), ['index.html']);
+		assert.deepEqual(stripCommonRootPaths([]), []);
 	});
 });
 
@@ -303,6 +386,17 @@ describe('resolveSiteRequest implements the static hosting rules', () => {
 			const serverBlock = config.slice(start, config.indexOf('location / {', start));
 
 			assert.ok(serverBlock.includes('server_name _;'));
+		});
+
+		it('never serves the storage folder of the website albums', () => {
+			// `/site` is `uploads/site`, the folder the albums are stored in. Without
+			// the exact match nginx would answer it as a directory of `/app/uploads`
+			// and expose the storage layout.
+			assert.ok(config.includes('location = /site {'));
+			const start = config.indexOf('location = /site {');
+			const block = config.slice(start, config.indexOf('}', start));
+
+			assert.ok(block.includes('return 404;'));
 		});
 	});
 

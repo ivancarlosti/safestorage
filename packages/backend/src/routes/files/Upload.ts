@@ -11,7 +11,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
-import { normalizeSitePath } from '@/utils/AlbumWebsite.js';
+import { getSiteStorageKey, normalizeSitePath } from '@/utils/AlbumWebsite.js';
 import { consumeAnonymousUploadSlot, getAnonymousUploadMaxSize } from '@/utils/AnonymousUploadLimiter.js';
 import { getUniqueFileIdentifier, constructFilePublicLink, deleteTmpFile, handleUploadFile } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
@@ -53,7 +53,11 @@ export const schema = {
 				.describe(
 					'The content type of the file. Defaults to application/octet-stream when it is empty or missing.'
 				),
-			sourceUrl: z.string().optional().describe('The source URL of the file.')
+			sourceUrl: z.string().optional().describe('The source URL of the file.'),
+			sitePath: z
+				.string()
+				.optional()
+				.describe('The path of the file inside a static website album (from a folder upload).')
 		})
 		.or(z.null()),
 	response: {
@@ -102,6 +106,22 @@ export const options = {
 	]
 };
 
+/*
+	Gallery uploads are stored under a random identifier, so two files with the
+	same name never collide.
+*/
+const generateGalleryFileName = async (name: string) => {
+	const uniqueIdentifier = await getUniqueFileIdentifier();
+	if (!uniqueIdentifier) throw new Error('Could not generate unique identifier.');
+
+	const ext = extname(name);
+	if (!SETTINGS.generateOriginalFileNameWithIdentifier) return `${uniqueIdentifier}${ext}`;
+
+	const isLowerCase = !SETTINGS.enableMixedCaseFilenames || process.platform === 'win32';
+	const originalNameWithoutExt = basename(name, ext);
+	return `${slugify(originalNameWithoutExt, { separator: '_', lowercase: isLowerCase })}-${uniqueIdentifier}${ext}`;
+};
+
 export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyReply, target: UploadTarget) => {
 	/*
 		With the network storage enabled every upload is a JSON request describing
@@ -109,9 +129,10 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 		A multipart body here (e.g. the setting was just switched on while a chunked
 		upload was in flight) is answered with a clear error instead of a crash.
 	*/
-	const { contentType, size, name } = (req.body ?? {}) as {
+	const { contentType, size, name, sitePath } = (req.body ?? {}) as {
 		contentType?: string;
 		name?: string;
+		sitePath?: string;
 		size?: number;
 	};
 	if (!size || !name) {
@@ -120,6 +141,27 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 	}
 
 	const fileType = normalizeContentType(contentType);
+
+	/*
+		A website album stores the file under `site/{albumIdentifier}/{sitePath}`
+		instead of a random identifier: the HTML refers to that path, so the name
+		the user picked is the one that has to be stored. A gallery album keeps its
+		flat name and only records the path.
+	*/
+	const normalizedSitePath = sitePath ? normalizeSitePath(sitePath) : null;
+	if (sitePath && !normalizedSitePath) {
+		void res.badRequest('Invalid site path');
+		return;
+	}
+
+	const siteKey =
+		normalizedSitePath && target.album?.isWebsite && target.album.identifier
+			? getSiteStorageKey(target.album.identifier, normalizedSitePath)
+			: null;
+	if (normalizedSitePath && target.album?.isWebsite && !siteKey) {
+		void res.badRequest('The path of this file cannot be stored as a website file');
+		return;
+	}
 
 	const anonymous = !req.user || target.type === 'link';
 	const maxSize = anonymous ? getAnonymousUploadMaxSize() : SETTINGS.maxSize;
@@ -158,19 +200,15 @@ export const uploadToNetworkStorage = async (req: RequestWithUser, res: FastifyR
 		}
 	}
 
-	// Assign a unique identifier to the file
-	const uniqueIdentifier = await getUniqueFileIdentifier();
-	if (!uniqueIdentifier) throw new Error('Could not generate unique identifier.');
+	const newFilename = siteKey ?? (await generateGalleryFileName(name));
 
-	const ext = extname(name);
-	let newFilename = `${uniqueIdentifier}${ext}`;
-	if (SETTINGS.generateOriginalFileNameWithIdentifier) {
-		const isLowerCase = !SETTINGS.enableMixedCaseFilenames || process.platform === 'win32';
-		const originalNameWithoutExt = basename(name, ext);
-		newFilename = `${slugify(originalNameWithoutExt, { separator: '_', lowercase: isLowerCase })}-${uniqueIdentifier}${ext}`;
-	}
-
-	const publicUrl = `${SETTINGS.S3PublicUrl || SETTINGS.S3Endpoint}/${newFilename}`;
+	/*
+		No ACL is attached to the pre-signed request: a website file has a
+		predictable key, so a `public-read` grant would expose the website on a
+		public bucket even while every link of the album is disabled. The bucket
+		itself is expected to serve its objects (see docs/storage.md).
+	*/
+	const publicUrl = siteKey ? undefined : `${SETTINGS.S3PublicUrl || SETTINGS.S3Endpoint}/${newFilename}`;
 
 	try {
 		const { createS3Client } = await import('@/structures/s3.js');
@@ -378,6 +416,29 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			}
 		}
 
+		const uploadSitePath = upload.metadata.sitePath;
+		const sitePath = uploadSitePath ? normalizeSitePath(uploadSitePath) : null;
+		if (uploadSitePath && !sitePath) {
+			await deleteTmpFile(upload.path as string);
+			void res.badRequest('Invalid site path.');
+			return;
+		}
+
+		/*
+			Only a website album stores the file under its path; a gallery album
+			keeps its flat, random identifier and only records the path, so a
+			folder upload still works there.
+		*/
+		if (
+			sitePath &&
+			target.album?.isWebsite &&
+			(!target.album.identifier || !getSiteStorageKey(target.album.identifier, sitePath))
+		) {
+			await deleteTmpFile(upload.path as string);
+			void res.badRequest('The path of this file cannot be stored as a website file.');
+			return;
+		}
+
 		const uploadedFile = await handleUploadFile({
 			user: target.type === 'link' ? undefined : req.user,
 			ip: req.ip,
@@ -388,12 +449,16 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 				size: upload.metadata.size ?? '0',
 				sourceUrl: (req.headers['x-source-url'] as string) ?? undefined
 			},
-			// Relative path of a folder upload, so the file can be served on a website
-			sitePath: normalizeSitePath(upload.metadata.sitePath),
-			album: target.albumId
+			// Path of a folder upload, so the file is stored under its website path
+			sitePath,
+			album: target.album
 		});
 
-		const linkData = constructFilePublicLink({ req, fileName: uploadedFile.name });
+		const linkData = constructFilePublicLink({
+			req,
+			fileName: uploadedFile.name,
+			uuid: uploadedFile.uuid
+		});
 		// Construct public link
 		const fileWithLink = {
 			...uploadedFile,

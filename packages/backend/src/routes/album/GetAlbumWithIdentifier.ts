@@ -203,7 +203,8 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			files: {
 				where: fileWhere,
 				select: {
-					name: true
+					name: true,
+					uuid: true
 				},
 				take: 1,
 				orderBy
@@ -217,14 +218,22 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		const { isWatched, isS3, ...modifiedFile } = file;
 		files.push({
 			...modifiedFile,
-			...constructFilePublicLink({ req, fileName: modifiedFile.name, isS3, isWatched })
+			...constructFilePublicLink({
+				req,
+				fileName: modifiedFile.name,
+				uuid: modifiedFile.uuid,
+				isS3,
+				isWatched
+			})
 		});
 	}
 
-	const coverPublicLink = firstImage?.files[0]?.name
+	const coverFile = firstImage?.files[0];
+	const coverPublicLink = coverFile
 		? constructFilePublicLink({
 				req,
-				fileName: firstImage.files[0].name
+				fileName: coverFile.name,
+				uuid: coverFile.uuid
 			})
 		: null;
 

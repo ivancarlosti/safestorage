@@ -6,7 +6,9 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { parseSiteStorageKey } from '@/utils/AlbumWebsite.js';
 import { logError } from '@/utils/Logger.js';
+import { isValidFileIdentifier } from '@/utils/NetworkStorage.js';
 import { validateUploadTarget } from '@/utils/UploadHelpers.js';
 
 export const schema = {
@@ -66,6 +68,26 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	if ('error' in validation) {
 		void res.code(validation.status).send({ message: validation.error });
 		return;
+	}
+
+	const { target } = validation;
+
+	/*
+		`key` comes back from the browser, so it is validated against the album
+		the upload belongs to: a gallery identifier, or a key inside the folder
+		of the website album taking the upload.
+	*/
+	const siteLocation = parseSiteStorageKey(key);
+	if (siteLocation) {
+		if (
+			!target.album?.isWebsite ||
+			!target.album.identifier ||
+			siteLocation.albumIdentifier !== target.album.identifier
+		) {
+			return res.badRequest('Invalid file identifier');
+		}
+	} else if (!isValidFileIdentifier(key)) {
+		return res.badRequest('Invalid file identifier');
 	}
 
 	try {

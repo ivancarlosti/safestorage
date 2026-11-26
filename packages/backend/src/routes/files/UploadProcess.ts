@@ -9,9 +9,16 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
-import { normalizeSitePath } from '@/utils/AlbumWebsite.js';
+import { normalizeSitePath, parseSiteStorageKey } from '@/utils/AlbumWebsite.js';
 import { getAnonymousUploadMaxSize } from '@/utils/AnonymousUploadLimiter.js';
-import { storeFileToDb, constructFilePublicLink, checkFileHashOnDB, deleteTmpFile } from '@/utils/File.js';
+import {
+	storeFileToDb,
+	constructFilePublicLink,
+	checkFileHashOnDB,
+	deleteTmpFile,
+	findSiteFileToReplace,
+	updateSiteFileOnDb
+} from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
 import { fetchNetworkStorageFile, getNetworkStorageTmpPath, isValidFileIdentifier } from '@/utils/NetworkStorage.js';
 import { generateThumbnails, imageExtensions, videoExtensions } from '@/utils/Thumbnails.js';
@@ -82,7 +89,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		type?: string;
 	};
 	if (!identifier || !name) return res.badRequest('Missing file identifier');
-	if (!isValidFileIdentifier(identifier)) return res.badRequest('Invalid file identifier');
 
 	const { createS3Client } = await import('@/structures/s3.js');
 	const S3Client = createS3Client();
@@ -99,6 +105,38 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	}
 
 	const { target } = validation;
+
+	/*
+		The key comes back from the browser, so it is validated against the album
+		the upload claims to belong to: a website album only accepts keys inside
+		its own folder (`site/{albumIdentifier}/{sitePath}`), everything else has
+		to be a plain gallery identifier.
+	*/
+	const siteLocation = parseSiteStorageKey(identifier);
+	if (siteLocation) {
+		if (
+			!target.album?.isWebsite ||
+			!target.album.identifier ||
+			siteLocation.albumIdentifier !== target.album.identifier
+		) {
+			return res.badRequest('Invalid file identifier');
+		}
+	} else if (!isValidFileIdentifier(identifier)) {
+		return res.badRequest('Invalid file identifier');
+	}
+
+	const normalizedBodySitePath = sitePath ? normalizeSitePath(sitePath) : null;
+	if (sitePath && !normalizedBodySitePath) return res.badRequest('Invalid site path');
+	if (siteLocation && normalizedBodySitePath && normalizedBodySitePath !== siteLocation.sitePath) {
+		return res.badRequest('The site path does not match the file identifier');
+	}
+
+	// The path inside the website storage, only set for the folder of a website album
+	const uploadSitePath = siteLocation?.sitePath ?? null;
+	// The path recorded on the row: a gallery album keeps its flat name but the
+	// path is remembered for a later website mode
+	const recordedSitePath = uploadSitePath ?? normalizedBodySitePath;
+
 	const anonymous = !req.user || target.type === 'link';
 	const maxSize = anonymous ? getAnonymousUploadMaxSize() : SETTINGS.maxSize;
 
@@ -155,12 +193,58 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		isS3: true,
 		isWatched: false,
 		sourceUrl,
-		sitePath: normalizeSitePath(sitePath)
+		sitePath: recordedSitePath
 	};
 
 	let uploadedFile;
-	const fileOnDb = target.type === 'link' ? null : await checkFileHashOnDB(req.user, file);
-	if (fileOnDb?.repeated) {
+	/*
+		A website file is replaced in place: uploading `index.html` again updates
+		the row of that path, which is what makes an edited page replace the old
+		one instead of being shadowed by it.
+	*/
+	const existingSiteFile =
+		uploadSitePath && target.album
+			? await findSiteFileToReplace({ albumId: target.album.id, sitePath: uploadSitePath })
+			: null;
+
+	if (existingSiteFile?.quarantine) {
+		const command = new DeleteObjectCommand({
+			Bucket: SETTINGS.S3Bucket,
+			Key: identifier
+		});
+
+		await S3Client.send(command);
+		return res.badRequest('This file is quarantined and cannot be replaced by an upload.');
+	}
+
+	/*
+		Hash dedupe must never fold two website files into one row: the same bytes
+		can legitimately live at `a/style.css` and `b/style.css`, and each path
+		needs its own row to be served.
+	*/
+	const shouldDeduplicate = !existingSiteFile && !uploadSitePath && target.type !== 'link';
+	const fileOnDb = shouldDeduplicate ? await checkFileHashOnDB(req.user, file) : null;
+	if (existingSiteFile) {
+		// A previous upload may live under another key (a file stored before the
+		// folder layout existed); the new object already replaced the bytes when
+		// both keys are the same
+		if (existingSiteFile.name !== identifier) {
+			const command = new DeleteObjectCommand({
+				Bucket: SETTINGS.S3Bucket,
+				Key: existingSiteFile.name
+			});
+
+			await S3Client.send(command);
+		}
+
+		const savedFile = await updateSiteFileOnDb({
+			file,
+			user: target.type === 'link' ? undefined : req.user,
+			uuid: existingSiteFile.uuid
+		});
+
+		uploadedFile = savedFile.file;
+	} else if (fileOnDb?.repeated) {
 		uploadedFile = fileOnDb.file;
 		await deleteTmpFile(newPath);
 
@@ -175,7 +259,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		const savedFile = await storeFileToDb(
 			target.type === 'link' ? undefined : req.user ? req.user : undefined,
 			file,
-			target.albumId ? target.albumId : undefined
+			target.album ? target.album.id : undefined
 		);
 
 		uploadedFile = savedFile.file;
@@ -184,7 +268,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		const needsThumbnails = [...imageExtensions, ...videoExtensions].includes(extension);
 		const maxFileSizeForThumbnails = 100 * 1024 * 1024; // 100Mb
 
-		if (needsThumbnails && fileSize <= maxFileSizeForThumbnails) {
+		// A website file is never thumbnailed: the album is a tree of assets
+		if (!uploadSitePath && needsThumbnails && fileSize <= maxFileSizeForThumbnails) {
 			fetchNetworkStorageFile(identifier)
 				// eslint-disable-next-line promise/prefer-await-to-then
 				.then(async res => {
@@ -205,7 +290,12 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		}
 	}
 
-	const linkData = constructFilePublicLink({ req, fileName: uploadedFile.name, isS3: true });
+	const linkData = constructFilePublicLink({
+		req,
+		fileName: uploadedFile.name,
+		uuid: uploadedFile.uuid,
+		isS3: true
+	});
 	// Construct public link
 	const fileWithLink = {
 		...uploadedFile,

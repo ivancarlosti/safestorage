@@ -34,7 +34,9 @@ model files {
 	id Int @id @default(autoincrement())
 	uuid String @unique
 	userId Int?
-	name String @db.VarChar(255)
+	// Storage key: `<identifier><extension>` for gallery uploads, or
+	// `site/<albumIdentifier>/<sitePath>` for the files of a website album
+	name String @db.VarChar(2048)
 	original String @db.VarChar(1024)
 	type String @db.VarChar(255)
 	size String
@@ -76,6 +78,8 @@ model albums {
 	notifyOnPublicUpload Boolean @default(false)
 	// Serves the album contents as a static website, when hosting is enabled
 	isWebsite Boolean @default(false)
+	// Folder of the album inside the website storage (`site/{identifier}/`)
+	identifier String? @unique @db.VarChar(32)
 	files files[]
 	members albumMembers[]
 	invites invites[]

@@ -117,11 +117,20 @@ Two ways to reach a website:
 | Path | `/site/{identifier}/…` | Works out of the box. The documents run inside a CSP `sandbox` **without** `allow-same-origin`, so they have an opaque origin: `localStorage`, cookies, service workers, push and `history.pushState`-based routing are unavailable. |
 | Domain | `{identifier}.{hostingDomain}` | Requires `websiteHostingDomain`, a wildcard DNS record, a wildcard certificate in front of container port **8080** and `docker/docker-compose-sites.yml`. The site gets a real origin, so SPAs and service workers work. |
 
-Files uploaded through a folder picker keep their relative path
-(`webkitRelativePath`) and are served at that path; `index.html` is served for
-`/` and for `/dir/`, `404.html` is used as the error page (with a 404 status) and
-an extension-less directory path redirects to its trailing-slash form. Two files
-claiming the same path are reported to the album owner and the oldest one wins.
+Files uploaded into a website album keep their name, case and folder. *Upload
+folder* (or a folder drop) stores the site without its container folder:
+dropping `dist/` gives `site/{identifier}/css/app.css`, not
+`site/{identifier}/dist/css/app.css`. `CNAME`, `_headers` and other
+extension-less files are accepted (`blockedExtensions` is still enforced, the
+"no extension" rule is not), and uploading the same path again replaces the file
+in place instead of adding a second one. The bytes live in the album's own
+folder (`site/{identifier}/`, see [Storage](storage.md#website-albums)) and are
+never thumbnailed or deduplicated; previews of a website album use
+`/api/file/{uuid}/content` instead of the flat `/uploads` URL.
+
+`index.html` is served for `/` and for `/dir/`, `404.html` is used as the error
+page (with a 404 status) and an extension-less directory path redirects to its
+trailing-slash form.
 
 Domain mode serves untrusted user content from a subdomain of your domain. Keep
 the session cookies **host-only** (do not set `Domain=.example.com`) so a website

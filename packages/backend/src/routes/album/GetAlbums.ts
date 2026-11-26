@@ -9,6 +9,7 @@ import { queryLimitSchema } from '@/structures/schemas/QueryLimit.js';
 import { queryPageSchema } from '@/structures/schemas/QueryPage.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { albumAccessWhere } from '@/utils/AlbumAccess.js';
+import { isSiteStorageKey } from '@/utils/AlbumWebsite.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 
 export const schema = {
@@ -133,9 +134,22 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		delete newObject.files;
 		delete newObject._count;
 
-		newObject.cover = album.files[0]
-			? constructFilePublicLink({ req, fileName: album.files[0].name as unknown as any }).thumb
-			: '';
+		const firstFile = album.files[0];
+		newObject.cover = '';
+		if (firstFile) {
+			const coverLink = constructFilePublicLink({ req, fileName: firstFile.name, uuid: firstFile.uuid });
+			/*
+				Website files are stored under their real path and are never
+				thumbnailed, so their cover is the file itself; a gallery file
+				keeps using the thumbnail.
+			*/
+			newObject.cover = coverLink.thumb
+				? isSiteStorageKey(firstFile.name)
+					? coverLink.url
+					: coverLink.thumb
+				: '';
+		}
+
 		fetchedAlbums.push(newObject);
 	}
 

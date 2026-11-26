@@ -154,11 +154,12 @@ Albums belong to the user that created them and can be shared with other people 
 
 An album can be published as a static website:
 
-- `POST /album/create` and `POST /album/:uuid/edit` accept `isWebsite`. Enabling it requires `websiteHostingEnabled`; disabling it also sets `serveWebsite` to `false` on every link of the album, in the same transaction.
+- `POST /album/create` and `POST /album/:uuid/edit` accept `isWebsite`. Enabling it requires `websiteHostingEnabled` and gives the album a folder of its own (`albums.identifier`, returned as `siteIdentifier` by `GET /album/:uuid` and `POST /album/create`); disabling it also sets `serveWebsite` to `false` on every link of the album, in the same transaction.
 - `POST /album/:uuid/link` and `POST /album/:uuid/link/:linkUuid/edit` accept `serveWebsite`. Enabling it requires website hosting to be on, the album to be a website, a DNS-safe identifier (`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`) and `hideFiles` to be off — a drop-only link cannot be a website.
 - `GET /album/:uuid/links` returns `serveWebsite` and `websiteUrl` (`null` while hosting or the album flag is off, even if the link still has the flag), plus `websiteWarnings` describing any path conflict that keeps a file from being served.
 - `GET /album/:identifier/view` returns `websiteUrl` for a hosted link and skips the file payload; the `/a/{identifier}` page redirects to it instead of rendering the gallery.
-- Uploads accept an optional `sitePath` (a form field on `/upload`, or a JSON field on `/upload/process`) that the frontend fills with `webkitRelativePath || name`. The backend sanitises it: `..`, absolute paths, control characters, segments over 255 bytes and paths over 1024 bytes are refused and the file falls back to its sanitised original name.
+- Uploads accept an optional `sitePath` (a form field on `/upload`, or a JSON field on `/upload/process`) filled with the path the file has inside the site. Inside a website album it becomes the storage key `site/{albumIdentifier}/{sitePath}`: the file keeps its name, case and folders, it replaces a file of the same path in place, it is never thumbnailed and never deduplicated by hash. `..`, absolute paths, control characters, segments over 255 bytes and keys over 2048 bytes are refused. A gallery album keeps its flat random identifier and only records `sitePath`.
+- `/upload/multipart/complete` validates `key` against the album: a gallery identifier, or a key inside the folder of the website album taking the upload.
 
 The website itself is served by `GET /site/:identifier/…` (and by `{identifier}.{hostingDomain}` when a hosting domain is configured): `index.html` for `/` and for directories, a `301` to the trailing-slash form for extension-less directories, `404.html` with a 404 status for missing paths, plus `HEAD`, `Range`/`206` and `ETag`/`304`. Views are counted on document requests only. Path mode answers with `Content-Security-Policy: sandbox allow-scripts …` (never `allow-same-origin`), `nosniff`, `Cross-Origin-Resource-Policy: cross-origin`, `Access-Control-Allow-Origin: *` and `Referrer-Policy: no-referrer`.
 
@@ -171,6 +172,7 @@ The website itself is served by `GET /site/:identifier/…` (and by `{identifier
 | ------ | ---------------------------------- | ------------- | ------------------------------------------------------------- |
 | GET    | `/files`                           | Auth          | List the user's files (paginated, filterable).                |
 | GET    | `/file/:uuid`                      | Auth          | Get a single file.                                            |
+| GET    | `/file/:uuid/content`              | Public        | Serve the bytes of a website file (`site/{albumIdentifier}/…`) by uuid, inline and without quarantined files. |
 | DELETE | `/file/:uuid`                      | Auth          | Delete a file.                                                |
 | POST   | `/files/delete`                    | Auth          | Bulk-delete files.                                            |
 | GET    | `/file/:uuid/download`             | Public        | Download a file with its original file name.                  |

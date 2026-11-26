@@ -27,6 +27,22 @@ const isDigitalOceanSpacesEndpoint = (endpoint: string) => {
 	}
 };
 
+/*
+	Everything `uploadFile` needs for one file. `sitePath` is the path the file
+	keeps inside a website album (see `UploadEntry`); it travels to the backend
+	so the bytes are stored under the path the website serves.
+*/
+export interface UploadFileOptions {
+	endpoint?: string | undefined;
+	file: File;
+	identifier?: string | undefined;
+	isNetworkStored: boolean;
+	method: 'POST' | 'PUT';
+	multipart?: MultipartUploadTarget | undefined;
+	publicUrl?: string | undefined;
+	sitePath?: string | undefined;
+}
+
 export const useUploadFile = ({
 	albumUuid,
 	albumLink
@@ -51,7 +67,7 @@ export const useUploadFile = ({
 		}: {
 			identifier: string;
 			name: string;
-			sitePath: string;
+			sitePath: string | undefined;
 			type: string;
 		}): Promise<{ error: string | undefined; url: string | undefined }> => {
 			try {
@@ -120,16 +136,15 @@ export const useUploadFile = ({
 			isNetworkStored,
 			method = 'POST',
 			multipart,
-			publicUrl = ''
-		}: {
-			endpoint?: string | undefined;
-			file: File;
-			identifier?: string | undefined;
-			isNetworkStored: boolean;
-			method: 'POST' | 'PUT';
-			multipart?: MultipartUploadTarget | undefined;
-			publicUrl?: string | undefined;
-		}) => {
+			publicUrl = '',
+			sitePath
+		}: UploadFileOptions) => {
+			/*
+				The path the file keeps inside a website album. A folder upload
+				carries it in `sitePath`, a loose pick of a folder in
+				`webkitRelativePath`; without either the file name is the path.
+			*/
+			const fileSitePath = sitePath || file.webkitRelativePath || file.name;
 			/*
 				Files that are too big for a single request are uploaded to the network
 				storage in parts, one part per pre-signed URL.
@@ -188,7 +203,7 @@ export const useUploadFile = ({
 						name: file.name,
 						type: getUploadContentType(file),
 						// The relative path of a folder upload becomes the file's place on a website
-						sitePath: file.webkitRelativePath || file.name
+						sitePath: fileSitePath
 					});
 					setUploads(draft => {
 						const upload = draft.findIndex(entry => entry.uuid === multipart.uploadId);
@@ -305,8 +320,8 @@ export const useUploadFile = ({
 					name: file.name,
 					type: getUploadContentType(file),
 					size: file.size.toString(),
-					// `webkitRelativePath` is set when the user picks a whole folder
-					sitePath: file.webkitRelativePath || file.name
+					// The relative path of a folder upload becomes the file's place on a website
+					sitePath: fileSitePath
 				};
 
 				options.headers = {
@@ -406,7 +421,7 @@ export const useUploadFile = ({
 							identifier,
 							name: file.name,
 							type: getUploadContentType(file),
-							sitePath: file.webkitRelativePath || file.name
+							sitePath: fileSitePath
 						});
 						setUploads(draft => {
 							const upload = draft.findIndex(file => file.uuid === uuid);

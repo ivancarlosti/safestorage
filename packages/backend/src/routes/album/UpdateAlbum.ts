@@ -7,6 +7,7 @@ import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { isValidSortOrder } from '@/utils/SortOrder.js';
+import { getUniqueAlbumIdentifier } from '@/utils/Util.js';
 import { isValidViewMode } from '@/utils/ViewMode.js';
 
 export const schema = {
@@ -105,6 +106,21 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		return;
 	}
 
+	/*
+		Enabling website mode gives the album its own folder
+		(`site/{identifier}/`). An album that already has one keeps it: renaming
+		the folder would orphan every file stored inside it.
+	*/
+	const isNowWebsite = isWebsite ?? album.isWebsite;
+	let identifier = album.identifier;
+	if (isNowWebsite && !identifier) {
+		identifier = await getUniqueAlbumIdentifier();
+		if (!identifier) {
+			void res.internalServerError('Could not generate an identifier for the album');
+			return;
+		}
+	}
+
 	const updateObj = {
 		name: name ?? album.name,
 		nsfw: nsfw === true ? true : nsfw === false ? false : album.nsfw,
@@ -112,7 +128,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		sortOrder: sortOrder === undefined ? album.sortOrder : sortOrder,
 		viewMode: viewMode ?? album.viewMode,
 		notifyOnPublicUpload: notifyOnPublicUpload ?? album.notifyOnPublicUpload,
-		isWebsite: isWebsite ?? album.isWebsite
+		isWebsite: isWebsite ?? album.isWebsite,
+		identifier
 	};
 
 	/*

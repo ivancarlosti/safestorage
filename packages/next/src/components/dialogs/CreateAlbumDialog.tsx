@@ -75,7 +75,10 @@ export function CreateAlbumDialog({ className }: { readonly className?: string }
 									<div className="space-y-0.5">
 										<p className="text-sm font-medium leading-none">Static website</p>
 										<p className="text-[0.8rem] text-muted-foreground">
-											Upload a built site and serve it through a public link.
+											Upload a built site and serve it through a public link. The album gets its
+											own folder and every file keeps its name and path, so{' '}
+											<code className="font-mono">css/app.css</code> and{' '}
+											<code className="font-mono">CNAME</code> work as they are.
 										</p>
 									</div>
 									<Switch id="isWebsite" name="isWebsite" />
