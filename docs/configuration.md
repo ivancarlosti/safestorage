@@ -103,6 +103,13 @@ public links can be switched to serve it (`links.serveWebsite`). Nothing is serv
 unless all three switches are on: `websiteHostingEnabled`, the album flag and the
 link flag.
 
+Turn the instance switch on in **Admin → Settings → Service → Static Website
+Hosting** (set the domain field there for domain mode) and press *Save settings*.
+The album switch lives in the album's settings dialog (or the create-album
+dialog) and the link switch in the link's settings dialog; both are hidden while
+hosting is disabled, and a link flag is cleared when the album stops being a
+website.
+
 Two ways to reach a website:
 
 | Mode | URL | Characteristics |
