@@ -30,6 +30,11 @@ const nextConfig = {
 					{
 						source: '/api/:path*',
 						destination: `${process.env.BASE_API_URL}/api/:path*`
+					},
+					// Static websites published from albums are served by the backend
+					{
+						source: '/site/:path*',
+						destination: `${process.env.BASE_API_URL}/site/:path*`
 					}
 				];
 	},

@@ -34,6 +34,23 @@ default account, so a fresh install needs that pair before the first start. The
 schema is created on the first boot, and the database itself too when it does
 not exist yet.
 
+## Static website hosting (optional)
+
+Albums can be published as static websites. Path mode (`/site/{identifier}/`)
+works with the default deployment. Per-site subdomains
+(`{identifier}.{websiteHostingDomain}`) need the second listener, which is
+published by the extra compose file:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose-sites.yml up -d
+```
+
+Then enable `websiteHostingEnabled` and set `websiteHostingDomain` in Admin →
+Settings, point a wildcard DNS record at the Docker host and terminate the
+wildcard TLS certificate in front of port 8080 (default `SAFESTORAGE_SITES_PORT`).
+Hosting is off by default and every album and link has to opt in. See the
+"Static website hosting" section of [Configuration](../docs/configuration.md).
+
 ## Users & authentication
 
 SafeStorage ships two ways to sign in and uses **one** at a time, chosen by

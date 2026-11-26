@@ -48,7 +48,8 @@ The backend is a plain Fastify server built around a small, explicit structure:
 -   **`structures/auth.ts`** — parses the authentication environment once (`AUTH_METHOD`, `ACCOUNT_*`, `KEYCLOAK_*`), so the rest of the backend only needs the booleans/values it exports. `validateAuthConfiguration()` returns the errors and warnings `Requirements` prints before the boot is stopped, which is how a misconfigured Keycloak setup fails fast.
 -   **`structures/schemas`** — reusable Zod schemas extended by route schemas.
 -   **`utils/`** — file handling, thumbnails, S3/multipart helpers, logging, docs/OpenAPI definition, update check, JWT signing/verification and the reCAPTCHA check (`utils/Auth.ts`, which reads the keys stored in the settings), the YOURLS client (`utils/Shortener.ts`), and the OIDC client (`utils/Keycloak.ts`: discovery-free endpoint assembly, PKCE + state, code exchange, JWKS cache and `id_token` verification).
--   **`routes/`** — one module per endpoint, grouped by domain (`auth`, `auth/keycloak`, `user`, `album`, `files`, `tag`, `links`, `admin/*`, `health`).
+-   **`routes/`** — one module per endpoint, grouped by domain (`auth`, `auth/keycloak`, `user`, `album`, `files`, `tag`, `links`, `admin/*`, `health`). `routes/album/hosting` holds the `/site/:identifier` endpoints, which opt out of the `/api` prefix.
+-   **`plugins/WebsiteHosting.ts`** — the `onRequest` hook for domain mode. It parses `Host` as `{identifier}.{hostingDomain}`, hijacks the reply and serves the website from the shared core in `utils/AlbumWebsiteServer.ts` (the same code backs the `/site` routes). A hook is used instead of a `/*` route so the dev static server and the Next.js routes keep their paths.
 
 ### Request lifecycle
 
@@ -85,7 +86,7 @@ The frontend version is injected at build time (`NEXT_PUBLIC_VERSION`, read from
 
 ## Container
 
--   **`container/nginx.conf`** — single server block: `/api/` and `/docs` → backend, existing files under `/app/uploads` → disk, everything else → frontend. Bodies are streamed (`client_max_body_size 0`, no request buffering) to support multi-gigabyte uploads.
+-   **`container/nginx.conf`** — single server block: `/api/`, `/docs` and `/site/` → backend, existing files under `/app/uploads` → disk, everything else → frontend. Bodies are streamed (`client_max_body_size 0`, no request buffering) to support multi-gigabyte uploads. A second server block listens on **8080** and proxies every request to the backend, which resolves the site identifier from the `Host` header (domain mode).
 -   **`container/supervisord.conf`** — supervises `backend`, `frontend` and `nginx`, each logging to stdout/stderr.
 -   **`container/start-nginx.sh`** — starts nginx only after `127.0.0.1:8000/api/health` and `127.0.0.1:8001/` answer (bounded by `NGINX_WAIT_ATTEMPTS`, 2 minutes by default), so supervisord launching all three processes at once does not log `connect() failed` upstream errors while booting.
 -   **`container/entrypoint.sh`** — prints the version banner, creates the writable folders, requires `DATABASE_URL`, waits for MariaDB/MySQL to accept connections, applies Prisma migrations (unless `SKIP_MIGRATIONS` is set) and `exec`s supervisord.

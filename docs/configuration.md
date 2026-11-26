@@ -91,8 +91,37 @@ All of the following live in **Admin → Settings**. Values are grouped by categ
 | `disableStatisticsCron` | boolean | `false`           | Disable the nightly statistics collection job.                                                      |
 | `disableUpdateCheck`    | boolean | `false`           | Disable the daily update check against GitHub releases.                                             |
 | `timezone`              | string  | `UTC`             | IANA timezone of the instance (e.g. `Europe/Berlin`) for log timestamps, log rotation and cron jobs. Applied as soon as it is saved; the web UI keeps using the timezone of the browser. |
+| `websiteHostingEnabled` | boolean | `false`           | Allow albums to be published as static websites. Off by default. |
+| `websiteHostingDomain`  | string  | _(empty)_         | Bare domain used for per-site subdomains (`{identifier}.sites.example.com`). Empty means path mode only (`/site/{identifier}/`). |
 
 _(`port`, `host`, `statisticsCron`, `updateCheckCron` and `enabledStatistics` are read-only/derived and not editable in the UI.)_
+
+### Static website hosting
+
+An album can be flagged as a **static website** (`albums.isWebsite`) and one of its
+public links can be switched to serve it (`links.serveWebsite`). Nothing is served
+unless all three switches are on: `websiteHostingEnabled`, the album flag and the
+link flag.
+
+Two ways to reach a website:
+
+| Mode | URL | Characteristics |
+| ---- | --- | --------------- |
+| Path | `/site/{identifier}/…` | Works out of the box. The documents run inside a CSP `sandbox` **without** `allow-same-origin`, so they have an opaque origin: `localStorage`, cookies, service workers, push and `history.pushState`-based routing are unavailable. |
+| Domain | `{identifier}.{hostingDomain}` | Requires `websiteHostingDomain`, a wildcard DNS record, a wildcard certificate in front of container port **8080** and `docker/docker-compose-sites.yml`. The site gets a real origin, so SPAs and service workers work. |
+
+Files uploaded through a folder picker keep their relative path
+(`webkitRelativePath`) and are served at that path; `index.html` is served for
+`/` and for `/dir/`, `404.html` is used as the error page (with a 404 status) and
+an extension-less directory path redirects to its trailing-slash form. Two files
+claiming the same path are reported to the album owner and the oldest one wins.
+
+Domain mode serves untrusted user content from a subdomain of your domain. Keep
+the session cookies **host-only** (do not set `Domain=.example.com`) so a website
+cannot read them, and only point the wildcard record at the container when you
+accept that. Independently of the cookie scope, the API never grants CORS access
+to `Origin: null` (the opaque origin of a sandboxed document) nor to a site
+subdomain, so a hosted website cannot read authenticated API responses either.
 
 ### Uploads
 

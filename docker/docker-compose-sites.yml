@@ -1,0 +1,20 @@
+# SafeStorage - per-site website hosting (domain mode)
+#
+# Adds the website listener to the default deployment, so albums published as
+# static websites can be served on their own subdomain:
+#
+#   docker compose -f docker-compose.yml -f docker-compose-sites.yml up -d
+#
+# On top of this, the operator has to:
+#   - point a wildcard DNS record (*.sites.example.com) at the Docker host,
+#   - terminate TLS for the wildcard in front of port 8080 (or proxy it),
+#   - set `websiteHostingDomain` to `sites.example.com` in Admin -> Settings and
+#     enable `websiteHostingEnabled`.
+#
+# The main instance keeps answering on its usual port; this file only publishes
+# the second listener of the same container.
+
+services:
+  safestorage:
+    ports:
+      - '${SAFESTORAGE_SITES_PORT:-8080}:8080'

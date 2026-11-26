@@ -8,7 +8,7 @@ import {
 	getSortedRowModel,
 	useReactTable
 } from '@tanstack/react-table';
-import { useState, type PropsWithChildren } from 'react';
+import { useState, useMemo, type PropsWithChildren } from 'react';
 import { ArrowUpRightFromSquare } from 'lucide-react';
 import { DataTable } from '../DataTable';
 import type { AlbumLink } from '@/types';
@@ -17,7 +17,8 @@ import { AlbumLinksToggleAction } from './AlbumLinksToggleAction';
 import { LinkSettingsDialog } from './LinkSettingsDialog';
 
 const columnHelper = createColumnHelper<AlbumLink>();
-const columns = [
+
+const getColumns = (albumIsWebsite: boolean) => [
 	columnHelper.accessor(row => row.views, {
 		id: 'views',
 		header: 'Views'
@@ -41,9 +42,14 @@ const columns = [
 		header: 'Access',
 		cell: props => (
 			<div className="flex flex-col text-xs text-muted-foreground">
+				{props.row.original.serveWebsite ? <span className="font-medium text-foreground">Website</span> : null}
 				{props.row.original.allowUploads ? <span>Uploads</span> : null}
 				{props.row.original.hideFiles ? <span>Drop-only</span> : null}
-				{!props.row.original.allowUploads && !props.row.original.hideFiles ? <span>View only</span> : null}
+				{!props.row.original.allowUploads &&
+				!props.row.original.hideFiles &&
+				!props.row.original.serveWebsite ? (
+					<span>View only</span>
+				) : null}
 				<span>
 					{props.row.original.viewMode === 'thumbs'
 						? 'Thumbnails'
@@ -71,17 +77,22 @@ const columns = [
 		header: '',
 		cell: props => (
 			<div className="flex justify-end gap-2">
-				<LinkSettingsDialog link={props.row.original} />
+				<LinkSettingsDialog link={props.row.original} albumIsWebsite={albumIsWebsite} />
 				<DeleteLinkButton uuid={props.row.original.uuid} albumUuid={props.row.original.albumUuid} />
 			</div>
 		)
 	})
 ];
 
-export const AlbumLinksTable = ({ data = [] }: PropsWithChildren<{ readonly data?: any | undefined }>) => {
+export const AlbumLinksTable = ({
+	data = [],
+	albumIsWebsite = false
+}: PropsWithChildren<{ readonly albumIsWebsite?: boolean; readonly data?: any | undefined }>) => {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+	const columns = useMemo(() => getColumns(albumIsWebsite), [albumIsWebsite]);
 
 	const table = useReactTable({
 		data,

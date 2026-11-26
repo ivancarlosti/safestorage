@@ -17,6 +17,13 @@ export const updateAlbumSettings = async (_: any, form: FormData) => {
 	const notifyOnPublicUpload = form.get('notifyOnPublicUpload') === 'on';
 	const sortOrder = (form.get('sortOrder') as string) || null;
 	const viewMode = (form.get('viewMode') as ViewMode) || 'thumbs';
+	/*
+		The website switch is only rendered while hosting is enabled. When it is not,
+		the field is absent and the stored flag has to be left alone: sending `false`
+		would turn website mode off (and cascade to the links) on any other save.
+	*/
+	const isWebsiteField = form.get('isWebsite');
+	const isWebsite = isWebsiteField === null ? undefined : isWebsiteField === 'on';
 
 	try {
 		const { error } = await request.post({
@@ -27,7 +34,8 @@ export const updateAlbumSettings = async (_: any, form: FormData) => {
 				nsfw,
 				notifyOnPublicUpload,
 				sortOrder,
-				viewMode
+				viewMode,
+				...(isWebsite === undefined ? {} : { isWebsite })
 			},
 			headers: {
 				authorization: `Bearer ${await getToken()}`

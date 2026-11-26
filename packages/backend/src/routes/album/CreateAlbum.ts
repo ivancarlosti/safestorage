@@ -6,6 +6,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { SETTINGS } from '@/structures/settings.js';
 
 export const schema = {
 	summary: 'Create album',
@@ -13,7 +14,11 @@ export const schema = {
 	tags: ['Albums'],
 	body: z
 		.object({
-			name: z.string().describe('The name of the album.')
+			name: z.string().describe('The name of the album.'),
+			isWebsite: z
+				.boolean()
+				.optional()
+				.describe('Whether the album is served as a static website (requires website hosting to be enabled).')
 		})
 		.required(),
 	response: {
@@ -22,6 +27,7 @@ export const schema = {
 			album: z.object({
 				uuid: z.string().describe('The uuid of the album.'),
 				name: z.string().describe('The name of the album.'),
+				isWebsite: z.boolean().describe('Whether the album is served as a static website.'),
 				createdAt: z.date().describe('The date the album was created.')
 			})
 		}),
@@ -37,7 +43,12 @@ export const options = {
 };
 
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
-	const { name } = req.body as { name: string };
+	const { name, isWebsite } = req.body as { isWebsite?: boolean; name: string };
+
+	if (isWebsite === true && !SETTINGS.websiteHostingEnabled) {
+		void res.badRequest('Static website hosting is disabled on this instance');
+		return;
+	}
 
 	const exists = await prisma.albums.findFirst({
 		where: {
@@ -58,6 +69,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			name,
 			userId: req.user.id,
 			uuid: uuidv4(),
+			isWebsite: isWebsite === true,
 			createdAt: now,
 			editedAt: now
 		}
@@ -68,6 +80,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		album: {
 			uuid: newAlbum.uuid,
 			name: newAlbum.name,
+			isWebsite: newAlbum.isWebsite,
 			createdAt: newAlbum.createdAt
 		}
 	});

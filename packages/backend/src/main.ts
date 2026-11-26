@@ -9,8 +9,10 @@ import fastify, { LogController } from 'fastify';
 import { jsonSchemaTransform } from 'fastify-type-provider-zod';
 import jetpack from 'fs-jetpack';
 import { cleanup } from 'unzipit';
+import { registerWebsiteHosting } from './plugins/WebsiteHosting.js';
 import Routes from './structures/routes.js';
 import { SETTINGS, loadSettings } from './structures/settings.js';
+import { isForbiddenCorsOrigin } from './utils/AlbumWebsite.js';
 import Docs from './utils/Docs.js';
 import { log, logError } from './utils/Logger.js';
 import Requirements from './utils/Requirements.js';
@@ -133,7 +135,18 @@ const start = async () => {
 	});
 
 	await server.register(cors, {
-		origin: true,
+		/*
+			`Origin: null` is what a sandboxed document sends: the uploaded files and
+			the albums served as websites (path mode) both live in an opaque origin.
+			Their requests still carry the application cookies of the visitor (the
+			cookie belongs to the URL host), so reflecting that origin with
+			credentials would let a hosted website read authenticated /api
+			responses, e.g. `/api/user/me`, with the session of whoever opens it.
+
+			A site subdomain is rejected for the same reason: it must never get a
+			credentialed CORS grant to the instance that hosts it.
+		*/
+		origin: (origin, done) => done(null, !isForbiddenCorsOrigin(origin, SETTINGS.websiteHostingDomain)),
 		credentials: true,
 		allowedHeaders: [
 			'Accept',
@@ -181,6 +194,13 @@ const start = async () => {
 		// Scan and load routes into fastify
 		await Routes.load(instance);
 	});
+
+	/*
+		Domain mode for hosted websites. Registered on the root instance so the
+		hook runs before any route, and after the routes so it can rely on the
+		settings being loaded.
+	*/
+	registerWebsiteHosting(server);
 
 	if (process.env.NODE_ENV === 'production') {
 		server.addHook('onRequest', (req, _, next) => {

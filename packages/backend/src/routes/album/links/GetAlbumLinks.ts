@@ -5,6 +5,9 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { SETTINGS } from '@/structures/settings.js';
+import { buildSiteIndex, type SiteFileEntry } from '@/utils/AlbumWebsite.js';
+import { getWebsiteUrl } from '@/utils/WebsiteUrl.js';
 
 export const schema = {
 	summary: 'Get links',
@@ -18,6 +21,9 @@ export const schema = {
 	response: {
 		200: z.object({
 			message: responseMessageSchema,
+			websiteWarnings: z
+				.array(z.string())
+				.describe('Path conflicts that keep files from being served on the album website.'),
 			links: z.array(
 				z.object({
 					identifier: z.string().describe('The identifier of the link'),
@@ -28,6 +34,11 @@ export const schema = {
 					hideFiles: z
 						.boolean()
 						.describe('Whether the album contents are hidden and only the visitor uploads are shown'),
+					serveWebsite: z.boolean().describe('Whether the link serves the album as a static website'),
+					websiteUrl: z
+						.string()
+						.nullable()
+						.describe('The URL of the website, or null when the link does not serve one'),
 					viewMode: z
 						.enum(['list', 'thumbs'])
 						.nullable()
@@ -64,7 +75,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			userId: req.user.id
 		},
 		select: {
-			id: true
+			id: true,
+			isWebsite: true
 		}
 	});
 
@@ -86,6 +98,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			enableDownload: true,
 			allowUploads: true,
 			hideFiles: true,
+			serveWebsite: true,
 			viewMode: true,
 			expiresAt: true,
 			createdAt: true,
@@ -93,11 +106,49 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		}
 	});
 
+	/*
+		The owner is the only one who can fix a path conflict, so the warnings are
+		returned with the links the settings dialog already fetches.
+	*/
+	let websiteWarnings: string[] = [];
+	if (album.isWebsite) {
+		const files = await prisma.files.findMany({
+			where: {
+				albums: { some: { id: album.id } },
+				quarantine: false
+			},
+			select: {
+				createdAt: true,
+				hash: true,
+				isS3: true,
+				isWatched: true,
+				name: true,
+				original: true,
+				sitePath: true,
+				size: true,
+				type: true,
+				uuid: true
+			}
+		});
+
+		websiteWarnings = buildSiteIndex(files as SiteFileEntry[]).warnings;
+	}
+
 	return res.send({
 		message: 'Successfully retrieved links',
+		websiteWarnings,
 		links: links.map(link => ({
 			...link,
-			albumUuid: uuid
+			albumUuid: uuid,
+			/*
+				A link can keep `serveWebsite` while the instance switch or the album
+				flag is off; in that case there is no URL to show, and the link falls
+				back to the gallery until both are on again.
+			*/
+			websiteUrl:
+				link.serveWebsite && album.isWebsite && SETTINGS.websiteHostingEnabled
+					? getWebsiteUrl(req, link.identifier)
+					: null
 		}))
 	});
 };

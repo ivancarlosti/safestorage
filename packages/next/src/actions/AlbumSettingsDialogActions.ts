@@ -68,6 +68,13 @@ export const updateLinkSettings = async (_: any, form: FormData) => {
 	const viewMode = form.get('viewMode') as 'default' | 'list' | 'thumbs';
 	const allowUploads = form.get('allowUploads') === 'true';
 	const hideFiles = form.get('hideFiles') === 'true';
+	/*
+		The website switch is only rendered while hosting is enabled and the album is
+		a website; when absent, the link's flag must not be touched by an unrelated
+		save.
+	*/
+	const serveWebsiteField = form.get('serveWebsite');
+	const serveWebsite = serveWebsiteField === null ? undefined : serveWebsiteField === 'true';
 
 	try {
 		const { error } = await request.post({
@@ -75,7 +82,8 @@ export const updateLinkSettings = async (_: any, form: FormData) => {
 			body: {
 				viewMode: viewMode === 'default' ? null : viewMode,
 				allowUploads,
-				hideFiles
+				hideFiles,
+				...(serveWebsite === undefined ? {} : { serveWebsite })
 			},
 			headers: {
 				authorization: `Bearer ${await getToken()}`

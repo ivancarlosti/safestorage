@@ -9,6 +9,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { normalizeSitePath } from '@/utils/AlbumWebsite.js';
 import { getAnonymousUploadMaxSize } from '@/utils/AnonymousUploadLimiter.js';
 import { storeFileToDb, constructFilePublicLink, checkFileHashOnDB, deleteTmpFile } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
@@ -39,7 +40,11 @@ export const schema = {
 			.string()
 			.optional()
 			.describe('The type of the file. Defaults to application/octet-stream when it is missing.'),
-		sourceUrl: z.string().optional().describe('The source URL of the file.')
+		sourceUrl: z.string().optional().describe('The source URL of the file.'),
+		sitePath: z
+			.string()
+			.optional()
+			.describe('The relative path of the file inside a static website album (from a folder upload).')
 	}),
 	response: {
 		200: z.object({
@@ -69,9 +74,10 @@ export const options = {
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	if (!SETTINGS.useNetworkStorage) return res.internalServerError('Network storage is not enabled');
 
-	const { identifier, name, type, sourceUrl } = req.body as {
+	const { identifier, name, type, sourceUrl, sitePath } = req.body as {
 		identifier: string;
 		name: string;
+		sitePath?: string;
 		sourceUrl?: string;
 		type?: string;
 	};
@@ -148,7 +154,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		ip: req.ip,
 		isS3: true,
 		isWatched: false,
-		sourceUrl
+		sourceUrl,
+		sitePath: normalizeSitePath(sitePath)
 	};
 
 	let uploadedFile;

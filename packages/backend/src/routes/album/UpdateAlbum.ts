@@ -5,6 +5,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { SETTINGS } from '@/structures/settings.js';
 import { isValidSortOrder } from '@/utils/SortOrder.js';
 import { isValidViewMode } from '@/utils/ViewMode.js';
 
@@ -26,7 +27,13 @@ export const schema = {
 		notifyOnPublicUpload: z
 			.boolean()
 			.optional()
-			.describe('Whether to email the album owners when someone uploads through a public link.')
+			.describe('Whether to email the album owners when someone uploads through a public link.'),
+		isWebsite: z
+			.boolean()
+			.optional()
+			.describe(
+				'Whether the album is served as a static website. Disabling it turns off website mode on its links.'
+			)
 	}),
 	response: {
 		200: z.object({
@@ -46,8 +53,9 @@ export const options = {
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const { uuid } = req.params as { uuid: string };
 
-	const { name, nsfw, description, sortOrder, viewMode, notifyOnPublicUpload } = req.body as {
+	const { name, nsfw, description, sortOrder, viewMode, notifyOnPublicUpload, isWebsite } = req.body as {
 		description?: string;
+		isWebsite?: boolean;
 		name?: string;
 		nsfw?: boolean;
 		notifyOnPublicUpload?: boolean;
@@ -60,9 +68,15 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		!description &&
 		sortOrder === undefined &&
 		viewMode === undefined &&
-		notifyOnPublicUpload === undefined
+		notifyOnPublicUpload === undefined &&
+		isWebsite === undefined
 	) {
 		void res.badRequest('No data supplied');
+		return;
+	}
+
+	if (isWebsite === true && !SETTINGS.websiteHostingEnabled) {
+		void res.badRequest('Static website hosting is disabled on this instance');
 		return;
 	}
 
@@ -97,15 +111,35 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		description: description ?? album.description,
 		sortOrder: sortOrder === undefined ? album.sortOrder : sortOrder,
 		viewMode: viewMode ?? album.viewMode,
-		notifyOnPublicUpload: notifyOnPublicUpload ?? album.notifyOnPublicUpload
+		notifyOnPublicUpload: notifyOnPublicUpload ?? album.notifyOnPublicUpload,
+		isWebsite: isWebsite ?? album.isWebsite
 	};
 
-	await prisma.albums.update({
-		where: {
-			uuid
-		},
-		data: {
-			...updateObj
+	/*
+		Turning website mode off has to turn it off on every link of the album as
+		well: a link left with `serveWebsite` would otherwise keep trying to serve an
+		album that is no longer a website, and re-enabling the album later would
+		silently republish every one of those links.
+	*/
+	await prisma.$transaction(async transaction => {
+		await transaction.albums.update({
+			where: {
+				uuid
+			},
+			data: {
+				...updateObj
+			}
+		});
+
+		if (updateObj.isWebsite === false && album.isWebsite) {
+			await transaction.links.updateMany({
+				where: {
+					albumId: album.id
+				},
+				data: {
+					serveWebsite: false
+				}
+			});
 		}
 	});
 

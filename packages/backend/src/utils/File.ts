@@ -385,6 +385,8 @@ export const storeFileToDb = async (
 		sourceUrl: file.sourceUrl ?? null,
 		isS3: file.isS3,
 		isWatched: file.isWatched,
+		// Path inside a static website album, when the upload came with one
+		sitePath: file.sitePath ?? null,
 		createdAt: now,
 		editedAt: now
 	};
@@ -525,10 +527,12 @@ export const handleUploadFile = async ({
 	user,
 	ip,
 	upload,
-	album
+	album,
+	sitePath
 }: {
 	album?: number | null | undefined;
 	ip: string;
+	sitePath?: string | null;
 	upload: { name: string; path: string; size: string; sourceUrl?: string; type: string };
 	user?: RequestUser | User | undefined;
 }) => {
@@ -558,12 +562,23 @@ export const handleUploadFile = async ({
 		ip,
 		sourceUrl: upload.sourceUrl,
 		isS3: false,
-		isWatched: false
+		isWatched: false,
+		sitePath: sitePath ?? null
 	};
 
 	let uploadedFile;
 	const fileOnDb = await checkFileHashOnDB(user, file);
 	if (fileOnDb?.repeated) {
+		/*
+			A duplicate upload can still teach an existing file its place inside a
+			website: the file is already stored, only the site path was missing.
+		*/
+		if (file.sitePath && !fileOnDb.file.sitePath) {
+			await prisma.files.update({
+				where: { uuid: fileOnDb.file.uuid },
+				data: { sitePath: file.sitePath }
+			});
+		}
 		if (SETTINGS.saveDuplicatesToAlbum && album) {
 			await saveFileToAlbum(album, fileOnDb.file.id);
 		} else {

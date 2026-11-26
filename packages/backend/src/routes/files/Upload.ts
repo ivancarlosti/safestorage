@@ -11,6 +11,7 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { SETTINGS } from '@/structures/settings.js';
+import { normalizeSitePath } from '@/utils/AlbumWebsite.js';
 import { consumeAnonymousUploadSlot, getAnonymousUploadMaxSize } from '@/utils/AnonymousUploadLimiter.js';
 import { getUniqueFileIdentifier, constructFilePublicLink, deleteTmpFile, handleUploadFile } from '@/utils/File.js';
 import { logError } from '@/utils/Logger.js';
@@ -387,6 +388,8 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 				size: upload.metadata.size ?? '0',
 				sourceUrl: (req.headers['x-source-url'] as string) ?? undefined
 			},
+			// Relative path of a folder upload, so the file can be served on a website
+			sitePath: normalizeSitePath(upload.metadata.sitePath),
 			album: target.albumId
 		});
 

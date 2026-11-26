@@ -46,10 +46,12 @@ export const useUploadFile = ({
 		async ({
 			identifier,
 			name,
-			type
+			type,
+			sitePath
 		}: {
 			identifier: string;
 			name: string;
+			sitePath: string;
 			type: string;
 		}): Promise<{ error: string | undefined; url: string | undefined }> => {
 			try {
@@ -61,7 +63,7 @@ export const useUploadFile = ({
 						albumuuid: albumUuid ?? '',
 						albumlink: albumLink ?? ''
 					},
-					body: JSON.stringify({ identifier, name, type })
+					body: JSON.stringify({ identifier, name, type, sitePath })
 				});
 
 				if (!response.ok) {
@@ -184,7 +186,9 @@ export const useUploadFile = ({
 					const { error, url } = await processNetworkStorageFile({
 						identifier,
 						name: file.name,
-						type: getUploadContentType(file)
+						type: getUploadContentType(file),
+						// The relative path of a folder upload becomes the file's place on a website
+						sitePath: file.webkitRelativePath || file.name
 					});
 					setUploads(draft => {
 						const upload = draft.findIndex(entry => entry.uuid === multipart.uploadId);
@@ -300,7 +304,9 @@ export const useUploadFile = ({
 				options.postParams = {
 					name: file.name,
 					type: getUploadContentType(file),
-					size: file.size.toString()
+					size: file.size.toString(),
+					// `webkitRelativePath` is set when the user picks a whole folder
+					sitePath: file.webkitRelativePath || file.name
 				};
 
 				options.headers = {
@@ -399,7 +405,8 @@ export const useUploadFile = ({
 						const { error, url } = await processNetworkStorageFile({
 							identifier,
 							name: file.name,
-							type: getUploadContentType(file)
+							type: getUploadContentType(file),
+							sitePath: file.webkitRelativePath || file.name
 						});
 						setUploads(draft => {
 							const upload = draft.findIndex(file => file.uuid === uuid);

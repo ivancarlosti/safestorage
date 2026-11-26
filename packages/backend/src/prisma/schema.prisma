@@ -49,6 +49,8 @@ model files {
 	albums albums[]
 	tags tags[]
 	quarantine Boolean @default(false)
+	// Path of the file inside a static website album (relative, no `..`)
+	sitePath String? @db.VarChar(1024)
 	quarantineFile quarantineFiles?
 }
 
@@ -72,6 +74,8 @@ model albums {
 	sortOrder String?
 	viewMode String @default("thumbs")
 	notifyOnPublicUpload Boolean @default(false)
+	// Serves the album contents as a static website, when hosting is enabled
+	isWebsite Boolean @default(false)
 	files files[]
 	members albumMembers[]
 	invites invites[]
@@ -111,6 +115,8 @@ model links {
 	expiresAt DateTime?
 	createdAt DateTime @default(now())
 	editedAt DateTime?
+	// Serves the album as a static website instead of a gallery
+	serveWebsite Boolean @default(false)
 }
 
 model settings {
@@ -179,6 +185,8 @@ model settings {
 	smtpFrom String @default("")
 	recaptchaSiteKey String @default("")
 	recaptchaSecretKey String @default("")
+	websiteHostingEnabled Boolean @default(false)
+	websiteHostingDomain String @db.VarChar(255) @default("")
 }
 
 model statistics {

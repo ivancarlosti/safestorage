@@ -138,6 +138,8 @@ export interface Settings {
 	useNetworkStorage: boolean;
 	useUrlShortener: boolean;
 	userAccounts: boolean;
+	websiteHostingDomain?: string;
+	websiteHostingEnabled?: boolean;
 }
 
 export interface Album {
@@ -148,6 +150,7 @@ export interface Album {
 	editedAt: string;
 	files?: FileWithAdditionalData[];
 	isOwner?: boolean;
+	isWebsite?: boolean;
 	name: string;
 	nsfw: boolean;
 	// Email the album owner and members when someone uploads through a public link
@@ -271,9 +274,11 @@ export interface AlbumLink {
 	expiresAt: string | null;
 	hideFiles: boolean;
 	identifier: string;
+	serveWebsite: boolean;
 	uuid: string;
 	viewMode: ViewMode | null;
 	views: number;
+	websiteUrl?: string | null;
 }
 
 export interface Setting {

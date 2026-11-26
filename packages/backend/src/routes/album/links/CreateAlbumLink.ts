@@ -6,8 +6,11 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
+import { SETTINGS } from '@/structures/settings.js';
+import { isDnsSafeIdentifier } from '@/utils/AlbumWebsite.js';
 import { getUniqueAlbumIdentifier } from '@/utils/Util.js';
 import { isValidViewMode } from '@/utils/ViewMode.js';
+import { getWebsiteUrl } from '@/utils/WebsiteUrl.js';
 
 export const schema = {
 	summary: 'Create link',
@@ -18,6 +21,22 @@ export const schema = {
 			uuid: z.string().describe('The uuid of the album.')
 		})
 		.required(),
+	/*
+		The client may create a link without a body at all, so the object has to
+		accept `null`; every field is optional.
+	*/
+	body: z
+		.object({
+			allowUploads: z.boolean().optional().describe('Whether visitors can upload files through the link.'),
+			hideFiles: z.boolean().optional().describe('Whether the album contents are hidden (drop-only link).'),
+			identifier: z.string().optional().describe('A custom identifier (administrators only).'),
+			serveWebsite: z
+				.boolean()
+				.optional()
+				.describe('Whether the link serves the album as a static website instead of a gallery.'),
+			viewMode: z.enum(['list', 'thumbs']).nullable().optional().describe('The view mode of the link.')
+		})
+		.nullish(),
 	response: {
 		200: z.object({
 			message: responseMessageSchema,
@@ -31,6 +50,11 @@ export const schema = {
 				hideFiles: z
 					.boolean()
 					.describe('Whether the album contents are hidden and only the visitor uploads are shown'),
+				serveWebsite: z.boolean().describe('Whether the link serves the album as a static website'),
+				websiteUrl: z
+					.string()
+					.nullable()
+					.describe('The URL of the website, or null when the link does not serve one'),
 				viewMode: z
 					.enum(['list', 'thumbs'])
 					.nullable()
@@ -69,10 +93,28 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		allowUploads?: boolean;
 		hideFiles?: boolean;
 		identifier?: string;
+		serveWebsite?: boolean;
 		viewMode?: string | null;
 	};
 	let { identifier } = body;
-	const { allowUploads, hideFiles, viewMode } = body;
+	const { allowUploads, hideFiles, serveWebsite, viewMode } = body;
+
+	if (serveWebsite === true) {
+		if (!SETTINGS.websiteHostingEnabled) {
+			void res.badRequest('Static website hosting is disabled on this instance');
+			return;
+		}
+
+		if (!exists.isWebsite) {
+			void res.badRequest('Enable website mode on the album before serving it as a website');
+			return;
+		}
+
+		if (hideFiles === true) {
+			void res.badRequest('A website link cannot hide its files');
+			return;
+		}
+	}
 
 	if (viewMode !== undefined && viewMode !== null && !isValidViewMode(viewMode)) {
 		void res.badRequest('Invalid view mode. Valid options: list, thumbs');
@@ -87,6 +129,17 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 
 		if (!/^[\w-]+$/.test(identifier)) {
 			void res.badRequest('Only alphanumeric, dashes, and underscore characters are allowed');
+			return;
+		}
+
+		/*
+			A website identifier becomes a subdomain, so underscores and uppercase
+			letters (valid in a gallery link) cannot be used.
+		*/
+		if (serveWebsite === true && !isDnsSafeIdentifier(identifier)) {
+			void res.badRequest(
+				'A website identifier can only contain lowercase letters, digits and dashes, and cannot start or end with a dash'
+			);
 			return;
 		}
 
@@ -116,6 +169,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		enableDownload: true,
 		allowUploads: allowUploads === true,
 		hideFiles: hideFiles === true,
+		serveWebsite: serveWebsite === true,
 		viewMode: viewMode ?? null,
 		expiresAt: null,
 		views: 0
@@ -135,6 +189,11 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			enableDownload: insertObj.enableDownload,
 			allowUploads: insertObj.allowUploads,
 			hideFiles: insertObj.hideFiles,
+			serveWebsite: insertObj.serveWebsite,
+			websiteUrl:
+				insertObj.serveWebsite && exists.isWebsite && SETTINGS.websiteHostingEnabled
+					? getWebsiteUrl(req, identifier)
+					: null,
 			viewMode: insertObj.viewMode,
 			expiresAt: insertObj.expiresAt,
 			views: insertObj.views

@@ -126,6 +126,8 @@ export const loadSettings = async (force = false) => {
 		SETTINGS.smtpFrom = settingsTable.smtpFrom;
 		SETTINGS.recaptchaSiteKey = settingsTable.recaptchaSiteKey;
 		SETTINGS.recaptchaSecretKey = settingsTable.recaptchaSecretKey;
+		SETTINGS.websiteHostingEnabled = settingsTable.websiteHostingEnabled;
+		SETTINGS.websiteHostingDomain = settingsTable.websiteHostingDomain || '';
 
 		applyTimezone(SETTINGS.timezone);
 		return;
@@ -197,7 +199,9 @@ export const loadSettings = async (force = false) => {
 		smtpPassword: '',
 		smtpFrom: '',
 		recaptchaSiteKey: '',
-		recaptchaSecretKey: ''
+		recaptchaSecretKey: '',
+		websiteHostingEnabled: false,
+		websiteHostingDomain: ''
 	};
 
 	await prisma.settings.create({
@@ -404,6 +408,23 @@ const SETTINGS_META = {
 		example: '6Lc...',
 		notice: 'Keep this one secret: it must never be exposed to the browser.',
 		category: 'users'
+	},
+	websiteHostingEnabled: {
+		type: 'boolean',
+		description:
+			'Whether albums can be served as static websites. Off by default: a website is untrusted HTML running on your instance.',
+		name: 'Static Website Hosting',
+		notice: 'When disabled, every website link stops being served. Enabling it does not publish anything by itself: each album and each link has to opt in.',
+		category: 'service'
+	},
+	websiteHostingDomain: {
+		type: 'string',
+		description:
+			'The domain used for per-site subdomains. Leave empty to only serve websites on /site/{identifier}/.',
+		name: 'Website Hosting Domain',
+		example: 'sites.example.com',
+		notice: 'Sites are served at {identifier}.{domain}, which requires a wildcard DNS record and a wildcard certificate pointing at port 8080 of the container. Keep the session cookies host-only (no Domain=.example.com) so the sites cannot read them.',
+		category: 'service'
 	},
 	disableStatisticsCron: {
 		type: 'boolean',

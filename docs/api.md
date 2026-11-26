@@ -133,6 +133,8 @@ Paths below are relative to `/api`.
 | DELETE | `/album/:uuid/link/:linkUuid`      | Auth   | Delete an album link.                  |
 | GET    | `/album/:identifier/view`          | Public | Get a public album by its identifier.  |
 | GET    | `/album/:identifier/view/count`    | Public | Increment a public album's views.      |
+| GET    | `/site/:identifier/*`              | Public | Serve an album published as a static website (path mode). |
+| GET    | `/site/:identifier`                | Public | `308` redirect to `/site/:identifier/`.                   |
 | POST   | `/album/:uuid/share`               | Auth   | Share an album with an email (album owner).    |
 | GET    | `/album/:uuid/members`             | Auth   | List members and pending invites (album owner).|
 | DELETE | `/album/:uuid/member/:userUuid`    | Auth   | Remove a member (album owner).                 |
@@ -147,6 +149,19 @@ Albums belong to the user that created them and can be shared with other people 
   - With `AUTH_METHOD=account`, an unknown email gets an invite (`type: "invite"`, plus `code` and the relative `inviteUrl`, `/invite/<code>`). Redeeming it creates the account, joins the album and marks the invite as used. Such invites are bound to that email address.
   - With `AUTH_METHOD=keycloak` the account is provisioned on the spot: the email is the identity, so the next single sign-on login picks the row up. The email has to pass `KEYCLOAK_RESTRICT`, otherwise the call answers `400`.
   - The response always carries `emailSent`. Emails are only sent when the SMTP settings are configured; the invite link is returned either way so it can be copied by hand.
+
+#### Album websites
+
+An album can be published as a static website:
+
+- `POST /album/create` and `POST /album/:uuid/edit` accept `isWebsite`. Enabling it requires `websiteHostingEnabled`; disabling it also sets `serveWebsite` to `false` on every link of the album, in the same transaction.
+- `POST /album/:uuid/link` and `POST /album/:uuid/link/:linkUuid/edit` accept `serveWebsite`. Enabling it requires website hosting to be on, the album to be a website, a DNS-safe identifier (`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`) and `hideFiles` to be off — a drop-only link cannot be a website.
+- `GET /album/:uuid/links` returns `serveWebsite` and `websiteUrl` (`null` while hosting or the album flag is off, even if the link still has the flag), plus `websiteWarnings` describing any path conflict that keeps a file from being served.
+- `GET /album/:identifier/view` returns `websiteUrl` for a hosted link and skips the file payload; the `/a/{identifier}` page redirects to it instead of rendering the gallery.
+- Uploads accept an optional `sitePath` (a form field on `/upload`, or a JSON field on `/upload/process`) that the frontend fills with `webkitRelativePath || name`. The backend sanitises it: `..`, absolute paths, control characters, segments over 255 bytes and paths over 1024 bytes are refused and the file falls back to its sanitised original name.
+
+The website itself is served by `GET /site/:identifier/…` (and by `{identifier}.{hostingDomain}` when a hosting domain is configured): `index.html` for `/` and for directories, a `301` to the trailing-slash form for extension-less directories, `404.html` with a 404 status for missing paths, plus `HEAD`, `Range`/`206` and `ETag`/`304`. Views are counted on document requests only. Path mode answers with `Content-Security-Policy: sandbox allow-scripts …` (never `allow-same-origin`), `nosniff`, `Cross-Origin-Resource-Policy: cross-origin`, `Access-Control-Allow-Origin: *` and `Referrer-Policy: no-referrer`.
+
 - Members can read the album, upload files into it and add or remove **their own** files. Only the album owner can rename, delete or purge the album and manage its public links. Purging an album deletes only the files the owner uploaded.
 - Deleting the album ends every membership; removing a member leaves the files they uploaded in the album.
 

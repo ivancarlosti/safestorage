@@ -28,6 +28,7 @@ export const schema = {
 			name: z.string().describe('The name of the album.'),
 			description: z.string().nullable().describe('The description of the album.'),
 			isNsfw: z.boolean().describe('Whether or not the album is nsfw.'),
+			isWebsite: z.boolean().describe('Whether the album is served as a static website.'),
 			sortOrder: z.string().nullable().describe('The sort order for files in this album.'),
 			viewMode: z.enum(['list', 'thumbs']).describe('The default view mode for this album.'),
 			count: z.number().describe('The number of files in the album.'),
@@ -107,6 +108,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			description: true,
 			userId: true,
 			nsfw: true,
+			isWebsite: true,
 			sortOrder: true,
 			viewMode: true,
 			files: {
@@ -161,6 +163,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		description: album.description,
 		files,
 		isNsfw: album.nsfw,
+		isWebsite: album.isWebsite,
 		sortOrder: album.sortOrder,
 		viewMode: album.viewMode,
 		count: album._count.files,

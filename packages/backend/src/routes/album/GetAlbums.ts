@@ -29,6 +29,7 @@ export const schema = {
 					name: z.string().describe('The name of the album.'),
 					description: z.string().nullable().describe('The description of the album.'),
 					nsfw: z.boolean().describe('Whether or not the album is NSFW.'),
+					isWebsite: z.boolean().describe('Whether the album is served as a static website.'),
 					sortOrder: z.string().nullable().describe('The sort order for files in this album.'),
 					viewMode: z.enum(['list', 'thumbs']).describe('The default view mode for this album.'),
 					notifyOnPublicUpload: z
@@ -81,6 +82,7 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			description: true,
 			userId: true,
 			nsfw: true,
+			isWebsite: true,
 			sortOrder: true,
 			viewMode: true,
 			notifyOnPublicUpload: true,
