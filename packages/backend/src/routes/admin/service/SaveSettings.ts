@@ -8,7 +8,6 @@ import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import type { SETTINGS } from '@/structures/settings.js';
 import { SETTINGS as INSTANCE_SETTINGS, isValidTimezone, loadSettings } from '@/structures/settings.js';
-import { isValidHostingDomain, normalizeHostingDomain } from '@/utils/AlbumWebsite.js';
 import { logError } from '@/utils/Logger.js';
 import { isValidSortOrder } from '@/utils/SortOrder.js';
 import { updateCheck, startUpdateCheckSchedule, stopUpdateCheckSchedule } from '@/utils/UpdateCheck.js';
@@ -149,17 +148,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 
 		if (parsedSettings.yourlsApiUrl !== undefined) {
 			parsedSettings.yourlsApiUrl = String(parsedSettings.yourlsApiUrl).trim();
-		}
-
-		if (parsedSettings.websiteHostingDomain !== undefined) {
-			parsedSettings.websiteHostingDomain = normalizeHostingDomain(String(parsedSettings.websiteHostingDomain));
-
-			if (parsedSettings.websiteHostingDomain && !isValidHostingDomain(parsedSettings.websiteHostingDomain)) {
-				void res.badRequest(
-					'The website hosting domain has to be a bare domain, for example sites.example.com'
-				);
-				return;
-			}
 		}
 
 		if (parsedSettings.yourlsSignature !== undefined) {

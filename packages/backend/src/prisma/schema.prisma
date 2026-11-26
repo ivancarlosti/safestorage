@@ -34,9 +34,7 @@ model files {
 	id Int @id @default(autoincrement())
 	uuid String @unique
 	userId Int?
-	// Storage key: `<identifier><extension>` for gallery uploads, or
-	// `site/<albumIdentifier>/<sitePath>` for the files of a website album
-	name String @db.VarChar(2048)
+	name String @db.VarChar(255)
 	original String @db.VarChar(1024)
 	type String @db.VarChar(255)
 	size String
@@ -51,8 +49,6 @@ model files {
 	albums albums[]
 	tags tags[]
 	quarantine Boolean @default(false)
-	// Path of the file inside a static website album (relative, no `..`)
-	sitePath String? @db.VarChar(1024)
 	quarantineFile quarantineFiles?
 }
 
@@ -76,10 +72,6 @@ model albums {
 	sortOrder String?
 	viewMode String @default("thumbs")
 	notifyOnPublicUpload Boolean @default(false)
-	// Serves the album contents as a static website, when hosting is enabled
-	isWebsite Boolean @default(false)
-	// Folder of the album inside the website storage (`site/{identifier}/`)
-	identifier String? @unique @db.VarChar(32)
 	files files[]
 	members albumMembers[]
 	invites invites[]
@@ -119,8 +111,6 @@ model links {
 	expiresAt DateTime?
 	createdAt DateTime @default(now())
 	editedAt DateTime?
-	// Serves the album as a static website instead of a gallery
-	serveWebsite Boolean @default(false)
 }
 
 model settings {
@@ -189,8 +179,6 @@ model settings {
 	smtpFrom String @default("")
 	recaptchaSiteKey String @default("")
 	recaptchaSecretKey String @default("")
-	websiteHostingEnabled Boolean @default(false)
-	websiteHostingDomain String @db.VarChar(255) @default("")
 }
 
 model statistics {

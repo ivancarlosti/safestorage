@@ -12,7 +12,6 @@ import { SETTINGS } from '@/structures/settings.js';
 import { albumAccessWhere } from '@/utils/AlbumAccess.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 import { parseSortOrder, resolveSortOrder } from '@/utils/SortOrder.js';
-import { ensureAlbumIdentifier } from '@/utils/Util.js';
 
 export const schema = {
 	summary: 'Get album',
@@ -29,11 +28,6 @@ export const schema = {
 			name: z.string().describe('The name of the album.'),
 			description: z.string().nullable().describe('The description of the album.'),
 			isNsfw: z.boolean().describe('Whether or not the album is nsfw.'),
-			isWebsite: z.boolean().describe('Whether the album is served as a static website.'),
-			siteIdentifier: z
-				.string()
-				.nullable()
-				.describe('The folder of the album inside the website storage, when it is a website.'),
 			sortOrder: z.string().nullable().describe('The sort order for files in this album.'),
 			viewMode: z.enum(['list', 'thumbs']).describe('The default view mode for this album.'),
 			count: z.number().describe('The number of files in the album.'),
@@ -109,13 +103,10 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 	const album = await prisma.albums.findFirst({
 		where: albumAccessWhere(req.user.id, uuid),
 		select: {
-			id: true,
 			name: true,
 			description: true,
 			userId: true,
 			nsfw: true,
-			isWebsite: true,
-			identifier: true,
 			sortOrder: true,
 			viewMode: true,
 			files: {
@@ -160,22 +151,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		const modifiedFile = file as unknown as File;
 		files.push({
 			...modifiedFile,
-			...constructFilePublicLink({
-				req,
-				fileName: modifiedFile.name,
-				uuid: modifiedFile.uuid,
-				isS3: file.isS3,
-				isWatched: file.isWatched
-			})
+			...constructFilePublicLink({ req, fileName: modifiedFile.name, isS3: file.isS3, isWatched: file.isWatched })
 		});
 	}
-
-	// The website folder is allocated on first sight of an older website album
-	const siteIdentifier = await ensureAlbumIdentifier({
-		id: album.id,
-		identifier: album.identifier,
-		isWebsite: album.isWebsite
-	});
 
 	return res.send({
 		message: 'Successfully retrieved album',
@@ -183,8 +161,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		description: album.description,
 		files,
 		isNsfw: album.nsfw,
-		isWebsite: album.isWebsite,
-		siteIdentifier,
 		sortOrder: album.sortOrder,
 		viewMode: album.viewMode,
 		count: album._count.files,

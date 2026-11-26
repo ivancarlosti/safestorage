@@ -27,12 +27,6 @@ const isValidTimezone = (timezone: string) => {
 	}
 };
 
-/*
-	Every setting the admin API returns has to be listed here: the resolver strips
-	the keys it does not know, so a setting that is missing from this schema is
-	rendered from its stored value but never sent back when the form is saved.
-	`test/settingsForm.test.ts` in the backend guards the mirror.
-*/
 const formSchema = z.object({
 	// Users
 	publicMode: z.boolean().optional(),
@@ -69,9 +63,6 @@ const formSchema = z.object({
 	rateLimitMax: z.coerce.number().min(1, { message: 'Required' }),
 	secret: z.string().trim().min(1, { message: 'Required' }),
 	disableUpdateCheck: z.boolean().optional(),
-	// Static website hosting
-	websiteHostingEnabled: z.boolean().optional(),
-	websiteHostingDomain: z.string().optional(),
 	// Uploads
 	chunkSize: z.coerce.number().int().min(1, { message: 'Required' }),
 	maxSize: z.coerce.number().int().min(1, { message: 'Required' }),

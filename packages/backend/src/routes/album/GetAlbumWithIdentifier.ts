@@ -10,7 +10,6 @@ import { SETTINGS } from '@/structures/settings.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 import { parseSortOrder, resolveSortOrder } from '@/utils/SortOrder.js';
 import { resolveViewMode } from '@/utils/ViewMode.js';
-import { getWebsiteUrl } from '@/utils/WebsiteUrl.js';
 
 export const schema = {
 	summary: 'Get public album',
@@ -51,11 +50,7 @@ export const schema = {
 						uuid: z.string().describe('The UUID of the file.')
 					})
 				),
-				cover: z.string().nullable().describe('The URL of the cover of the album.'),
-				websiteUrl: z
-					.string()
-					.nullable()
-					.describe('The URL of the website when the link serves the album as one, null otherwise.')
+				cover: z.string().nullable().describe('The URL of the cover of the album.')
 			})
 		}),
 		'4xx': http4xxErrorSchema,
@@ -88,8 +83,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			allowUploads: true,
 			hideFiles: true,
 			viewMode: true,
-			expiresAt: true,
-			serveWebsite: true
+			expiresAt: true
 		}
 	});
 
@@ -110,36 +104,9 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		},
 		select: {
 			sortOrder: true,
-			viewMode: true,
-			name: true,
-			description: true,
-			nsfw: true,
-			isWebsite: true
+			viewMode: true
 		}
 	});
-
-	/*
-		When the link serves the album as a website the gallery payload is not
-		needed at all: the page redirects to the site. Skipping the file queries
-		keeps a popular website from paying for the gallery on every /a/ visit.
-	*/
-	if (link.serveWebsite && SETTINGS.websiteHostingEnabled && albumMeta?.isWebsite) {
-		return res.send({
-			message: 'Successfully retrieved album',
-			album: {
-				name: albumMeta.name,
-				description: albumMeta.description,
-				files: [],
-				cover: null,
-				isNsfw: albumMeta.nsfw,
-				viewMode: resolveViewMode(link.viewMode, albumMeta.viewMode),
-				allowUploads: Boolean(link.allowUploads && SETTINGS.anonymousUploadsEnabled),
-				hideFiles: false,
-				count: 0,
-				websiteUrl: getWebsiteUrl(req, identifier)
-			}
-		});
-	}
 
 	// Determine sort order: album-specific > global default > legacy fallback
 	const effectiveSortOrder = resolveSortOrder(albumMeta?.sortOrder, SETTINGS.defaultSortOrder);
@@ -203,8 +170,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			files: {
 				where: fileWhere,
 				select: {
-					name: true,
-					uuid: true
+					name: true
 				},
 				take: 1,
 				orderBy
@@ -218,22 +184,14 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 		const { isWatched, isS3, ...modifiedFile } = file;
 		files.push({
 			...modifiedFile,
-			...constructFilePublicLink({
-				req,
-				fileName: modifiedFile.name,
-				uuid: modifiedFile.uuid,
-				isS3,
-				isWatched
-			})
+			...constructFilePublicLink({ req, fileName: modifiedFile.name, isS3, isWatched })
 		});
 	}
 
-	const coverFile = firstImage?.files[0];
-	const coverPublicLink = coverFile
+	const coverPublicLink = firstImage?.files[0]?.name
 		? constructFilePublicLink({
 				req,
-				fileName: coverFile.name,
-				uuid: coverFile.uuid
+				fileName: firstImage.files[0].name
 			})
 		: null;
 
@@ -249,8 +207,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 			viewMode,
 			allowUploads: Boolean(link.allowUploads && SETTINGS.anonymousUploadsEnabled),
 			hideFiles: link.hideFiles,
-			count: album._count.files,
-			websiteUrl: null
+			count: album._count.files
 		}
 	});
 };

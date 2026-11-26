@@ -1,7 +1,6 @@
 import path from 'node:path';
 import { URL } from 'node:url';
 import { SETTINGS } from '@/structures/settings.js';
-import { isValidSiteStorageKey } from '@/utils/AlbumWebsite.js';
 import { tmpUploadPath } from '@/utils/File.js';
 
 /*
@@ -18,25 +17,6 @@ const fileIdentifierRegex = /^[^\p{Cc}\p{Cf}\s./\\%?#:@][^\p{Cc}\p{Cf}/\\%?#:@]{
 export const isValidFileIdentifier = (identifier: unknown): identifier is string =>
 	typeof identifier === 'string' && fileIdentifierRegex.test(identifier);
 
-/*
-	A stored key is either a flat gallery identifier or the nested key of a
-	website file (`site/{albumIdentifier}/{sitePath}`), which is validated with
-	the same rules the website server uses.
-*/
-export const isValidStorageKey = (identifier: unknown): identifier is string =>
-	typeof identifier === 'string' && (isValidFileIdentifier(identifier) || isValidSiteStorageKey(identifier));
-
-/*
-	Every segment is encoded on its own: encoding the whole key would turn the
-	folder separators into `%2F` and ask the storage for a single object named
-	`site%2F…` instead of for the file inside the website folder.
-*/
-const encodeStorageKey = (key: string) =>
-	key
-		.split('/')
-		.map(segment => encodeURIComponent(segment))
-		.join('/');
-
 /**
  * Builds the URL a file stored on network storage is fetched from.
  *
@@ -45,7 +25,7 @@ const encodeStorageKey = (key: string) =>
  * chosen by the caller.
  */
 export const constructNetworkStorageUrl = (identifier: string) => {
-	if (!isValidStorageKey(identifier)) {
+	if (!isValidFileIdentifier(identifier)) {
 		throw new Error('Invalid network storage file identifier');
 	}
 
@@ -57,7 +37,7 @@ export const constructNetworkStorageUrl = (identifier: string) => {
 	// Throws if the operator configured an URL that cannot be parsed
 	const baseUrl = new URL(configuredUrl);
 	const bucketUrl = `${baseUrl.origin}${baseUrl.pathname.replace(/\/+$/, '')}/`;
-	const fileUrl = new URL(encodeStorageKey(identifier), bucketUrl);
+	const fileUrl = new URL(encodeURIComponent(identifier), bucketUrl);
 
 	if (fileUrl.origin !== baseUrl.origin) {
 		throw new Error('Refusing to fetch a file outside of the configured network storage');
@@ -79,7 +59,7 @@ export const fetchNetworkStorageFile = async (identifier: string) =>
  * segments are stripped so the identifier can not escape the tmp folder.
  */
 export const getNetworkStorageTmpPath = (identifier: string) => {
-	if (!isValidStorageKey(identifier)) {
+	if (!isValidFileIdentifier(identifier)) {
 		throw new Error('Invalid network storage file identifier');
 	}
 

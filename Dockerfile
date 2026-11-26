@@ -145,9 +145,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/start-nginx.sh \
 	/app/logs \
  && nginx -t
 
-# 80   - the whole instance (nginx)
-# 8080 - the per-site website listener (nginx -> backend, Host based)
-EXPOSE 80 8080
+EXPOSE 80
 
 # One probe covers all three processes: /api/health is answered by Fastify
 # through nginx, / is rendered by Next.js through nginx.

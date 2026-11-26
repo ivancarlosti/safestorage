@@ -94,10 +94,9 @@ export const notifyUpload = async ({ file, links, origin, target, uploader }: Up
 		// Dashboard uploads only notify when nobody is signed in
 		if (!isPublicLinkUpload && (Boolean(uploader) || !SETTINGS.anonymousUploadNotificationsEnabled)) return;
 
-		const context =
-			target.type === 'link'
-				? await albumNotificationContext(target.album.id)
-				: await anonymousNotificationContext();
+		const context = isPublicLinkUpload
+			? await albumNotificationContext(target.albumId)
+			: await anonymousNotificationContext();
 		if (!context) return;
 
 		const recipients = [

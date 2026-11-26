@@ -10,35 +10,10 @@ SafeStorage can keep uploads in two places, toggled with the **`useNetworkStorag
 | Folder               | Container path        | Contents                              |
 | -------------------- | --------------------- | ------------------------------------- |
 | live uploads         | `/app/uploads`        | the uploaded files themselves         |
-| website albums       | `/app/uploads/site`   | one folder per album (`site/{identifier}/`) |
 | thumbnails           | `/app/uploads/thumbs` | generated previews                    |
 | chunked uploads      | `/app/uploads/tmp`    | chunks of in-progress chunked uploads |
 | generated archives   | `/app/uploads/zips`   | ZIP files built from public albums    |
 | live/streaming video | `/app/uploads/live`   | streaming media                       |
-
-### Website albums
-
-An album flagged as a static website stores its files in a folder of its own,
-under the exact path the site serves:
-
-```
-/app/uploads/site/{albumIdentifier}/index.html
-/app/uploads/site/{albumIdentifier}/css/app.css
-/app/uploads/site/{albumIdentifier}/CNAME
-```
-
-The album identifier is generated when the album becomes a website
-(`albums.identifier`) and is shown in the album header. Inside that folder the
-bytes are **not** renamed: the file name, casing, unicode and folders are the
-ones inside the uploaded site, so relative references (`css/app.css`), `CNAME`,
-`_headers` and extension-less files keep working, and the tree can be mirrored
-with `rsync`/`rclone` or browsed on the bucket. Uploading the same path again
-replaces the file in place (same uuid, same URL). Website files are never
-thumbnailed and are never deduplicated by hash: the same bytes may legitimately
-live at two paths.
-
-Gallery albums are untouched: they keep the flat, random identifier in
-`/app/uploads`.
 
 nginx serves these straight off disk (Range requests included), so downloads do not go through Node. Back up `/app/uploads` along with the database; see [Deployment](deployment.md).
 
@@ -70,29 +45,6 @@ Files go **straight from the browser to the bucket**, never through the backend:
 -   larger files use a real **S3 multipart upload** (2 parts at a time, failed parts retried, 12 h URL lifetime), so there is no 5 GB single-`PUT` ceiling.
 
 The backend collects the ETags itself, so the bucket does **not** need `ExposeHeaders: ETag` in its CORS rules.
-
-### Website albums on the bucket
-
-The files of a website album are stored under the path the site serves, in their
-own folder:
-
-```
-site/{albumIdentifier}/index.html
-site/{albumIdentifier}/css/app.css
-site/{albumIdentifier}/CNAME
-```
-
-Objects are stored with the Content-Type the browser sent (`application/octet-stream`
-when the browser cannot name the type, which is what most extension-less files
-report) and are served through the instance (`/site/{identifier}/…` and
-`/api/file/{uuid}/content`), so the bucket does not have to be world-readable.
-
-Because those keys are predictable (`site/{albumIdentifier}/…`), SafeStorage
-never attaches `x-amz-acl: public-read` to them — not even on DigitalOcean
-Spaces, where gallery uploads do get it. Keep the bucket **private** if a
-website must only be reachable while its link is enabled: with a public bucket
-policy, anyone who learns the album identifier can read the files even when
-every link of the album is disabled.
 
 ### Bucket policy
 

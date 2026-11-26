@@ -95,7 +95,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			...constructFilePublicLink({
 				req,
 				fileName: modifiedFile.name,
-				uuid: modifiedFile.uuid,
 				isS3: modifiedFile.isS3,
 				isWatched: file.isWatched
 			})

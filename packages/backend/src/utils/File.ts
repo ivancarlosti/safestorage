@@ -1,4 +1,3 @@
-import { rmdir } from 'node:fs/promises';
 import path, { basename, extname } from 'node:path';
 import process from 'node:process';
 import { URL, fileURLToPath } from 'node:url';
@@ -13,15 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 import prisma from '@/structures/database.js';
 import type { FileInProgress, RequestUser, User } from '@/structures/interfaces.js';
 import { SETTINGS } from '@/structures/settings.js';
-import {
-	getSiteStorageDirectory,
-	getSiteStorageKey,
-	isSiteStorageKey,
-	normalizeSitePath
-} from '@/utils/AlbumWebsite.js';
 import { log, logError } from '@/utils/Logger.js';
 import { generateThumbnails, getFileThumbnail, removeThumbs } from './Thumbnails.js';
-import type { UploadAlbum } from './UploadHelpers.js';
 import { getHost } from './Util.js';
 
 const fileIdentifierMaxTries = 5;
@@ -81,81 +73,6 @@ export const deleteTmpFile = async (uploadPath: string) => {
 	}
 };
 
-/*
-	A website file lives in a folder of its own, so removing it can leave empty
-	folders behind. They are pruned up to `uploads/`; an empty directory is not
-	worth an error, so the walk simply stops at the first non-empty one.
-*/
-export const pruneEmptyDirectories = async (directory: string) => {
-	let current = directory;
-	while (current.startsWith(uploadPath) && current !== uploadPath) {
-		try {
-			await rmdir(current);
-		} catch {
-			return;
-		}
-
-		current = path.dirname(current);
-	}
-};
-
-/*
-	The file a website upload replaces. A website is edited by uploading the
-	changed file again, so the row of that path (and with it the uuid the public
-	links point at) is updated instead of a second row being added next to it.
-*/
-export const findSiteFileToReplace = async ({ albumId, sitePath }: { albumId: number; sitePath: string }) =>
-	prisma.files.findFirst({
-		where: {
-			sitePath,
-			albums: {
-				some: {
-					id: albumId
-				}
-			}
-		},
-		include: {
-			quarantineFile: true
-		}
-	});
-
-/*
-	Replaces the content of an existing website file in place. The uuid and the
-	quarantine state are kept: a quarantined file is never silently reinstated by
-	an upload (the callers refuse to replace it).
-*/
-export const updateSiteFileOnDb = async ({
-	file,
-	user,
-	uuid
-}: {
-	file: FileInProgress;
-	user?: RequestUser | User | undefined;
-	uuid: string;
-}) => {
-	const now = new Date();
-	const data = {
-		userId: user?.id ?? undefined!,
-		name: file.name,
-		original: file.original,
-		type: file.type,
-		size: file.size,
-		hash: file.hash,
-		ip: file.ip,
-		isS3: file.isS3,
-		isWatched: file.isWatched,
-		sitePath: file.sitePath ?? null,
-		editedAt: now
-	};
-
-	const updated = await prisma.files.update({
-		where: { uuid },
-		data
-	});
-
-	return { file: { ...data, createdAt: updated.createdAt, id: updated.id, uuid: updated.uuid } };
-};
-
 export const deleteFiles = async ({
 	files,
 	deleteFromDB = false
@@ -207,13 +124,12 @@ export const deleteFiles = async ({
 					});
 				}
 
-				const name = file.quarantine ? (file.quarantineFile?.name ?? file.name) : file.name;
-				const root = file.quarantine ? quarantinePath : file.isWatched ? watchPath : uploadPath;
-				await jetpack.removeAsync(path.join(root, name));
-
-				if (!file.quarantine && !file.isWatched && isSiteStorageKey(file.name)) {
-					await pruneEmptyDirectories(getSiteStorageDirectory(path.join(uploadPath, file.name)));
-				}
+				await jetpack.removeAsync(
+					path.join(
+						file.quarantine ? quarantinePath : file.isWatched ? watchPath : uploadPath,
+						file.quarantine ? (file.quarantineFile?.name ?? file.name) : file.name
+					)
+				);
 			}
 		}
 
@@ -331,7 +247,6 @@ export const createZip = (files: string[], albumUuid: string) => {
 export const constructFilePublicLink = ({
 	req,
 	fileName,
-	uuid,
 	quarantine = false,
 	isS3 = false,
 	isWatched = false
@@ -341,22 +256,12 @@ export const constructFilePublicLink = ({
 	isWatched?: boolean;
 	quarantine?: boolean;
 	req: FastifyRequest;
-	uuid?: string;
 }) => {
 	const host = SETTINGS.serveUploadsFrom ? SETTINGS.serveUploadsFrom : getHost(req);
-	/*
-		A website file is stored under a nested key (`site/{album}/{sitePath}`)
-		that is not reachable as a flat upload URL, and the album it belongs to
-		may have no public link at all. It is served by uuid instead, which is
-		also what keeps the gallery previews and the album cover working.
-	*/
-	const isSiteFile = !quarantine && Boolean(uuid) && isSiteStorageKey(fileName);
 	const data = {
-		url: isSiteFile
-			? `${host}/api/file/${uuid}/content`
-			: isS3
-				? `${SETTINGS.S3PublicUrl || SETTINGS.S3Endpoint}${quarantine ? '/quarantine' : ''}/${fileName}`
-				: `${host}${quarantine ? '/quarantine' : ''}${isWatched ? '/live' : ''}/${fileName}`,
+		url: isS3
+			? `${SETTINGS.S3PublicUrl || SETTINGS.S3Endpoint}${quarantine ? '/quarantine' : ''}/${fileName}`
+			: `${host}${quarantine ? '/quarantine' : ''}${isWatched ? '/live' : ''}/${fileName}`,
 		thumb: '',
 		preview: ''
 	};
@@ -480,8 +385,6 @@ export const storeFileToDb = async (
 		sourceUrl: file.sourceUrl ?? null,
 		isS3: file.isS3,
 		isWatched: file.isWatched,
-		// Path inside a static website album, when the upload came with one
-		sitePath: file.sitePath ?? null,
 		createdAt: now,
 		editedAt: now
 	};
@@ -622,32 +525,32 @@ export const handleUploadFile = async ({
 	user,
 	ip,
 	upload,
-	album,
-	sitePath
+	album
 }: {
-	album?: UploadAlbum | null | undefined;
+	album?: number | null | undefined;
 	ip: string;
-	sitePath?: string | null;
 	upload: { name: string; path: string; size: string; sourceUrl?: string; type: string };
 	user?: RequestUser | User | undefined;
 }) => {
+	// Assign a unique identifier to the file
+	const uniqueIdentifier = await getUniqueFileIdentifier();
+	if (!uniqueIdentifier) throw new Error('Could not generate unique identifier.');
 	const ext = extname(upload.name);
-	const normalizedSitePath = sitePath ? normalizeSitePath(sitePath) : null;
-	/*
-		A file uploaded into a website album is stored exactly where the website
-		serves it: `uploads/site/{albumIdentifier}/{sitePath}`, under the name the
-		HTML refers to. No random identifier, no suffix, no slugification: renaming
-		the file would break `css/app.css`, `CNAME` and friends.
-	*/
-	const siteKey =
-		normalizedSitePath && album?.isWebsite && album.identifier
-			? getSiteStorageKey(album.identifier, normalizedSitePath)
-			: null;
+	let newFilename = `${uniqueIdentifier}${ext}`;
+	if (SETTINGS.generateOriginalFileNameWithIdentifier) {
+		const isLowerCase = !SETTINGS.enableMixedCaseFilenames || process.platform === 'win32';
+		const originalNameWithoutExt = basename(upload.name, ext);
+		newFilename = `${slugify(originalNameWithoutExt, { separator: '_', lowercase: isLowerCase })}-${uniqueIdentifier}${ext}`;
+	}
 
-	const file: FileInProgress = {
-		name: '',
+	log.debug(`> Name for upload: ${newFilename}`);
+
+	// Move file to permanent location
+	const newPath = fileURLToPath(new URL(`../../../../uploads/${newFilename}`, import.meta.url));
+	const file = {
+		name: newFilename,
 		extension: ext,
-		path: '',
+		path: newPath,
 		original: upload.name,
 		type: upload.type,
 		size: upload.size,
@@ -655,75 +558,14 @@ export const handleUploadFile = async ({
 		ip,
 		sourceUrl: upload.sourceUrl,
 		isS3: false,
-		isWatched: false,
-		/*
-			The path is recorded for every album: a gallery album keeps its flat
-			name and turns the file into a website file if the album is later
-			served as a website.
-		*/
-		sitePath: normalizedSitePath
+		isWatched: false
 	};
 
-	if (siteKey) {
-		file.name = siteKey;
-		file.path = path.join(uploadPath, siteKey);
-	} else {
-		// Gallery upload: a unique identifier is generated for the stored name
-		const uniqueIdentifier = await getUniqueFileIdentifier();
-		if (!uniqueIdentifier) throw new Error('Could not generate unique identifier.');
-		let newFilename = `${uniqueIdentifier}${ext}`;
-		if (SETTINGS.generateOriginalFileNameWithIdentifier) {
-			const isLowerCase = !SETTINGS.enableMixedCaseFilenames || process.platform === 'win32';
-			const originalNameWithoutExt = basename(upload.name, ext);
-			newFilename = `${slugify(originalNameWithoutExt, { separator: '_', lowercase: isLowerCase })}-${uniqueIdentifier}${ext}`;
-		}
-
-		file.name = newFilename;
-		file.path = fileURLToPath(new URL(`../../../../uploads/${newFilename}`, import.meta.url));
-	}
-
-	log.debug(`> Name for upload: ${file.name}`);
-
-	// A website is edited by uploading the file again: the row is replaced in place
-	const existingSiteFile =
-		siteKey && normalizedSitePath && album
-			? await findSiteFileToReplace({ albumId: album.id, sitePath: normalizedSitePath })
-			: null;
-	if (existingSiteFile?.quarantine) {
-		await deleteTmpFile(upload.path);
-		throw new Error('This file is quarantined and cannot be replaced by an upload.');
-	}
-
-	if (existingSiteFile) {
-		if (existingSiteFile.name !== file.name) {
-			// The previous bytes lived under another key (a file uploaded before
-			// the folder layout existed); they are replaced, not kept around
-			await deleteFiles({ files: [existingSiteFile] });
-		}
-
-		await jetpack.dirAsync(path.dirname(file.path));
-		// Overwrite: this is exactly how an edited file replaces the old one
-		await jetpack.moveAsync(upload.path, file.path, { overwrite: true });
-
-		const savedFile = await updateSiteFileOnDb({ file, user, uuid: existingSiteFile.uuid });
-		return savedFile.file;
-	}
-
 	let uploadedFile;
-	const fileOnDb = siteKey ? null : await checkFileHashOnDB(user, file);
+	const fileOnDb = await checkFileHashOnDB(user, file);
 	if (fileOnDb?.repeated) {
-		/*
-			A duplicate upload can still teach an existing file its place inside a
-			website: the file is already stored, only the site path was missing.
-		*/
-		if (file.sitePath && !fileOnDb.file.sitePath) {
-			await prisma.files.update({
-				where: { uuid: fileOnDb.file.uuid },
-				data: { sitePath: file.sitePath }
-			});
-		}
 		if (SETTINGS.saveDuplicatesToAlbum && album) {
-			await saveFileToAlbum(album.id, fileOnDb.file.id);
+			await saveFileToAlbum(album, fileOnDb.file.id);
 		} else {
 			log.info(
 				`> Tried uploading ${file.original} but already exists on database with identifier: ${fileOnDb.file.name}. Consider enabling "Add duplicates to Album"`
@@ -733,27 +575,18 @@ export const handleUploadFile = async ({
 		uploadedFile = fileOnDb.file;
 		await deleteTmpFile(upload.path);
 	} else {
-		if (siteKey) {
-			await jetpack.dirAsync(path.dirname(file.path));
-			// A file left on disk without a row (an interrupted upload) is replaced
-			await jetpack.moveAsync(upload.path, file.path, { overwrite: true });
-		} else {
-			await jetpack.moveAsync(upload.path, file.path);
-		}
-
+		await jetpack.moveAsync(upload.path, newPath);
 		// Store file in database
-		const savedFile = await storeFileToDb(user ? user : undefined, file, album ? album.id : undefined);
+		const savedFile = await storeFileToDb(user ? user : undefined, file, album ? album : undefined);
 
 		uploadedFile = savedFile.file;
 
 		// Generate thumbnails
-		if (!siteKey) {
-			void generateThumbnails({
-				filename: savedFile.file.name,
-				tmp: savedFile.file.isS3,
-				watched: savedFile.file.isWatched
-			});
-		}
+		void generateThumbnails({
+			filename: savedFile.file.name,
+			tmp: savedFile.file.isS3,
+			watched: savedFile.file.isWatched
+		});
 	}
 
 	return uploadedFile;

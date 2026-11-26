@@ -3,7 +3,6 @@ import prisma from '@/structures/database.js';
 import type { RequestUser } from '@/structures/interfaces.js';
 import { SETTINGS } from '@/structures/settings.js';
 import { albumAccessWhere } from '@/utils/AlbumAccess.js';
-import { ensureAlbumIdentifier } from '@/utils/Util.js';
 
 export const authUser = async (authorization?: string | null) => {
 	if (!authorization) return null;
@@ -56,30 +55,10 @@ export const authUser = async (authorization?: string | null) => {
 	} as RequestUser;
 };
 
-/*
-	The album an upload lands in. `identifier` is the folder of a website album
-	(`site/{identifier}/`), generated on demand for albums that predate it.
-*/
-export interface UploadAlbum {
-	id: number;
-	identifier: string | null;
-	isWebsite: boolean;
-}
-
 export type UploadTarget =
-	| { album: null; type: 'none' }
-	| { album: UploadAlbum; type: 'album' }
-	| { album: UploadAlbum; linkUuid: string; type: 'link' };
-
-/*
-	Website albums own a folder, gallery albums do not. The identifier is
-	allocated here (instead of only when the album is created) because an album
-	created before the folder layout existed has none yet.
-*/
-const toUploadAlbum = async (album: UploadAlbum | null): Promise<UploadAlbum | null> => {
-	if (!album) return null;
-	return { ...album, identifier: await ensureAlbumIdentifier(album) };
-};
+	| { albumId: null; type: 'none' }
+	| { albumId: number; type: 'album' }
+	| { albumId: number; linkUuid: string; type: 'link' };
 
 /*
 	Browsers report an empty `type` for formats they cannot name (an `.iso`
@@ -126,23 +105,7 @@ export const validateUploadTarget = async ({
 		if (!link.allowUploads) return { error: 'This link does not allow uploads', status: 403 };
 		if (!SETTINGS.anonymousUploadsEnabled) return { error: 'Anonymous uploads are disabled', status: 403 };
 
-		const album = await prisma.albums.findFirst({
-			where: {
-				id: link.albumId
-			},
-			select: {
-				id: true,
-				identifier: true,
-				isWebsite: true
-			}
-		});
-
-		if (!album) return { error: "The album of this link doesn't exist anymore", status: 404 };
-
-		const uploadAlbum = await toUploadAlbum(album);
-		if (!uploadAlbum) return { error: "The album of this link doesn't exist anymore", status: 404 };
-
-		return { target: { album: uploadAlbum, linkUuid: link.uuid, type: 'link' } };
+		return { target: { albumId: link.albumId, linkUuid: link.uuid, type: 'link' } };
 	}
 
 	if (!albumUuid) {
@@ -153,7 +116,7 @@ export const validateUploadTarget = async ({
 			}
 		}
 
-		return { target: { album: null, type: 'none' } };
+		return { target: { albumId: null, type: 'none' } };
 	}
 
 	if (!user) return { error: 'Only registered users can upload files to an album.', status: 401 };
@@ -161,16 +124,11 @@ export const validateUploadTarget = async ({
 	const album = await prisma.albums.findFirst({
 		where: albumAccessWhere(user.id, albumUuid),
 		select: {
-			id: true,
-			identifier: true,
-			isWebsite: true
+			id: true
 		}
 	});
 
 	if (!album) return { error: "Album doesn't exist or the user has no access to it.", status: 400 };
 
-	const uploadAlbum = await toUploadAlbum(album);
-	if (!uploadAlbum) return { error: "Album doesn't exist or the user has no access to it.", status: 400 };
-
-	return { target: { album: uploadAlbum, type: 'album' } };
+	return { target: { albumId: album.id, type: 'album' } };
 };

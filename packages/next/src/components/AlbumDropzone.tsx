@@ -8,10 +8,10 @@ import { DropZone } from '@/components/ui/dropzone';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { settingsAtom } from '@/lib/atoms/settings';
-import { processDropItems } from '@/lib/dropzone';
-import { uploadEntries } from '@/lib/uploadEntries';
+import { getSignedUrl, processDropItem } from '@/lib/dropzone';
 import { useUploadFile } from '@/hooks/useUploadFile';
 import { albumDisablePointerEventAtom } from '@/lib/atoms/dropzone';
+import { uploadQueue } from '@/lib/uploadQueue';
 
 interface DropZonePropsWithAlbumUuid extends DropZoneProps {
 	readonly albumLink?: string;
@@ -35,15 +35,44 @@ export const AlbumDropZone = (props: DropZonePropsWithAlbumUuid) => {
 	const onDrop = useCallback(
 		async (ev: DropEvent) => {
 			setAlbumDisablePointerEvent(true);
-			const entries = await processDropItems(ev.items, settings);
-			await uploadEntries({
-				entries,
-				albumLink: props.albumLink,
-				albumUuid: props.albumUuid,
-				failUpload,
-				uploadFile,
-				useNetworkStorage: Boolean(settings?.useNetworkStorage)
-			});
+			for (const item of ev.items) {
+				const files = await processDropItem(item, settings);
+				if (!files.length) continue;
+
+				if (!settings?.useNetworkStorage) {
+					void files.map(
+						async file =>
+							void uploadQueue.add(async () =>
+								uploadFile({
+									file: file instanceof File ? file : await file.getFile(),
+									endpoint: '/api/upload',
+									isNetworkStored: false,
+									method: 'POST'
+								})
+							)
+					);
+
+					continue;
+				}
+
+				void files.map(async file => {
+					void uploadQueue.add(async () => {
+						const actualFile = file instanceof File ? file : await file.getFile();
+						const target = await getSignedUrl(actualFile, props.albumLink, props.albumUuid);
+						if ('error' in target) {
+							failUpload(actualFile, target.error);
+							return;
+						}
+
+						await uploadFile({
+							file: actualFile,
+							isNetworkStored: true,
+							method: 'PUT',
+							...target
+						});
+					});
+				});
+			}
 		},
 		[failUpload, props.albumLink, props.albumUuid, setAlbumDisablePointerEvent, settings, uploadFile]
 	);

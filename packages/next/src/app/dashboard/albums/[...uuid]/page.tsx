@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { PageQuery } from '@/types';
-import { FolderUp, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 import { fetchEndpoint } from '@/lib/fileFetching';
 import { Button } from '@/components/ui/react-aria-button';
@@ -68,19 +68,7 @@ export default async function AlbumPage({
 				]}
 			>
 				{response.isOwner === false ? (
-					<span className="hidden text-sm text-muted-foreground md:inline">
-						Shared by {response.ownerUsername}
-					</span>
-				) : null}
-				{/*
-					A website album keeps the structure of the site it serves, so the
-					folder it is stored in is shown: it is what an `rsync`/`rclone`
-					mirror of the instance has to write to.
-				*/}
-				{response.isWebsite && response.siteIdentifier ? (
-					<span className="hidden text-sm text-muted-foreground md:inline">
-						Website files live in <code className="font-mono">site/{response.siteIdentifier}/</code>
-					</span>
+					<span className="hidden text-sm text-muted-foreground md:inline">Shared by {response.ownerUsername}</span>
 				) : null}
 				{response.isOwner === false ? null : <AlbumShareDialog albumName={response.name} albumUuid={uuid} />}
 				<UploadTrigger allowsMultiple albumUuid={uuid}>
@@ -89,16 +77,6 @@ export default async function AlbumPage({
 						Upload file to album
 					</Button>
 				</UploadTrigger>
-				{response.isWebsite ? (
-					// Picks a whole folder, keeping every relative path: `css/app.css`
-					// is stored and served as `css/app.css`
-					<UploadTrigger acceptDirectory allowsMultiple albumUuid={uuid}>
-						<Button className={buttonVariants({ variant: 'secondary' })}>
-							<FolderUp className="mr-2 h-4 w-4" />
-							Upload folder
-						</Button>
-					</UploadTrigger>
-				) : null}
 			</DashboardHeader>
 			<div className="px-2 w-full">
 				<HydrationBoundary state={dehydrate(queryClient)}>

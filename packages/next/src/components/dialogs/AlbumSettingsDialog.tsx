@@ -9,7 +9,6 @@ import { useActionState } from 'react';
 import { toast } from 'sonner';
 
 import { isDialogOpenAtom, selectedAlbumAtom } from '@/lib/atoms/albumSettingsDialog';
-import { settingsAtom } from '@/lib/atoms/settings';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -37,11 +36,9 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 	const defaultSortValue = '_default';
 	const [open, setOpen] = useAtom(isDialogOpenAtom);
 	const album = useAtomValue(selectedAlbumAtom);
-	const settings = useAtomValue(settingsAtom);
 	const queryClient = useQueryClient();
 	const [sortOrder, setSortOrder] = useState<string>('');
 	const [viewMode, setViewMode] = useState<'list' | 'thumbs'>('thumbs');
-	const [isWebsite, setIsWebsite] = useState<boolean>(false);
 
 	const [state, formAction] = useActionState(updateAlbumSettings, {
 		message: '',
@@ -52,8 +49,7 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 	useEffect(() => {
 		setSortOrder(album?.sortOrder ?? '');
 		setViewMode(album?.viewMode ?? 'thumbs');
-		setIsWebsite(album?.isWebsite ?? false);
-	}, [album?.isWebsite, album?.sortOrder, album?.viewMode]);
+	}, [album?.sortOrder, album?.viewMode]);
 
 	const createNewAlbumLink = async () => {
 		try {
@@ -73,7 +69,7 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 		}
 	};
 
-	const { data, error } = useQuery<{ links: AlbumLink[]; websiteWarnings?: string[] }>({
+	const { data, error } = useQuery<{ links: AlbumLink[] }>({
 		queryKey: ['albums', album?.uuid, 'links'],
 		enabled: Boolean(album?.uuid) && open,
 		queryFn: async () => {
@@ -171,30 +167,6 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 									defaultChecked={album?.notifyOnPublicUpload ?? false}
 								/>
 							</div>
-							{settings?.websiteHostingEnabled ? (
-								<div className="space-y-2 flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
-									<div className="space-y-0.5">
-										<Label
-											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-											htmlFor="isWebsite"
-										>
-											Static website
-										</Label>
-										<p className="text-[0.8rem] text-muted-foreground">
-											Serve this album as a website through a public link. Turning it off also
-											turns it off on every link of the album. Files uploaded while it is on keep
-											their name and folder.
-										</p>
-									</div>
-									<Switch
-										id="isWebsite"
-										name="isWebsite"
-										checked={isWebsite}
-										onCheckedChange={setIsWebsite}
-									/>
-								</div>
-							) : null}
-
 							<div>
 								<Label htmlFor="sortOrder">Sort Order</Label>
 								<input type="hidden" name="sortOrder" value={sortOrder} />
@@ -255,18 +227,7 @@ export function AlbumSettingsDialog({ children }: PropsWithChildren) {
 								Create new link
 							</Button>
 
-							{data?.websiteWarnings && data.websiteWarnings.length > 0 ? (
-								<div className="mb-4 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs">
-									<p className="font-medium">Website path conflicts</p>
-									<ul className="mt-1 list-disc pl-4">
-										{data.websiteWarnings.map(warning => (
-											<li key={warning}>{warning}</li>
-										))}
-									</ul>
-								</div>
-							) : null}
-
-							<AlbumLinksTable data={data?.links} albumIsWebsite={album?.isWebsite ?? false} />
+							<AlbumLinksTable data={data?.links} />
 						</div>
 					</div>
 					<DialogFooter className="!place-content-between mt-4 gap-4">

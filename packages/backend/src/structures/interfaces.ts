@@ -45,7 +45,6 @@ export interface FileInProgress {
 	name: string;
 	original: string;
 	path: string;
-	sitePath?: string | null;
 	size: string;
 	sourceUrl?: string | undefined;
 	type: string;
@@ -185,16 +184,12 @@ export interface Settings {
 	useUrlShortener: boolean;
 	userAccounts: boolean;
 	usersStorageQuota: number;
-	websiteHostingDomain: string;
-	websiteHostingEnabled: boolean;
 	yourlsApiUrl: string;
 	yourlsSignature: string;
 }
 
 export interface RouteOptions {
 	debug?: boolean;
-	// Keeps the URL out of the /api prefix (used by /site and public routes)
-	ignoreRoutePrefix?: boolean;
 	method: string;
 	middlewares?: (string | { [index: number | string]: any })[];
 	// options?: { [index: number | string]: any };

@@ -85,9 +85,6 @@ export default async function PublicAlbumPage({
 		redirect('/');
 	}
 
-	// A link that serves the album as a website sends the visitor to the site
-	if (response.album.websiteUrl) return redirect(response.album.websiteUrl);
-
 	try {
 		await request.get({
 			url: `album/${encodeURIComponent(identifier)}/view/count`,

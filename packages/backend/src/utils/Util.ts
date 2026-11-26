@@ -15,36 +15,18 @@ export const VERSION = JSON.parse(readFileSync(basePackageJson, 'utf8')).version
 export const getHost = (req: FastifyRequest) => `${req.protocol}://${req.headers.host}`;
 export const getSafeStorageVersion = () => VERSION;
 
-/*
-	Album identifiers and link identifiers share one namespace: both end up in a
-	public URL (`/site/{identifier}` and `/l/{identifier}`), so an identifier is
-	only free when neither table uses it.
-*/
 export const getUniqueAlbumIdentifier = () => {
 	const retry: any = async (i = 0) => {
 		const identifier = randomstring.generate({
 			length: SETTINGS.generatedAlbumLength,
 			capitalization: 'lowercase'
 		});
-		const [link, album] = await Promise.all([
-			prisma.links.findFirst({
-				where: {
-					identifier
-				},
-				select: {
-					id: true
-				}
-			}),
-			prisma.albums.findFirst({
-				where: {
-					identifier
-				},
-				select: {
-					id: true
-				}
-			})
-		]);
-		if (!link && !album) return identifier;
+		const exists = await prisma.links.findFirst({
+			where: {
+				identifier
+			}
+		});
+		if (!exists) return identifier;
 		/*
 			It's funny but if you do i++ the asignment never gets done resulting in an infinite loop
 		*/
@@ -54,34 +36,6 @@ export const getUniqueAlbumIdentifier = () => {
 	};
 
 	return retry();
-};
-
-/*
-	The folder of a website album (`site/{identifier}/`). Albums created before
-	the folder existed get their identifier on first use, so an old website keeps
-	working without a manual migration step.
-*/
-export const ensureAlbumIdentifier = async (album: {
-	id: number;
-	identifier: string | null;
-	isWebsite: boolean;
-}): Promise<string | null> => {
-	if (!album.isWebsite) return album.identifier;
-	if (album.identifier) return album.identifier;
-
-	const identifier = await getUniqueAlbumIdentifier();
-	if (!identifier) throw new Error('Could not generate a unique identifier for the album.');
-
-	await prisma.albums.update({
-		where: {
-			id: album.id
-		},
-		data: {
-			identifier
-		}
-	});
-
-	return identifier;
 };
 
 // A function that adds spaces to the beginning of the string until there are 7 characters

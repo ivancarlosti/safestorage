@@ -6,8 +6,6 @@ import type { RequestWithUser } from '@/structures/interfaces.js';
 import { http4xxErrorSchema } from '@/structures/schemas/HTTP4xxError.js';
 import { http5xxErrorSchema } from '@/structures/schemas/HTTP5xxError.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
-import { SETTINGS } from '@/structures/settings.js';
-import { getUniqueAlbumIdentifier } from '@/utils/Util.js';
 
 export const schema = {
 	summary: 'Create album',
@@ -15,11 +13,7 @@ export const schema = {
 	tags: ['Albums'],
 	body: z
 		.object({
-			name: z.string().describe('The name of the album.'),
-			isWebsite: z
-				.boolean()
-				.optional()
-				.describe('Whether the album is served as a static website (requires website hosting to be enabled).')
+			name: z.string().describe('The name of the album.')
 		})
 		.required(),
 	response: {
@@ -28,11 +22,6 @@ export const schema = {
 			album: z.object({
 				uuid: z.string().describe('The uuid of the album.'),
 				name: z.string().describe('The name of the album.'),
-				isWebsite: z.boolean().describe('Whether the album is served as a static website.'),
-				siteIdentifier: z
-					.string()
-					.nullable()
-					.describe('The folder of the album inside the website storage, when it is a website.'),
 				createdAt: z.date().describe('The date the album was created.')
 			})
 		}),
@@ -48,12 +37,7 @@ export const options = {
 };
 
 export const run = async (req: RequestWithUser, res: FastifyReply) => {
-	const { name, isWebsite } = req.body as { isWebsite?: boolean; name: string };
-
-	if (isWebsite === true && !SETTINGS.websiteHostingEnabled) {
-		void res.badRequest('Static website hosting is disabled on this instance');
-		return;
-	}
+	const { name } = req.body as { name: string };
 
 	const exists = await prisma.albums.findFirst({
 		where: {
@@ -69,27 +53,11 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 
 	const now = new Date();
 
-	/*
-		An album served as a website owns a folder of its own
-		(`site/{identifier}/`), allocated here so the stored tree matches the
-		served tree from the very first upload.
-	*/
-	let identifier: string | null = null;
-	if (isWebsite === true) {
-		identifier = await getUniqueAlbumIdentifier();
-		if (!identifier) {
-			void res.internalServerError('Could not generate an identifier for the album');
-			return;
-		}
-	}
-
 	const newAlbum = await prisma.albums.create({
 		data: {
 			name,
 			userId: req.user.id,
 			uuid: uuidv4(),
-			isWebsite: isWebsite === true,
-			identifier,
 			createdAt: now,
 			editedAt: now
 		}
@@ -100,8 +68,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		album: {
 			uuid: newAlbum.uuid,
 			name: newAlbum.name,
-			isWebsite: newAlbum.isWebsite,
-			siteIdentifier: newAlbum.identifier,
 			createdAt: newAlbum.createdAt
 		}
 	});

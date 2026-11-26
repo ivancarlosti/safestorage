@@ -27,22 +27,6 @@ const isDigitalOceanSpacesEndpoint = (endpoint: string) => {
 	}
 };
 
-/*
-	Everything `uploadFile` needs for one file. `sitePath` is the path the file
-	keeps inside a website album (see `UploadEntry`); it travels to the backend
-	so the bytes are stored under the path the website serves.
-*/
-export interface UploadFileOptions {
-	endpoint?: string | undefined;
-	file: File;
-	identifier?: string | undefined;
-	isNetworkStored: boolean;
-	method: 'POST' | 'PUT';
-	multipart?: MultipartUploadTarget | undefined;
-	publicUrl?: string | undefined;
-	sitePath?: string | undefined;
-}
-
 export const useUploadFile = ({
 	albumUuid,
 	albumLink
@@ -62,12 +46,10 @@ export const useUploadFile = ({
 		async ({
 			identifier,
 			name,
-			type,
-			sitePath
+			type
 		}: {
 			identifier: string;
 			name: string;
-			sitePath: string | undefined;
 			type: string;
 		}): Promise<{ error: string | undefined; url: string | undefined }> => {
 			try {
@@ -79,7 +61,7 @@ export const useUploadFile = ({
 						albumuuid: albumUuid ?? '',
 						albumlink: albumLink ?? ''
 					},
-					body: JSON.stringify({ identifier, name, type, sitePath })
+					body: JSON.stringify({ identifier, name, type })
 				});
 
 				if (!response.ok) {
@@ -136,15 +118,16 @@ export const useUploadFile = ({
 			isNetworkStored,
 			method = 'POST',
 			multipart,
-			publicUrl = '',
-			sitePath
-		}: UploadFileOptions) => {
-			/*
-				The path the file keeps inside a website album. A folder upload
-				carries it in `sitePath`, a loose pick of a folder in
-				`webkitRelativePath`; without either the file name is the path.
-			*/
-			const fileSitePath = sitePath || file.webkitRelativePath || file.name;
+			publicUrl = ''
+		}: {
+			endpoint?: string | undefined;
+			file: File;
+			identifier?: string | undefined;
+			isNetworkStored: boolean;
+			method: 'POST' | 'PUT';
+			multipart?: MultipartUploadTarget | undefined;
+			publicUrl?: string | undefined;
+		}) => {
 			/*
 				Files that are too big for a single request are uploaded to the network
 				storage in parts, one part per pre-signed URL.
@@ -201,9 +184,7 @@ export const useUploadFile = ({
 					const { error, url } = await processNetworkStorageFile({
 						identifier,
 						name: file.name,
-						type: getUploadContentType(file),
-						// The relative path of a folder upload becomes the file's place on a website
-						sitePath: fileSitePath
+						type: getUploadContentType(file)
 					});
 					setUploads(draft => {
 						const upload = draft.findIndex(entry => entry.uuid === multipart.uploadId);
@@ -319,9 +300,7 @@ export const useUploadFile = ({
 				options.postParams = {
 					name: file.name,
 					type: getUploadContentType(file),
-					size: file.size.toString(),
-					// The relative path of a folder upload becomes the file's place on a website
-					sitePath: fileSitePath
+					size: file.size.toString()
 				};
 
 				options.headers = {
@@ -420,8 +399,7 @@ export const useUploadFile = ({
 						const { error, url } = await processNetworkStorageFile({
 							identifier,
 							name: file.name,
-							type: getUploadContentType(file),
-							sitePath: fileSitePath
+							type: getUploadContentType(file)
 						});
 						setUploads(draft => {
 							const upload = draft.findIndex(file => file.uuid === uuid);

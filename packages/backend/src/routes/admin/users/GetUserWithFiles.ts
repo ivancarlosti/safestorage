@@ -145,13 +145,7 @@ export const run = async (req: FastifyRequest, res: FastifyReply) => {
 	for (const file of filesWithAlbumOwners) {
 		readyFiles.push({
 			...file,
-			...constructFilePublicLink({
-				req,
-				fileName: file.name,
-				uuid: file.uuid,
-				isS3: file.isS3,
-				isWatched: file.isWatched
-			})
+			...constructFilePublicLink({ req, fileName: file.name, isS3: file.isS3, isWatched: file.isWatched })
 		});
 	}
 

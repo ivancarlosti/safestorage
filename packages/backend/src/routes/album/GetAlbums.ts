@@ -9,7 +9,6 @@ import { queryLimitSchema } from '@/structures/schemas/QueryLimit.js';
 import { queryPageSchema } from '@/structures/schemas/QueryPage.js';
 import { responseMessageSchema } from '@/structures/schemas/ResponseMessage.js';
 import { albumAccessWhere } from '@/utils/AlbumAccess.js';
-import { isSiteStorageKey } from '@/utils/AlbumWebsite.js';
 import { constructFilePublicLink } from '@/utils/File.js';
 
 export const schema = {
@@ -30,7 +29,6 @@ export const schema = {
 					name: z.string().describe('The name of the album.'),
 					description: z.string().nullable().describe('The description of the album.'),
 					nsfw: z.boolean().describe('Whether or not the album is NSFW.'),
-					isWebsite: z.boolean().describe('Whether the album is served as a static website.'),
 					sortOrder: z.string().nullable().describe('The sort order for files in this album.'),
 					viewMode: z.enum(['list', 'thumbs']).describe('The default view mode for this album.'),
 					notifyOnPublicUpload: z
@@ -83,7 +81,6 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 			description: true,
 			userId: true,
 			nsfw: true,
-			isWebsite: true,
 			sortOrder: true,
 			viewMode: true,
 			notifyOnPublicUpload: true,
@@ -134,22 +131,9 @@ export const run = async (req: RequestWithUser, res: FastifyReply) => {
 		delete newObject.files;
 		delete newObject._count;
 
-		const firstFile = album.files[0];
-		newObject.cover = '';
-		if (firstFile) {
-			const coverLink = constructFilePublicLink({ req, fileName: firstFile.name, uuid: firstFile.uuid });
-			/*
-				Website files are stored under their real path and are never
-				thumbnailed, so their cover is the file itself; a gallery file
-				keeps using the thumbnail.
-			*/
-			newObject.cover = coverLink.thumb
-				? isSiteStorageKey(firstFile.name)
-					? coverLink.url
-					: coverLink.thumb
-				: '';
-		}
-
+		newObject.cover = album.files[0]
+			? constructFilePublicLink({ req, fileName: album.files[0].name as unknown as any }).thumb
+			: '';
 		fetchedAlbums.push(newObject);
 	}
 

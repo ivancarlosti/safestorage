@@ -9,15 +9,11 @@ export const createAlbum = async (_: any, form: FormData) => {
 	const name = form.get('album') as string;
 	if (!name) return { message: 'Name is required', type: MessageType.Error };
 
-	// The switch is only rendered when website hosting is enabled on the instance
-	const isWebsite = form.get('isWebsite') === 'on';
-
 	try {
 		const { error } = await request.post({
 			url: 'album/create',
 			body: {
-				name,
-				isWebsite
+				name
 			},
 			headers: {
 				authorization: `Bearer ${await getToken()}`
