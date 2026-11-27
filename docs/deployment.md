@@ -11,7 +11,7 @@ The recommended way to run SafeStorage is the **single combined Docker image**, 
 
 ## Quick start (Docker Compose)
 
-The [`docker/`](../docker) folder ships two ready-to-use, **pull-only** stacks (they never build anything):
+The [`docker/`](../docker) folder ships two ready-to-use, **pull-only** stacks (they never build anything); the [Docker quick start](docker.md) is the condensed version of this section:
 
 | File                        | Database                                                   |
 | --------------------------- | ---------------------------------------------------------- |

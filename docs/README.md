@@ -6,7 +6,7 @@
 
 | I want to…                                | Read                                                                           |
 | ----------------------------------------- | ------------------------------------------------------------------------------ |
-| Deploy it in two minutes                  | [Deployment](deployment.md) (+ the [Docker quick start](../docker/README.md))  |
+| Deploy it in two minutes                  | [Deployment](deployment.md) (+ the [Docker quick start](docker.md))            |
 | Integrate with the API                    | [API reference](api.md) or the live reference at `/docs` on a running instance |
 | Configure the instance                    | [Configuration](configuration.md)                                              |
 | Store files off-site (S3/R2/Spaces/MinIO) | [Storage](storage.md)                                                          |
@@ -21,6 +21,7 @@
 | [api.md](api.md)                         | Authentication, rate limiting and every REST endpoint.                  |
 | [configuration.md](configuration.md)     | Every admin setting and every environment variable.                     |
 | [deployment.md](deployment.md)           | Running SafeStorage with Docker Compose, TLS, backups and updates.      |
+| [docker.md](docker.md)                   | Pull-only Compose quick start: first boot, accounts, volumes, updates.  |
 | [storage.md](storage.md)                 | Local disk vs. network (S3-compatible) storage, bucket policy and CORS. |
 | [architecture.md](architecture.md)       | The monorepo, the backend, the frontend and the combined container.     |
 | [development.md](development.md)         | Local setup, scripts, code style and the release workflow.              |

@@ -12,6 +12,8 @@
 # next to this file. If you would rather have the database shipped for you, use
 # `docker-compose-bundle.yml` instead.
 #
+# Full guide: ../docs/docker.md
+#
 # There is no default account: a fresh install needs `ACCOUNT_LOGIN` (and
 # `ACCOUNT_PASSWORD`) in `.env` before the first start, and you sign in with that
 # email afterwards.

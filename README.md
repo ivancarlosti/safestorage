@@ -76,13 +76,14 @@ docker compose up -d
 
 Open `http://<your-host>:24424` and log in with the `ACCOUNT_LOGIN` email and password you configured. That's it — migrations run automatically on first boot.
 
-Prefer building from source, or want TLS/backup guidance? See [docs/deployment.md](docs/deployment.md).
+Prefer building from source, or want TLS/backup guidance? See [docs/deployment.md](docs/deployment.md); the condensed walkthrough is [docs/docker.md](docs/docker.md).
 
 ## Documentation
 
 | Document                                           | Contents                                              |
 | -------------------------------------------------- | ----------------------------------------------------- |
 | [docs/deployment.md](docs/deployment.md)           | Docker deployment, TLS, backups, updates.             |
+| [docs/docker.md](docs/docker.md)                   | Pull-only Compose quick start: first boot, accounts.  |
 | [docs/configuration.md](docs/configuration.md)     | Every setting and environment variable.               |
 | [docs/api.md](docs/api.md)                         | The REST API (a live reference is served at `/docs`). |
 | [docs/storage.md](docs/storage.md)                 | Local disk vs. S3-compatible object storage.          |

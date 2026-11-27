@@ -18,6 +18,8 @@
 # Credentials below are defaults, they are not secrets until you publish the
 # instance. Change `MARIADB_PASSWORD`/`MARIADB_ROOT_PASSWORD` (uncomment the
 # matching lines in `.env`) before exposing it to the internet.
+#
+# Full guide: ../docs/docker.md
 
 services:
   mariadb:

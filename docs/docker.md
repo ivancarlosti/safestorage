@@ -1,12 +1,14 @@
-# SafeStorage with Docker (pull only)
+# Docker quick start (pull only)
 
-This folder contains everything needed to run SafeStorage **without the source
-code**: one combined image (nginx + backend + frontend) is pulled from
-`ghcr.io/ivancarlosti/safestorage`.
+This guide runs SafeStorage **without the source code**: one combined image
+(nginx + backend + frontend) is pulled from `ghcr.io/ivancarlosti/safestorage`.
+The two Compose files and `.env.example` it drives live in the
+[`docker/`](../docker) folder. For the full reference — TLS, backups, updates,
+build from source — see [Deployment](deployment.md).
 
 ## Quick start
 
-This folder ships two stacks; pick the one that matches your setup:
+[`docker/`](../docker) ships two stacks; pick the one that matches your setup:
 
 | File                        | Database                                                       |
 | --------------------------- | -------------------------------------------------------------- |
@@ -16,6 +18,7 @@ This folder ships two stacks; pick the one that matches your setup:
 **Bundled database** (nothing else to install):
 
 ```bash
+cd docker
 cp .env.example .env   # edit ACCOUNT_LOGIN, ACCOUNT_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
 docker compose -f docker-compose-bundle.yml up -d
 ```
@@ -23,6 +26,7 @@ docker compose -f docker-compose-bundle.yml up -d
 **Existing database:**
 
 ```bash
+cd docker
 cp .env.example .env   # edit DATABASE_URL, ACCOUNT_LOGIN, ACCOUNT_PASSWORD, SAFESTORAGE_PORT and AUTH_METHOD
 docker compose pull
 docker compose up -d
@@ -61,12 +65,12 @@ or bare domains). The backend refuses to start with `AUTH_METHOD=keycloak` while
 that allow-list is empty, so the first visitor cannot quietly claim the instance.
 
 Every variable is documented in
-[`../docs/configuration.md#authentication`](../docs/configuration.md#authentication).
+[Configuration → Authentication](configuration.md#authentication).
 
 ## Data
 
-Everything persistent lives next to this file (or in a named volume for the
-bundle):
+Everything persistent lives next to the Compose files (or in a named volume for
+the bundle):
 
 | Storage                        | Container path  | Contents                |
 | ------------------------------ | --------------- | ----------------------- |
@@ -79,6 +83,7 @@ Back up the uploads, the logs and a database dump and you have a full backup.
 ## Operations
 
 ```bash
+cd docker
 docker compose logs -f          # all logs (nginx, backend, frontend)
 docker compose pull && docker compose up -d   # update
 docker compose down             # stop (data stays on disk)
