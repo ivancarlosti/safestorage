@@ -58,3 +58,25 @@ reverted (`v8.0.3`) tree, so `latest` images match the code on `main`.
   feature.
 - **Version history.** `v8.1.0`, `v8.1.1` and `v8.2.0` remain published; the new
   `v8.2.1` is the first release without the feature.
+
+## Verification (2026-11-27)
+
+- PR #49 merged as `62ab7d8` with a merge commit; the same Dependabot PR was used,
+  no replacement PR was opened.
+- `effect` overridden in `resolutions` to `3.22.5`, `yarn.lock` rewritten. The Prisma CLI
+  loads `prisma.config.ts` (which reaches `effect` through `@prisma/config`) and
+  `migrate status` runs normally against the local MariaDB, so the minor bump is safe
+  for the config loader.
+- Local suite on the final tree: backend test/lint/build, Next lint, `tsc --noEmit` and a
+  production `next build` with `next@15.5.29` all exit 0.
+- `da74080` (`fix(deps): …`) triggered semantic-release → release **v8.2.1**
+  (published, not a draft), which dispatched `🐳 Build Artifacts` run `45914963866`
+  (success, 18m32s).
+- `ghcr.io/ivancarlosti/safestorage:8.2.1` and `:latest` resolve to the same multi-arch
+  index `sha256:00a21f3b…` (linux/amd64 + linux/arm64). Build provenance records
+  `COMMIT=da7408010603d5bb6d70e30e255a2eec98d6c157`, `VERSION=8.2.1`, so `latest` now
+  ships the rolled-back tree plus both dependency fixes.
+- Release assets: `safestorage-8.2.1.zip`.
+- Post-push state: 0 open Dependabot alerts (was 1 high + 6 moderate), 0 open
+  code-scanning alerts, no open Dependabot PRs, CodeQL and semantic-release runs green.
+
